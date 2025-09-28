@@ -22,4 +22,4 @@ autoinstall:
   updates: all
   shutdown: reboot
   late-commands:
-    - curtin in-target -- sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/polkaulfield/ubuntu-debullshit/main/ubuntu-debullshit.sh)"
+    - curtin in-target -- sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/lucasrainett/autoinstall/master/script.sh)"
