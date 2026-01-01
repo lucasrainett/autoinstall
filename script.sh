@@ -2,11 +2,10 @@
 
 
 #theme
-gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
-gsettings set org.gnome.desktop.interface icon-theme "ZorinGrey-Dark"
-gsettings set org.gnome.shell.extensions.user-theme name "ZorinGrey-Dark"
-gsettings set org.gnome.desktop.interface gtk-theme "ZorinGrey-Dark"
-
+#gsettings set org.gnome.desktop.interface color-scheme "prefer-dark"
+#gsettings set org.gnome.desktop.interface icon-theme "ZorinGrey-Dark"
+#gsettings set org.gnome.shell.extensions.user-theme name "ZorinGrey-Dark"
+#gsettings set org.gnome.desktop.interface gtk-theme "ZorinGrey-Dark"
 
 apt update
 
@@ -79,11 +78,19 @@ wget -O ProtonMail-desktop-beta.deb https://proton.me/download/mail/linux/1.11.0
 dpkg -i ProtonMail-desktop-beta.deb
 
 
+#tar
+
+wget -O jetbrains-toolbox.tar.gz https://download-cdn.jetbrains.com/toolbox/jetbrains-toolbox-3.2.0.65851.tar.gz
+tar -xvf jetbrains-toolbox.tar.gz
+mv jetbrains-toolbox-* jetbrains-toolbox
+mv jetbrains-toolbox /opt/jetbrains-toolbox
+/opt/jetbrains-toolbox/bin/jetbrains-toolbox &
+
 
 flatpak run app.zen_browser.zen \
     https://addons.mozilla.org/en-US/firefox/addon/proton-pass/ \
     https://addons.mozilla.org/en-US/firefox/addon/ublock-origin/ \
-    https://github.com/settings/ssh/new \
+    https://github.com/settings/ssh/new &
 
 
 
