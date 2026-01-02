@@ -1,16 +1,12 @@
 # autoinstall
 
-`sudo bash -c "$(wget -qO- https://raw.githubusercontent.com/lucasrainett/autoinstall/master/script.sh)"`
+`bash -c "$(wget -qO- https://raw.githubusercontent.com/lucasrainett/autoinstall/master/script.sh)"`
 
 
 GIT
 Wallpaper
 softwares
-    proton
-    grayjay
-    zenbrowser
-    bazaar
-    mission center
+
     moonlight
     onlyoffice
     steam controller
@@ -22,17 +18,14 @@ softwares
     solaar
     gnome tweeks
     ungoogled chrome
+    
     cockpit
     docker
     portainer
-    
+
     extension manager
         caffeine
-    gear lever - appimage
-        lmstudio
-        beeper
-        cryptomator
-    
+
 
 
 mount drive
