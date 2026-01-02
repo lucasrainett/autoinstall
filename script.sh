@@ -68,6 +68,7 @@ flatpak install \
     org.onlyoffice.desktopeditors \
     org.gnome.Boxes \
     it.mijorus.gearlever \
+    org.angryip.ipscan \
     io.missioncenter.MissionCenter \
     io.github.ungoogled_software.ungoogled_chromium \
     io.github.kolunmi.Bazaar \
@@ -100,6 +101,8 @@ xdg-settings set default-web-browser app.zen_browser.zen.desktop
 #dpkg -i ./steam.deb
 
 
+wget -O OrcaSlicer-Linux-flatpak_x86_64.flatpak https://github.com/OrcaSlicer/OrcaSlicer/releases/download/v2.3.1/OrcaSlicer-Linux-flatpak_V2.3.1_x86_64.flatpak
+flatpak install --user ./OrcaSlicer-Linux-flatpak_x86_64.flatpak -y --noninteractive
 
 #remove default apps
 sudo apt purge brave-browser brave-keyring -y
@@ -116,10 +119,15 @@ sudo apt install gnome-shell-extension-manager -ycd
 sudo apt update -y
 
 
-gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'app.zen_browser.zen.desktop', 'app.grayjay.Grayjay.desktop', 'org.gnome.Terminal.desktop', 'io.missioncenter.MissionCenter.desktop', 'proton-pass.desktop']"
+gsettings set org.gnome.shell favorite-apps "['org.gnome.Nautilus.desktop', 'app.zen_browser.zen.desktop', 'app.grayjay.Grayjay.desktop', 'org.gnome.Terminal.desktop', 'io.missioncenter.MissionCenter.desktop', 'proton-pass.desktop', 'proton-mail.desktop', 'beepertexts.desktop', 'io.github.kolunmi.Bazaar.desktop']"
 
 flatpak run app.zen_browser.zen \
     https://addons.mozilla.org/en-US/firefox/addon/proton-pass/ \
+    https://addons.mozilla.org/en-US/firefox/addon/proton-vpn-firefox-extension/ \
+    https://addons.mozilla.org/en-US/firefox/addon/privacy-badger17/ \
+    https://addons.mozilla.org/en-US/firefox/addon/read-aloud/ \
+    https://addons.mozilla.org/en-US/firefox/addon/clearurls/ \
+    https://addons.mozilla.org/en-US/firefox/addon/video-downloadhelper/ \
     https://addons.mozilla.org/en-US/firefox/addon/ublock-origin/ \
     https://github.com/settings/ssh/new &
 
