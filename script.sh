@@ -278,5 +278,86 @@ fi
 log "Log saved to $LOG_FILE"
 log "[100%] All done!"
 
+# ── launch installed apps ─────────────────────────────────────
+log ""
+log "Launching installed applications..."
+
+LAUNCH_APPS=(
+    "Beeper|beeper*.desktop"
+    "LM Studio|lm_studio*.desktop"
+    "Cryptomator|cryptomator*.desktop"
+    "Helium|helium*.desktop"
+    "WinBoat|winboat*.desktop"
+    "Proton Pass|proton-pass"
+    "Proton Mail|proton-mail"
+    "JetBrains Toolbox|/opt/jetbrains-toolbox/bin/jetbrains-toolbox"
+    "VLC|flatpak:org.videolan.VLC"
+    "Signal|flatpak:org.signal.Signal"
+    "OnlyOffice|flatpak:org.onlyoffice.desktopeditors"
+    "Boxes|flatpak:org.gnome.Boxes"
+    "Angry IP Scanner|flatpak:org.angryip.ipscan"
+    "Mission Center|flatpak:io.missioncenter.MissionCenter"
+    "Ungoogled Chromium|flatpak:io.github.ungoogled_software.ungoogled_chromium"
+    "Bazaar|flatpak:io.github.kolunmi.Bazaar"
+    "Exodus|flatpak:io.exodus.Exodus"
+    "VSCodium|flatpak:com.vscodium.codium"
+    "Moonlight|flatpak:com.moonlight_stream.Moonlight"
+    "Stream Controller|flatpak:com.core447.StreamController"
+    "Grayjay|flatpak:app.grayjay.Grayjay"
+    "Boxy SVG|flatpak:com.boxy_svg.BoxySVG"
+    "Alpaca|flatpak:com.jeffser.Alpaca"
+    "Minecraft|flatpak:com.mojang.Minecraft"
+    "Steam|flatpak:com.valvesoftware.Steam"
+    "OBS Studio|flatpak:com.obsproject.Studio"
+    "Proton VPN|flatpak:com.protonvpn.www"
+    "OrcaSlicer|flatpak:io.github.softfever.OrcaSlicer"
+    "DistroShelf|flatpak:com.ranfdev.DistroShelf"
+    "Pods|flatpak:com.github.marhkb.Pods"
+    "Minder|flatpak:com.github.phase1geo.minder"
+    "Blanket|flatpak:com.rafaelmardojai.Blanket"
+    "Bruno|flatpak:com.usebruno.Bruno"
+    "HandBrake|flatpak:fr.handbrake.ghb"
+    "LibreWolf|flatpak:io.gitlab.librewolf-community"
+    "Parabolic|flatpak:org.nickvision.tubeconverter"
+    "Flatseal|flatpak:com.github.tchx84.Flatseal"
+    "Warehouse|flatpak:io.github.flattool.Warehouse"
+    "Solaar|flatpak:io.github.pwr_solaar.solaar"
+    "Extension Manager|flatpak:com.mattjakeman.ExtensionManager"
+    "Zen Browser|flatpak:app.zen_browser.zen"
+    "GearLever|flatpak:it.mijorus.gearlever"
+)
+
+for entry in "${LAUNCH_APPS[@]}"; do
+    APP_NAME="${entry%%|*}"
+    APP_CMD="${entry##*|}"
+
+    if [[ "$APP_CMD" == flatpak:* ]]; then
+        FLATPAK_ID="${APP_CMD#flatpak:}"
+        if flatpak info "$FLATPAK_ID" &>/dev/null; then
+            log "  Launching $APP_NAME..."
+            flatpak run "$FLATPAK_ID" &>/dev/null &
+        fi
+    elif [[ "$APP_CMD" == /* ]]; then
+        if [ -x "$APP_CMD" ]; then
+            log "  Launching $APP_NAME..."
+            "$APP_CMD" &>/dev/null &
+        fi
+    elif [[ "$APP_CMD" == *.desktop ]]; then
+        DESKTOP_FILE=$(find ~/.local/share/applications -name "$APP_CMD" 2>/dev/null | head -1)
+        if [ -n "$DESKTOP_FILE" ]; then
+            log "  Launching $APP_NAME..."
+            gtk-launch "$(basename "$DESKTOP_FILE" .desktop)" &>/dev/null &
+        fi
+    else
+        if command -v "$APP_CMD" &>/dev/null; then
+            log "  Launching $APP_NAME..."
+            "$APP_CMD" &>/dev/null &
+        fi
+    fi
+done
+
+log ""
+log "All applications launched!"
+
 sudo -k
 kill "$keepalive_pid" 2>/dev/null

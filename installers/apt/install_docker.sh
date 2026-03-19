@@ -27,5 +27,8 @@ sudo apt update -y
 # install Docker
 sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
+# enable and start docker daemon
+sudo systemctl enable --now docker
+
 # add current user to docker group
 sudo usermod -aG docker "$USER"
