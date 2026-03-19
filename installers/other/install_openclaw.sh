@@ -2,7 +2,8 @@
 # OpenClaw - AI coding assistant.
 # https://openclaw.ai
 
-source ~/.bashrc
+export VOLTA_HOME="$HOME/.volta"
+export PATH="$VOLTA_HOME/bin:$PATH"
 
 [ "$AUTOINSTALL_UPDATE" != "true" ] && command -v openclaw &>/dev/null && echo "OpenClaw already installed, skipping." && exit 0
 

@@ -28,5 +28,5 @@ sudo systemctl enable --now docker
 cd ~/Downloads
 VERSION=$(curl -s https://api.github.com/repos/TibixDev/winboat/releases/latest | grep -oP '"tag_name": "\K[^"]+')
 VERSION_NUM=${VERSION#v}
-wget -q --show-progress -O winboat.AppImage "https://github.com/TibixDev/winboat/releases/download/${VERSION}/winboat-${VERSION_NUM}-x86_64.AppImage"
+curl -fsSL -o winboat.AppImage "https://github.com/TibixDev/winboat/releases/download/${VERSION}/winboat-${VERSION_NUM}-x86_64.AppImage"
 flatpak run it.mijorus.gearlever --integrate winboat.AppImage -y

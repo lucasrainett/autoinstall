@@ -11,5 +11,5 @@ UBUNTU_VERSION=$(. /etc/os-release && echo "$VERSION_ID")
 
 cd ~/Downloads
 DOWNLOAD_URL=$(curl -s https://api.github.com/repos/LizardByte/Sunshine/releases/latest | grep -oP "\"browser_download_url\": \"\K[^\"]*ubuntu-${UBUNTU_VERSION}-amd64\.deb")
-wget -q --show-progress -O sunshine.deb "$DOWNLOAD_URL"
+curl -fsSL -o sunshine.deb "$DOWNLOAD_URL"
 sudo apt install -y ./sunshine.deb

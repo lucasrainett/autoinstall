@@ -4,7 +4,7 @@
 # Wallpaper download is skipped if already present; gsettings are always re-applied.
 
 [ -f /usr/share/backgrounds/PaulsHardware8BitLogosChristmas.png ] || {
-    wget https://raw.githubusercontent.com/lucasrainett/autoinstall/master/wallpapers/PaulsHardware8BitLogosChristmas.png
+    curl -fsSL -o PaulsHardware8BitLogosChristmas.png https://raw.githubusercontent.com/lucasrainett/autoinstall/master/wallpapers/PaulsHardware8BitLogosChristmas.png
     sudo mv PaulsHardware8BitLogosChristmas.png /usr/share/backgrounds/
 }
 

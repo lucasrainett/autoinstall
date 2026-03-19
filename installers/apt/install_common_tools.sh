@@ -6,7 +6,6 @@ sudo apt update -y
 sudo apt install -y \
     git \
     curl \
-    wget \
     unzip \
     zip \
     htop \

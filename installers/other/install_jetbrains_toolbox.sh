@@ -7,12 +7,12 @@
 # Extracts the tarball to /opt, then briefly launches the app so it can
 # register itself (create desktop entries and system tray integration).
 
-[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -d /opt/jetbrains-toolbox ] && echo "JetBrains Toolbox already installed, skipping." && exit 0
+[ "$AUTOINSTALL_UPDATE" != "true" ] && { [ -d /opt/jetbrains-toolbox ] || [ -d "$HOME/.local/share/JetBrains/Toolbox" ]; } && echo "JetBrains Toolbox already installed, skipping." && exit 0
 
 cd ~/Downloads
 DOWNLOAD_URL=$(curl -s "https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release" | grep -oP '"linux":\{"link":"\K[^"]+')
-wget -q --show-progress -O jetbrains-toolbox.tar.gz "$DOWNLOAD_URL"
-tar -xvf jetbrains-toolbox.tar.gz > /dev/null 2>&1
+curl -fsSL -o jetbrains-toolbox.tar.gz "$DOWNLOAD_URL"
+tar -xf jetbrains-toolbox.tar.gz > /dev/null
 mv jetbrains-toolbox-* jetbrains-toolbox
 sudo mv jetbrains-toolbox /opt/jetbrains-toolbox
 

@@ -5,7 +5,8 @@
 #
 # Requires Node.js 18+ (installed via Volta).
 
-source ~/.bashrc
+export VOLTA_HOME="$HOME/.volta"
+export PATH="$VOLTA_HOME/bin:$PATH"
 
 [ "$AUTOINSTALL_UPDATE" != "true" ] && command -v claude &>/dev/null && echo "Claude Code already installed, skipping." && exit 0
 

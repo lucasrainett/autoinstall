@@ -6,5 +6,5 @@
 [ "$AUTOINSTALL_UPDATE" != "true" ] && ls ~/AppImages/*[Ll][Mm]*[Ss]tudio* &>/dev/null && echo "LM Studio already installed, skipping." && exit 0
 
 cd ~/Downloads
-wget -q --show-progress -O lmstudio.AppImage https://lmstudio.ai/download/latest/linux/x64
+curl -fsSL -o lmstudio.AppImage https://lmstudio.ai/download/latest/linux/x64
 flatpak run it.mijorus.gearlever --integrate lmstudio.AppImage -y
