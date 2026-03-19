@@ -5,7 +5,7 @@
 #
 # Fetches the latest version from the GitHub releases API.
 
-[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -f ~/AppImages/cryptomator.appimage ] && echo "Cryptomator already installed, skipping." && exit 0
+[ "$AUTOINSTALL_UPDATE" != "true" ] && ls ~/AppImages/*[Cc]ryptomator* &>/dev/null && echo "Cryptomator already installed, skipping." && exit 0
 
 cd ~/Downloads
 VERSION=$(curl -s https://api.github.com/repos/cryptomator/cryptomator/releases/latest | grep -oP '"tag_name": "\K[^"]+')

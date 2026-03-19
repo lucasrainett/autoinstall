@@ -3,7 +3,7 @@
 # Download, manage, and chat with open-source language models offline.
 # https://lmstudio.ai
 
-[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -f ~/AppImages/lm_studio.appimage ] && echo "LM Studio already installed, skipping." && exit 0
+[ "$AUTOINSTALL_UPDATE" != "true" ] && ls ~/AppImages/*[Ll][Mm]*[Ss]tudio* &>/dev/null && echo "LM Studio already installed, skipping." && exit 0
 
 cd ~/Downloads
 wget -q --show-progress -O lmstudio.AppImage https://lmstudio.ai/download/latest/linux/x64

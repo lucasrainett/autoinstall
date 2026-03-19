@@ -23,7 +23,7 @@ groups "$USER" | grep -q kvm || sudo usermod -aG kvm "$USER"
 sudo systemctl enable --now docker
 
 # download and integrate WinBoat
-[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -f ~/AppImages/winboat.appimage ] && echo "WinBoat already installed, skipping." && exit 0
+[ "$AUTOINSTALL_UPDATE" != "true" ] && ls ~/AppImages/*[Ww]inboat* &>/dev/null && echo "WinBoat already installed, skipping." && exit 0
 
 cd ~/Downloads
 VERSION=$(curl -s https://api.github.com/repos/TibixDev/winboat/releases/latest | grep -oP '"tag_name": "\K[^"]+')

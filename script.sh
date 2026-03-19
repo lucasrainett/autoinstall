@@ -356,14 +356,19 @@ for entry in "${STEPS[@]}"; do
     fi
 
     if [ -n "$DESKTOP_SRC" ]; then
-        cp "$DESKTOP_SRC" "$SHORTCUTS_DIR/"
-        chmod +x "$SHORTCUTS_DIR/$(basename "$DESKTOP_SRC")"
+        DEST="$SHORTCUTS_DIR/$(basename "$DESKTOP_SRC")"
+        if [ -f "$DEST" ]; then
+            continue
+        fi
+        cp "$DESKTOP_SRC" "$DEST"
+        chmod +x "$DEST"
+        # mark as trusted so GNOME doesn't prompt "allow launching"
+        gio set "$DEST" metadata::trusted true 2>/dev/null
         SHORTCUT_COUNT=$((SHORTCUT_COUNT + 1))
     fi
 done
 
 log "  Created $SHORTCUT_COUNT shortcuts in '$SHORTCUTS_DIR'"
-gio set "$SHORTCUTS_DIR" metadata::trusted true 2>/dev/null
 
 sudo -k
 kill "$keepalive_pid" 2>/dev/null

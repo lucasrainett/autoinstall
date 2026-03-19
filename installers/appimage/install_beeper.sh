@@ -3,7 +3,7 @@
 # Combines chats from iMessage, WhatsApp, Telegram, Slack, and more into one inbox.
 # https://www.beeper.com
 
-[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -f ~/AppImages/beeper.appimage ] && echo "Beeper already installed, skipping." && exit 0
+[ "$AUTOINSTALL_UPDATE" != "true" ] && ls ~/AppImages/*[Bb]eeper* &>/dev/null && echo "Beeper already installed, skipping." && exit 0
 
 cd ~/Downloads
 wget -q --show-progress -O beeper.AppImage https://api.beeper.com/desktop/download/linux/x64/stable/com.automattic.beeper.desktop

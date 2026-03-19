@@ -5,7 +5,7 @@
 #
 # Downloads the latest release from go.dev and extracts to /usr/local/go.
 
-[ "$AUTOINSTALL_UPDATE" != "true" ] && command -v go &>/dev/null && echo "Go already installed, skipping." && exit 0
+[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -x /usr/local/go/bin/go ] && echo "Go already installed, skipping." && exit 0
 
 cd ~/Downloads
 LATEST=$(curl -fsSL "https://go.dev/VERSION?m=text" | head -1)

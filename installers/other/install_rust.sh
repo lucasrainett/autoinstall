@@ -5,7 +5,7 @@
 #
 # Installs via the official rustup installer (always latest stable).
 
-[ "$AUTOINSTALL_UPDATE" != "true" ] && command -v rustc &>/dev/null && echo "Rust already installed, skipping." && exit 0
+[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -x "$HOME/.cargo/bin/rustc" ] && echo "Rust already installed, skipping." && exit 0
 
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 source "$HOME/.cargo/env"
