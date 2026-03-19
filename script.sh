@@ -309,11 +309,10 @@ fi
 log "Log saved to $LOG_FILE"
 log "[100%] All done!"
 
-# ── create desktop shortcuts folder ───────────────────────────
-SHORTCUTS_DIR="$HOME/Desktop/Installed Apps"
-mkdir -p "$SHORTCUTS_DIR"
+# ── create desktop shortcuts ──────────────────────────────────
+SHORTCUTS_DIR="$HOME/Desktop"
 log ""
-log "Creating desktop shortcuts in '$SHORTCUTS_DIR'..."
+log "Creating desktop shortcuts..."
 
 SHORTCUT_COUNT=0
 for entry in "${STEPS[@]}"; do
@@ -368,7 +367,7 @@ for entry in "${STEPS[@]}"; do
     fi
 done
 
-log "  Created $SHORTCUT_COUNT shortcuts in '$SHORTCUTS_DIR'"
+log "  Created $SHORTCUT_COUNT desktop shortcuts"
 
 sudo -k
 kill "$keepalive_pid" 2>/dev/null

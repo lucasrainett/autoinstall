@@ -18,7 +18,7 @@ for EXT in "${EXTENSIONS[@]}"; do
     fi
 
     # download from extensions.gnome.org
-    GNOME_VERSION=$(gnome-shell --version | grep -oP '\d+')
+    GNOME_VERSION=$(gnome-shell --version | grep -oP '\d+' | head -1)
     EXT_UUID="$EXT"
     EXT_INFO=$(curl -s "https://extensions.gnome.org/extension-info/?uuid=${EXT_UUID}&shell_version=${GNOME_VERSION}")
     DOWNLOAD_URL=$(echo "$EXT_INFO" | grep -oP '"download_url":\s*"\K[^"]+')
@@ -30,9 +30,14 @@ for EXT in "${EXTENSIONS[@]}"; do
 
     TEMP_FILE=$(mktemp --suffix=.zip)
     curl -sL "https://extensions.gnome.org${DOWNLOAD_URL}" -o "$TEMP_FILE"
-    gnome-extensions install --force "$TEMP_FILE"
+
+    # extract directly to extensions dir (works without active GNOME session)
+    EXT_DIR="$HOME/.local/share/gnome-shell/extensions/${EXT_UUID}"
+    mkdir -p "$EXT_DIR"
+    unzip -o "$TEMP_FILE" -d "$EXT_DIR" > /dev/null
     rm -f "$TEMP_FILE"
 
-    gnome-extensions enable "$EXT_UUID"
+    # enable (may require GNOME Shell restart to take effect)
+    gnome-extensions enable "$EXT_UUID" 2>/dev/null || true
     echo "Installed and enabled $EXT"
 done
