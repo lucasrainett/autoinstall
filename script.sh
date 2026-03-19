@@ -309,24 +309,21 @@ fi
 log "Log saved to $LOG_FILE"
 log "[100%] All done!"
 
-# ── launch installed apps ─────────────────────────────────────
+# ── create desktop shortcuts folder ───────────────────────────
+SHORTCUTS_DIR="$HOME/Desktop/Installed Apps"
+mkdir -p "$SHORTCUTS_DIR"
 log ""
-log "Launching installed applications..."
+log "Creating desktop shortcuts in '$SHORTCUTS_DIR'..."
 
+SHORTCUT_COUNT=0
 for entry in "${STEPS[@]}"; do
     NAME="${entry%%|*}"
     SCRIPT="${entry##*|}"
 
-    # skip non-launchable steps (config, remove, apt tools, CLI-only)
+    # skip non-launchable steps
     [[ "$SCRIPT" == config/* ]] && continue
     [[ "$SCRIPT" == remove/* ]] && continue
-    [[ "$SCRIPT" == apt/install_common_tools.sh ]] && continue
-    [[ "$SCRIPT" == apt/install_firewall.sh ]] && continue
-    [[ "$SCRIPT" == apt/install_docker.sh ]] && continue
-    [[ "$SCRIPT" == apt/install_terraform.sh ]] && continue
-    [[ "$SCRIPT" == apt/install_github_cli.sh ]] && continue
-    [[ "$SCRIPT" == apt/install_python.sh ]] && continue
-    [[ "$SCRIPT" == apt/install_tailscale.sh ]] && continue
+    [[ "$SCRIPT" == apt/* ]] && continue
     [[ "$SCRIPT" == other/install_volta.sh ]] && continue
     [[ "$SCRIPT" == other/install_claude.sh ]] && continue
     [[ "$SCRIPT" == other/install_openclaw.sh ]] && continue
@@ -335,54 +332,38 @@ for entry in "${STEPS[@]}"; do
     [[ "$SCRIPT" == other/install_rust.sh ]] && continue
 
     FILEPATH="$INSTALLERS_DIR/$SCRIPT"
+    DESKTOP_SRC=""
 
-    LAUNCHED=false
-
-    # flatpak apps: extract ID and launch
+    # flatpak apps: find .desktop by flatpak ID
     if [[ "$SCRIPT" == flatpak/* ]]; then
         FLATPAK_ID=$(grep -oP 'flatpak install \K\S+' "$FILEPATH" 2>/dev/null)
         if [ -n "$FLATPAK_ID" ] && flatpak info "$FLATPAK_ID" &>/dev/null; then
-            log "  Launching $NAME..."
-            flatpak run "$FLATPAK_ID" &>/dev/null &
-            LAUNCHED=true
+            DESKTOP_SRC=$(find /var/lib/flatpak/exports/share/applications -name "${FLATPAK_ID}.desktop" 2>/dev/null | head -1)
         fi
-    # appimage apps: find .desktop file created by GearLever
+    # appimage apps: find .desktop created by GearLever
     elif [[ "$SCRIPT" == appimage/* ]]; then
         APP_SLUG=$(basename "$SCRIPT" .sh | sed 's/install_//')
-        DESKTOP_FILE=$(find ~/.local/share/applications -iname "*${APP_SLUG}*" -name "*.desktop" 2>/dev/null | head -1)
-        if [ -n "$DESKTOP_FILE" ]; then
-            log "  Launching $NAME..."
-            gtk-launch "$(basename "$DESKTOP_FILE" .desktop)" &>/dev/null &
-            LAUNCHED=true
-        fi
-    # deb/other apps: extract command from script and launch
+        DESKTOP_SRC=$(find ~/.local/share/applications -iname "*${APP_SLUG}*" -name "*.desktop" 2>/dev/null | head -1)
+    # deb/other apps: find .desktop by package name
     elif [[ "$SCRIPT" == deb/* || "$SCRIPT" == other/* ]]; then
-        # try to find a known command or .desktop file
         PKG=$(grep -oP 'sudo apt install -y \./\K\S+' "$FILEPATH" 2>/dev/null | head -1 | sed 's/\.deb//')
         if [ -n "$PKG" ]; then
-            DESKTOP_FILE=$(find /usr/share/applications ~/.local/share/applications -iname "*${PKG}*" -name "*.desktop" 2>/dev/null | head -1)
-            if [ -n "$DESKTOP_FILE" ]; then
-                log "  Launching $NAME..."
-                gtk-launch "$(basename "$DESKTOP_FILE" .desktop)" &>/dev/null &
-                LAUNCHED=true
-            fi
+            DESKTOP_SRC=$(find /usr/share/applications ~/.local/share/applications -iname "*${PKG}*" -name "*.desktop" 2>/dev/null | head -1)
         fi
-        # fallback: try JetBrains Toolbox path
-        if [[ "$SCRIPT" == *jetbrains* ]] && [ -x /opt/jetbrains-toolbox/bin/jetbrains-toolbox ]; then
-            log "  Launching $NAME..."
-            /opt/jetbrains-toolbox/bin/jetbrains-toolbox &>/dev/null &
-            LAUNCHED=true
+        if [ -z "$DESKTOP_SRC" ] && [[ "$SCRIPT" == *jetbrains* ]]; then
+            DESKTOP_SRC=$(find ~/.local/share/applications -name "jetbrains-toolbox.desktop" 2>/dev/null | head -1)
         fi
     fi
 
-    # wait between launches to avoid overwhelming the system
-    if $LAUNCHED; then
-        sleep 20
+    if [ -n "$DESKTOP_SRC" ]; then
+        cp "$DESKTOP_SRC" "$SHORTCUTS_DIR/"
+        chmod +x "$SHORTCUTS_DIR/$(basename "$DESKTOP_SRC")"
+        SHORTCUT_COUNT=$((SHORTCUT_COUNT + 1))
     fi
 done
 
-log ""
-log "All applications launched!"
+log "  Created $SHORTCUT_COUNT shortcuts in '$SHORTCUTS_DIR'"
+gio set "$SHORTCUTS_DIR" metadata::trusted true 2>/dev/null
 
 sudo -k
 kill "$keepalive_pid" 2>/dev/null
