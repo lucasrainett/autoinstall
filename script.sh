@@ -116,7 +116,7 @@ check_requirements() {
     log "Checking system requirements..."
 
     # internet
-    if ! ping -c 1 -W 3 1.1.1.1 &>/dev/null; then
+    if ! curl -s --head --max-time 5 https://flathub.org &>/dev/null; then
         log "ERROR: No internet connection detected."
         exit 1
     fi
