@@ -5,7 +5,7 @@
 #
 # Fetches the latest version from the GitHub releases API.
 
-[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -f ~/.local/share/applications/helium*.desktop ] && echo "Helium already installed, skipping." && exit 0
+[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -f ~/AppImages/helium.appimage ] && echo "Helium already installed, skipping." && exit 0
 
 cd ~/Downloads
 VERSION=$(curl -s https://api.github.com/repos/imputnet/helium-linux/releases/latest | grep -oP '"tag_name": "\K[^"]+')

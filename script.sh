@@ -321,12 +321,15 @@ for entry in "${STEPS[@]}"; do
 
     FILEPATH="$INSTALLERS_DIR/$SCRIPT"
 
+    LAUNCHED=false
+
     # flatpak apps: extract ID and launch
     if [[ "$SCRIPT" == flatpak/* ]]; then
         FLATPAK_ID=$(grep -oP 'flatpak install \K\S+' "$FILEPATH" 2>/dev/null)
         if [ -n "$FLATPAK_ID" ] && flatpak info "$FLATPAK_ID" &>/dev/null; then
             log "  Launching $NAME..."
             flatpak run "$FLATPAK_ID" &>/dev/null &
+            LAUNCHED=true
         fi
     # appimage apps: find .desktop file created by GearLever
     elif [[ "$SCRIPT" == appimage/* ]]; then
@@ -335,6 +338,7 @@ for entry in "${STEPS[@]}"; do
         if [ -n "$DESKTOP_FILE" ]; then
             log "  Launching $NAME..."
             gtk-launch "$(basename "$DESKTOP_FILE" .desktop)" &>/dev/null &
+            LAUNCHED=true
         fi
     # deb/other apps: extract command from script and launch
     elif [[ "$SCRIPT" == deb/* || "$SCRIPT" == other/* ]]; then
@@ -345,14 +349,20 @@ for entry in "${STEPS[@]}"; do
             if [ -n "$DESKTOP_FILE" ]; then
                 log "  Launching $NAME..."
                 gtk-launch "$(basename "$DESKTOP_FILE" .desktop)" &>/dev/null &
-                continue
+                LAUNCHED=true
             fi
         fi
         # fallback: try JetBrains Toolbox path
         if [[ "$SCRIPT" == *jetbrains* ]] && [ -x /opt/jetbrains-toolbox/bin/jetbrains-toolbox ]; then
             log "  Launching $NAME..."
             /opt/jetbrains-toolbox/bin/jetbrains-toolbox &>/dev/null &
+            LAUNCHED=true
         fi
+    fi
+
+    # wait between launches to avoid overwhelming the system
+    if $LAUNCHED; then
+        sleep 3
     fi
 done
 
