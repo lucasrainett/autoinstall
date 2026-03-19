@@ -8,5 +8,5 @@
 [ "$AUTOINSTALL_UPDATE" != "true" ] && dpkg -s steam-launcher &>/dev/null && echo "Steam already installed, skipping." && exit 0
 
 cd ~/Downloads
-wget -O steam.deb "https://repo.steampowered.com/steam/archive/precise/steam_latest.deb"
+wget -q --show-progress -O steam.deb "https://repo.steampowered.com/steam/archive/precise/steam_latest.deb"
 sudo apt install -y ./steam.deb

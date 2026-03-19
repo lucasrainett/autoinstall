@@ -9,7 +9,7 @@
 
 cd ~/Downloads
 LATEST=$(curl -fsSL "https://go.dev/VERSION?m=text" | head -1)
-wget -O go.tar.gz "https://go.dev/dl/${LATEST}.linux-amd64.tar.gz"
+wget -q --show-progress -O go.tar.gz "https://go.dev/dl/${LATEST}.linux-amd64.tar.gz"
 sudo rm -rf /usr/local/go
 sudo tar -C /usr/local -xzf go.tar.gz
 

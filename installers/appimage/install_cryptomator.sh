@@ -9,5 +9,5 @@
 
 cd ~/Downloads
 VERSION=$(curl -s https://api.github.com/repos/cryptomator/cryptomator/releases/latest | grep -oP '"tag_name": "\K[^"]+')
-wget -O cryptomator.AppImage "https://github.com/cryptomator/cryptomator/releases/download/${VERSION}/cryptomator-${VERSION}-x86_64.AppImage"
+wget -q --show-progress -O cryptomator.AppImage "https://github.com/cryptomator/cryptomator/releases/download/${VERSION}/cryptomator-${VERSION}-x86_64.AppImage"
 flatpak run it.mijorus.gearlever --integrate cryptomator.AppImage -y

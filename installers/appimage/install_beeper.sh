@@ -6,5 +6,5 @@
 [ "$AUTOINSTALL_UPDATE" != "true" ] && [ -f ~/AppImages/beeper.appimage ] && echo "Beeper already installed, skipping." && exit 0
 
 cd ~/Downloads
-wget -O beeper.AppImage https://api.beeper.com/desktop/download/linux/x64/stable/com.automattic.beeper.desktop
+wget -q --show-progress -O beeper.AppImage https://api.beeper.com/desktop/download/linux/x64/stable/com.automattic.beeper.desktop
 flatpak run it.mijorus.gearlever --integrate beeper.AppImage -y

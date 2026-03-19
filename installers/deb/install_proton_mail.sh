@@ -8,5 +8,5 @@
 [ "$AUTOINSTALL_UPDATE" != "true" ] && dpkg -s proton-mail &>/dev/null && echo "Proton Mail already installed, skipping." && exit 0
 
 cd ~/Downloads
-wget -O ProtonMail-desktop-beta.deb "https://proton.me/download/mail/linux/ProtonMail-desktop-beta.deb"
+wget -q --show-progress -O ProtonMail-desktop-beta.deb "https://proton.me/download/mail/linux/ProtonMail-desktop-beta.deb"
 sudo apt install -y ./ProtonMail-desktop-beta.deb
