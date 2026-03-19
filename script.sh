@@ -38,6 +38,9 @@ STEPS=(
     "Theme|config/install_theme.sh"
     "SSH Key|config/install_ssh.sh"
     "Git Config|config/install_git_config.sh"
+    "Disable Telemetry|config/install_disable_telemetry.sh"
+    "Power Profile|config/install_power_profile.sh"
+    "System Tweaks|config/install_system_tweaks.sh"
     "Firewall|apt/install_firewall.sh"
     "Docker|apt/install_docker.sh"
     "GearLever|flatpak/install_gearlever.sh"
@@ -50,6 +53,15 @@ STEPS=(
     "Proton Mail|deb/install_proton_mail.sh"
     "JetBrains Toolbox|other/install_jetbrains_toolbox.sh"
     "Volta|other/install_volta.sh"
+    "Claude Code|other/install_claude.sh"
+    "OpenClaw|other/install_openclaw.sh"
+    "AWS CLI|other/install_aws_cli.sh"
+    "Terraform|apt/install_terraform.sh"
+    "GitHub CLI|apt/install_github_cli.sh"
+    "Go|other/install_go.sh"
+    "Rust|other/install_rust.sh"
+    "Python|apt/install_python.sh"
+    "Tailscale|apt/install_tailscale.sh"
     "VLC|flatpak/install_vlc.sh"
     "Signal|flatpak/install_signal.sh"
     "OnlyOffice|flatpak/install_onlyoffice.sh"
@@ -66,9 +78,9 @@ STEPS=(
     "Boxy SVG|flatpak/install_boxy_svg.sh"
     "Alpaca|flatpak/install_alpaca.sh"
     "Minecraft|flatpak/install_minecraft.sh"
-    "Steam|flatpak/install_steam.sh"
+    "Steam|deb/install_steam.sh"
     "OBS Studio|flatpak/install_obs.sh"
-    "Proton VPN|flatpak/install_proton_vpn.sh"
+    "Proton VPN|deb/install_proton_vpn.sh"
     "OrcaSlicer|flatpak/install_orca_slicer.sh"
     "DistroShelf|flatpak/install_distroshelf.sh"
     "Pods|flatpak/install_pods.sh"
@@ -88,6 +100,10 @@ STEPS=(
     "Dotfiles|config/install_dotfiles.sh"
     "GNOME Settings|config/install_gnome_settings.sh"
     "Taskbar|config/install_taskbar.sh"
+    "Lutris|flatpak/install_lutris.sh"
+    "Heroic Games Launcher|flatpak/install_heroic.sh"
+    "Bottles|flatpak/install_bottles.sh"
+    "Sunshine|deb/install_sunshine.sh"
     "Zen Browser|flatpak/install_zen_browser.sh"
     "Cleanup Downloads|config/install_cleanup_downloads.sh"
 )
@@ -282,76 +298,60 @@ log "[100%] All done!"
 log ""
 log "Launching installed applications..."
 
-LAUNCH_APPS=(
-    "Beeper|beeper*.desktop"
-    "LM Studio|lm_studio*.desktop"
-    "Cryptomator|cryptomator*.desktop"
-    "Helium|helium*.desktop"
-    "WinBoat|winboat*.desktop"
-    "Proton Pass|proton-pass"
-    "Proton Mail|proton-mail"
-    "JetBrains Toolbox|/opt/jetbrains-toolbox/bin/jetbrains-toolbox"
-    "VLC|flatpak:org.videolan.VLC"
-    "Signal|flatpak:org.signal.Signal"
-    "OnlyOffice|flatpak:org.onlyoffice.desktopeditors"
-    "Boxes|flatpak:org.gnome.Boxes"
-    "Angry IP Scanner|flatpak:org.angryip.ipscan"
-    "Mission Center|flatpak:io.missioncenter.MissionCenter"
-    "Ungoogled Chromium|flatpak:io.github.ungoogled_software.ungoogled_chromium"
-    "Bazaar|flatpak:io.github.kolunmi.Bazaar"
-    "Exodus|flatpak:io.exodus.Exodus"
-    "VSCodium|flatpak:com.vscodium.codium"
-    "Moonlight|flatpak:com.moonlight_stream.Moonlight"
-    "Stream Controller|flatpak:com.core447.StreamController"
-    "Grayjay|flatpak:app.grayjay.Grayjay"
-    "Boxy SVG|flatpak:com.boxy_svg.BoxySVG"
-    "Alpaca|flatpak:com.jeffser.Alpaca"
-    "Minecraft|flatpak:com.mojang.Minecraft"
-    "Steam|flatpak:com.valvesoftware.Steam"
-    "OBS Studio|flatpak:com.obsproject.Studio"
-    "Proton VPN|flatpak:com.protonvpn.www"
-    "OrcaSlicer|flatpak:io.github.softfever.OrcaSlicer"
-    "DistroShelf|flatpak:com.ranfdev.DistroShelf"
-    "Pods|flatpak:com.github.marhkb.Pods"
-    "Minder|flatpak:com.github.phase1geo.minder"
-    "Blanket|flatpak:com.rafaelmardojai.Blanket"
-    "Bruno|flatpak:com.usebruno.Bruno"
-    "HandBrake|flatpak:fr.handbrake.ghb"
-    "LibreWolf|flatpak:io.gitlab.librewolf-community"
-    "Parabolic|flatpak:org.nickvision.tubeconverter"
-    "Flatseal|flatpak:com.github.tchx84.Flatseal"
-    "Warehouse|flatpak:io.github.flattool.Warehouse"
-    "Solaar|flatpak:io.github.pwr_solaar.solaar"
-    "Extension Manager|flatpak:com.mattjakeman.ExtensionManager"
-    "Zen Browser|flatpak:app.zen_browser.zen"
-    "GearLever|flatpak:it.mijorus.gearlever"
-)
+for entry in "${STEPS[@]}"; do
+    NAME="${entry%%|*}"
+    SCRIPT="${entry##*|}"
 
-for entry in "${LAUNCH_APPS[@]}"; do
-    APP_NAME="${entry%%|*}"
-    APP_CMD="${entry##*|}"
+    # skip non-launchable steps (config, remove, apt tools, CLI-only)
+    [[ "$SCRIPT" == config/* ]] && continue
+    [[ "$SCRIPT" == remove/* ]] && continue
+    [[ "$SCRIPT" == apt/install_common_tools.sh ]] && continue
+    [[ "$SCRIPT" == apt/install_firewall.sh ]] && continue
+    [[ "$SCRIPT" == apt/install_docker.sh ]] && continue
+    [[ "$SCRIPT" == apt/install_terraform.sh ]] && continue
+    [[ "$SCRIPT" == apt/install_github_cli.sh ]] && continue
+    [[ "$SCRIPT" == apt/install_python.sh ]] && continue
+    [[ "$SCRIPT" == apt/install_tailscale.sh ]] && continue
+    [[ "$SCRIPT" == other/install_volta.sh ]] && continue
+    [[ "$SCRIPT" == other/install_claude.sh ]] && continue
+    [[ "$SCRIPT" == other/install_openclaw.sh ]] && continue
+    [[ "$SCRIPT" == other/install_aws_cli.sh ]] && continue
+    [[ "$SCRIPT" == other/install_go.sh ]] && continue
+    [[ "$SCRIPT" == other/install_rust.sh ]] && continue
 
-    if [[ "$APP_CMD" == flatpak:* ]]; then
-        FLATPAK_ID="${APP_CMD#flatpak:}"
-        if flatpak info "$FLATPAK_ID" &>/dev/null; then
-            log "  Launching $APP_NAME..."
+    FILEPATH="$INSTALLERS_DIR/$SCRIPT"
+
+    # flatpak apps: extract ID and launch
+    if [[ "$SCRIPT" == flatpak/* ]]; then
+        FLATPAK_ID=$(grep -oP 'flatpak install \K\S+' "$FILEPATH" 2>/dev/null)
+        if [ -n "$FLATPAK_ID" ] && flatpak info "$FLATPAK_ID" &>/dev/null; then
+            log "  Launching $NAME..."
             flatpak run "$FLATPAK_ID" &>/dev/null &
         fi
-    elif [[ "$APP_CMD" == /* ]]; then
-        if [ -x "$APP_CMD" ]; then
-            log "  Launching $APP_NAME..."
-            "$APP_CMD" &>/dev/null &
-        fi
-    elif [[ "$APP_CMD" == *.desktop ]]; then
-        DESKTOP_FILE=$(find ~/.local/share/applications -name "$APP_CMD" 2>/dev/null | head -1)
+    # appimage apps: find .desktop file created by GearLever
+    elif [[ "$SCRIPT" == appimage/* ]]; then
+        APP_SLUG=$(basename "$SCRIPT" .sh | sed 's/install_//')
+        DESKTOP_FILE=$(find ~/.local/share/applications -iname "*${APP_SLUG}*" -name "*.desktop" 2>/dev/null | head -1)
         if [ -n "$DESKTOP_FILE" ]; then
-            log "  Launching $APP_NAME..."
+            log "  Launching $NAME..."
             gtk-launch "$(basename "$DESKTOP_FILE" .desktop)" &>/dev/null &
         fi
-    else
-        if command -v "$APP_CMD" &>/dev/null; then
-            log "  Launching $APP_NAME..."
-            "$APP_CMD" &>/dev/null &
+    # deb/other apps: extract command from script and launch
+    elif [[ "$SCRIPT" == deb/* || "$SCRIPT" == other/* ]]; then
+        # try to find a known command or .desktop file
+        PKG=$(grep -oP 'sudo apt install -y \./\K\S+' "$FILEPATH" 2>/dev/null | head -1 | sed 's/\.deb//')
+        if [ -n "$PKG" ]; then
+            DESKTOP_FILE=$(find /usr/share/applications ~/.local/share/applications -iname "*${PKG}*" -name "*.desktop" 2>/dev/null | head -1)
+            if [ -n "$DESKTOP_FILE" ]; then
+                log "  Launching $NAME..."
+                gtk-launch "$(basename "$DESKTOP_FILE" .desktop)" &>/dev/null &
+                continue
+            fi
+        fi
+        # fallback: try JetBrains Toolbox path
+        if [[ "$SCRIPT" == *jetbrains* ]] && [ -x /opt/jetbrains-toolbox/bin/jetbrains-toolbox ]; then
+            log "  Launching $NAME..."
+            /opt/jetbrains-toolbox/bin/jetbrains-toolbox &>/dev/null &
         fi
     fi
 done
