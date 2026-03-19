@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Bootstrap script for running autoinstall without cloning the repo.
+# Downloads the full project to a temp directory, runs script.sh, then cleans up.
+# Usage: curl -sL https://raw.githubusercontent.com/lucasrainett/autoinstall/master/bootstrap.sh | bash
 
 TEMP_DIR=$(mktemp -d)
 curl -sL https://github.com/lucasrainett/autoinstall/archive/master.tar.gz | tar xz -C "$TEMP_DIR"

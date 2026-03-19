@@ -1,6 +1,18 @@
 #!/usr/bin/env bash
+# WinBoat - Run Windows apps on Linux via containers.
+# Uses Docker + QEMU/KVM to run Windows in a container, streamed via FreeRDP.
+# https://www.winboat.app
+# https://github.com/TibixDev/winboat
+#
+# Dependencies installed by this script:
+# - freerdp3: RDP client used to stream the Windows desktop
+# - qemu-system-x86: QEMU/KVM virtualization backend
+# - kvm group: allows current user to access /dev/kvm
+# - docker: must be running (enabled by systemctl)
+# Fetches the latest AppImage version from the GitHub releases API.
 
 # dependencies: FreeRDP 3.x (for RDP streaming) and KVM (for virtualization)
+
 dpkg -s freerdp3-x11 &>/dev/null || sudo apt install -y freerdp3-x11 freerdp3-wayland
 dpkg -s qemu-system-x86 &>/dev/null || sudo apt install -y qemu-system-x86
 
@@ -11,7 +23,7 @@ groups "$USER" | grep -q kvm || sudo usermod -aG kvm "$USER"
 sudo systemctl enable --now docker
 
 # download and integrate WinBoat
-[ -f ~/.local/share/applications/winboat*.desktop ] && echo "WinBoat already installed, skipping." && exit 0
+[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -f ~/.local/share/applications/winboat*.desktop ] && echo "WinBoat already installed, skipping." && exit 0
 
 cd ~/Downloads
 VERSION=$(curl -s https://api.github.com/repos/TibixDev/winboat/releases/latest | grep -oP '"tag_name": "\K[^"]+')

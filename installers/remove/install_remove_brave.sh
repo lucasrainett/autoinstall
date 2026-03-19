@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Remove Brave browser and all associated files.
+# Purges the apt package, removes the apt source list, GPG key,
+# config/cache directories, and GNOME keyring entries.
+
 ! dpkg -s brave-browser &>/dev/null && echo "Brave not installed, skipping." && exit 0
 
 sudo apt purge brave-browser brave-keyring -y

@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-[ -f ~/.local/share/applications/helium*.desktop ] && echo "Helium already installed, skipping." && exit 0
+# Helium - Lightweight web browser and media downloader.
+# Privacy-respecting browser based on Electron with built-in download features.
+# https://github.com/imputnet/helium-linux
+#
+# Fetches the latest version from the GitHub releases API.
+
+[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -f ~/.local/share/applications/helium*.desktop ] && echo "Helium already installed, skipping." && exit 0
 
 cd ~/Downloads
 VERSION=$(curl -s https://api.github.com/repos/imputnet/helium-linux/releases/latest | grep -oP '"tag_name": "\K[^"]+')

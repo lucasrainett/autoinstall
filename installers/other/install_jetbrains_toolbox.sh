@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
-[ -d /opt/jetbrains-toolbox ] && echo "JetBrains Toolbox already installed, skipping." && exit 0
+# JetBrains Toolbox - Manage JetBrains IDEs (IntelliJ, WebStorm, etc.).
+# Install, update, and manage all JetBrains tools from one app.
+# https://www.jetbrains.com/toolbox-app/
+#
+# Uses the JetBrains releases API to get the latest linux download URL.
+# Extracts the tarball to /opt, then briefly launches the app so it can
+# register itself (create desktop entries and system tray integration).
+
+[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -d /opt/jetbrains-toolbox ] && echo "JetBrains Toolbox already installed, skipping." && exit 0
 
 cd ~/Downloads
 DOWNLOAD_URL=$(curl -s "https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release" | grep -oP '"linux":\{"link":"\K[^"]+')

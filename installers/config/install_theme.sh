@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# Zorin OS theme configuration.
+# Downloads a custom wallpaper and applies dark mode with the ZorinGrey-Dark theme.
+# Wallpaper download is skipped if already present; gsettings are always re-applied.
+
 [ -f /usr/share/backgrounds/PaulsHardware8BitLogosChristmas.png ] || {
     wget https://raw.githubusercontent.com/lucasrainett/autoinstall/master/wallpapers/PaulsHardware8BitLogosChristmas.png
     sudo mv PaulsHardware8BitLogosChristmas.png /usr/share/backgrounds/

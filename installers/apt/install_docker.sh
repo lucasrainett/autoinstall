@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
-dpkg -s docker-ce &>/dev/null && echo "Docker already installed, skipping." && exit 0
+# Docker - Container runtime for building and running applications.
+# https://docs.docker.com/engine/install/ubuntu/
+#
+# Installs Docker CE from Docker's official apt repository (not the Ubuntu snap).
+# Steps: add GPG key -> add repo -> apt install -> add user to docker group.
+# The docker group addition requires a logout/login to take effect.
+
+[ "$AUTOINSTALL_UPDATE" != "true" ] && dpkg -s docker-ce &>/dev/null && echo "Docker already installed, skipping." && exit 0
 
 # install prerequisites
 sudo apt install -y ca-certificates curl

@@ -2,11 +2,43 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALLERS_DIR="$SCRIPT_DIR/installers"
+LOG_FILE="$HOME/.autoinstall.log"
 
+# ── flags ──────────────────────────────────────────────────────
+export AUTOINSTALL_UPDATE=false
+DRY_RUN=false
+SELECTED_APPS=()
+
+for arg in "$@"; do
+    case "$arg" in
+        --update)  AUTOINSTALL_UPDATE=true ;;
+        --dry-run) DRY_RUN=true ;;
+        --help)
+            echo "Usage: ./script.sh [options] [app names...]"
+            echo ""
+            echo "Options:"
+            echo "  --update    Re-install apps even if already present"
+            echo "  --dry-run   Show what would be installed without doing anything"
+            echo "  --help      Show this help"
+            echo ""
+            echo "Examples:"
+            echo "  ./script.sh                   Install everything"
+            echo "  ./script.sh docker volta      Install only Docker and Volta"
+            echo "  ./script.sh --update beeper   Force re-install Beeper"
+            echo "  ./script.sh --dry-run         Preview all steps"
+            exit 0
+            ;;
+        *)  SELECTED_APPS+=("${arg,,}") ;;
+    esac
+done
+
+# ── steps ──────────────────────────────────────────────────────
 STEPS=(
     "Common Tools|apt/install_common_tools.sh"
     "Theme|config/install_theme.sh"
     "SSH Key|config/install_ssh.sh"
+    "Git Config|config/install_git_config.sh"
+    "Firewall|apt/install_firewall.sh"
     "Docker|apt/install_docker.sh"
     "GearLever|flatpak/install_gearlever.sh"
     "Beeper|appimage/install_beeper.sh"
@@ -50,30 +82,201 @@ STEPS=(
     "Warehouse|flatpak/install_warehouse.sh"
     "Solaar|flatpak/install_solaar.sh"
     "Extension Manager|flatpak/install_extension_manager.sh"
+    "GNOME Extensions|config/install_gnome_extensions.sh"
     "Remove Brave|remove/install_remove_brave.sh"
     "Remove LibreOffice|remove/install_remove_libreoffice.sh"
+    "Dotfiles|config/install_dotfiles.sh"
+    "GNOME Settings|config/install_gnome_settings.sh"
     "Taskbar|config/install_taskbar.sh"
     "Zen Browser|flatpak/install_zen_browser.sh"
+    "Cleanup Downloads|config/install_cleanup_downloads.sh"
 )
 
 TOTAL=${#STEPS[@]}
 
-echo "Requesting sudo privileges..."
+# ── tracking ───────────────────────────────────────────────────
+PASSED=()
+FAILED=()
+SKIPPED=()
+
+# ── logging ────────────────────────────────────────────────────
+echo "" >> "$LOG_FILE"
+echo "════════════════════════════════════════════════════════════" >> "$LOG_FILE"
+echo "autoinstall started at $(date)" >> "$LOG_FILE"
+echo "args: $*" >> "$LOG_FILE"
+echo "════════════════════════════════════════════════════════════" >> "$LOG_FILE"
+
+log() {
+    echo "$1" | tee -a "$LOG_FILE"
+}
+
+# ── system requirements check ──────────────────────────────────
+check_requirements() {
+    log ""
+    log "Checking system requirements..."
+
+    # internet
+    if ! ping -c 1 -W 3 1.1.1.1 &>/dev/null; then
+        log "ERROR: No internet connection detected."
+        exit 1
+    fi
+    log "  Internet: OK"
+
+    # disk space (need at least 10GB free)
+    FREE_GB=$(df -BG --output=avail / | tail -1 | tr -d ' G')
+    if [ "$FREE_GB" -lt 10 ]; then
+        log "ERROR: Less than 10GB free disk space ($FREE_GB GB available)."
+        exit 1
+    fi
+    log "  Disk space: ${FREE_GB}GB free - OK"
+
+    # flatpak remote
+    if ! flatpak remotes | grep -q flathub; then
+        log "  Flathub not configured, adding..."
+        flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+    fi
+    log "  Flathub: OK"
+
+    log "System requirements: OK"
+}
+
+# ── selective install filter ───────────────────────────────────
+should_run() {
+    local name="${1,,}"
+    if [ ${#SELECTED_APPS[@]} -eq 0 ]; then
+        return 0
+    fi
+    for app in "${SELECTED_APPS[@]}"; do
+        if [[ "$name" == *"$app"* ]]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# ── batch flatpak pre-install ──────────────────────────────────
+batch_flatpak_install() {
+    if $DRY_RUN; then
+        return
+    fi
+
+    log ""
+    log "Pre-installing flatpak apps in batch..."
+
+    # map of flatpak script -> flatpak ID
+    FLATPAK_IDS=()
+    for entry in "${STEPS[@]}"; do
+        NAME="${entry%%|*}"
+        SCRIPT="${entry##*|}"
+
+        # only simple flatpak scripts (single flatpak install line)
+        [[ "$SCRIPT" != flatpak/install_*.sh ]] && continue
+        # skip complex scripts
+        [[ "$SCRIPT" == *zen_browser* || "$SCRIPT" == *orca_slicer* || "$SCRIPT" == *distroshelf* ]] && continue
+        # check selective filter
+        should_run "$NAME" || continue
+
+        FILEPATH="$INSTALLERS_DIR/$SCRIPT"
+        FLATPAK_ID=$(grep -oP 'flatpak install \K\S+' "$FILEPATH" 2>/dev/null)
+        [ -z "$FLATPAK_ID" ] && continue
+
+        if $AUTOINSTALL_UPDATE || ! flatpak info "$FLATPAK_ID" &>/dev/null; then
+            FLATPAK_IDS+=("$FLATPAK_ID")
+        fi
+    done
+
+    if [ ${#FLATPAK_IDS[@]} -eq 0 ]; then
+        log "  All flatpak apps already installed."
+        return
+    fi
+
+    log "  Installing ${#FLATPAK_IDS[@]} flatpak apps..."
+    flatpak install "${FLATPAK_IDS[@]}" -y --noninteractive 2>&1 | tee -a "$LOG_FILE"
+}
+
+# ── main ───────────────────────────────────────────────────────
+if $DRY_RUN; then
+    log "DRY RUN - no changes will be made"
+    log ""
+    for i in "${!STEPS[@]}"; do
+        NAME="${STEPS[$i]%%|*}"
+        SCRIPT="${STEPS[$i]##*|}"
+        PROGRESS=$(( (i * 100) / TOTAL ))
+        if should_run "$NAME"; then
+            log "  [$PROGRESS%] ($((i + 1))/$TOTAL) Would install: $NAME ($SCRIPT)"
+        else
+            log "  [$PROGRESS%] ($((i + 1))/$TOTAL) SKIP (not selected): $NAME"
+        fi
+    done
+    log ""
+    log "[100%] Dry run complete."
+    exit 0
+fi
+
+check_requirements
+
+log ""
+log "Requesting sudo privileges..."
 sudo -v
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 keepalive_pid=$!
+
+# batch all simple flatpak installs for speed
+batch_flatpak_install
 
 for i in "${!STEPS[@]}"; do
     NAME="${STEPS[$i]%%|*}"
     SCRIPT="${STEPS[$i]##*|}"
     PROGRESS=$(( (i * 100) / TOTAL ))
-    echo ""
-    echo "[$PROGRESS%] Installing $NAME... ($((i + 1))/$TOTAL)"
-    "$INSTALLERS_DIR/$SCRIPT" || echo "  FAILED: $NAME (continuing...)"
+
+    if ! should_run "$NAME"; then
+        SKIPPED+=("$NAME (not selected)")
+        continue
+    fi
+
+    log ""
+    log "[$PROGRESS%] Installing $NAME... ($((i + 1))/$TOTAL)"
+
+    if "$INSTALLERS_DIR/$SCRIPT" 2>&1 | tee -a "$LOG_FILE"; then
+        # check if it was skipped (script printed "skipping")
+        if tail -5 "$LOG_FILE" | grep -qi "skipping"; then
+            SKIPPED+=("$NAME")
+        else
+            PASSED+=("$NAME")
+        fi
+    else
+        log "  FAILED: $NAME (continuing...)"
+        FAILED+=("$NAME")
+    fi
 done
 
-echo ""
-echo "[100%] All done!"
+# ── summary ────────────────────────────────────────────────────
+log ""
+log "════════════════════════════════════════════════════════════"
+log "                    INSTALL SUMMARY"
+log "════════════════════════════════════════════════════════════"
+log ""
+
+if [ ${#PASSED[@]} -gt 0 ]; then
+    log "INSTALLED (${#PASSED[@]}):"
+    for item in "${PASSED[@]}"; do log "  + $item"; done
+    log ""
+fi
+
+if [ ${#SKIPPED[@]} -gt 0 ]; then
+    log "SKIPPED (${#SKIPPED[@]}):"
+    for item in "${SKIPPED[@]}"; do log "  - $item"; done
+    log ""
+fi
+
+if [ ${#FAILED[@]} -gt 0 ]; then
+    log "FAILED (${#FAILED[@]}):"
+    for item in "${FAILED[@]}"; do log "  ! $item"; done
+    log ""
+fi
+
+log "Log saved to $LOG_FILE"
+log "[100%] All done!"
 
 sudo -k
 kill "$keepalive_pid" 2>/dev/null

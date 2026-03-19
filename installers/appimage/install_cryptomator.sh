@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
-[ -f ~/.local/share/applications/cryptomator*.desktop ] && echo "Cryptomator already installed, skipping." && exit 0
+# Cryptomator - Client-side encryption for cloud storage.
+# Creates encrypted vaults that work with any cloud provider (Dropbox, GDrive, etc.).
+# https://cryptomator.org
+#
+# Fetches the latest version from the GitHub releases API.
+
+[ "$AUTOINSTALL_UPDATE" != "true" ] && [ -f ~/.local/share/applications/cryptomator*.desktop ] && echo "Cryptomator already installed, skipping." && exit 0
 
 cd ~/Downloads
 VERSION=$(curl -s https://api.github.com/repos/cryptomator/cryptomator/releases/latest | grep -oP '"tag_name": "\K[^"]+')

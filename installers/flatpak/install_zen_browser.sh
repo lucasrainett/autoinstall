@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
+# Zen Browser - Privacy-focused browser based on Firefox.
+# Fast, customizable browser with built-in sidebar and split views.
+# https://zen-browser.app
+#
+# After installing, this script:
+# 1. Sets Zen as the system default browser via xdg-settings
+# 2. Opens Zen with extension install URLs and GitHub SSH key page
+#    so the user can click through to install them (runs in background)
 
-if ! flatpak info app.zen_browser.zen &>/dev/null; then
+if [ "$AUTOINSTALL_UPDATE" = "true" ] || ! flatpak info app.zen_browser.zen &>/dev/null; then
     flatpak install app.zen_browser.zen -y --noninteractive
 fi
 
