@@ -61,6 +61,8 @@ STEPS=(
     "OBS Studio|cask/install_obs.sh"
     "HandBrake|cask/install_handbrake.sh"
     "Moonlight|cask/install_moonlight.sh"
+    "Logi Options+|cask/install_logi_options.sh"
+    "Stream Deck|cask/install_stream_deck.sh"
     "VSCodium|cask/install_vscodium.sh"
     "Proton VPN|cask/install_proton_vpn.sh"
     "Proton Pass|cask/install_proton_pass.sh"
@@ -68,6 +70,8 @@ STEPS=(
     "LM Studio|cask/install_lmstudio.sh"
     "Cryptomator|cask/install_cryptomator.sh"
     "Mission Center|cask/install_mission_center.sh"
+    "UTM|cask/install_utm.sh"
+    "Podman Desktop|cask/install_podman_desktop.sh"
     "JetBrains Toolbox|cask/install_jetbrains_toolbox.sh"
     "Steam|cask/install_steam.sh"
     "Minecraft|cask/install_minecraft.sh"
@@ -75,6 +79,8 @@ STEPS=(
     "OrcaSlicer|cask/install_orca_slicer.sh"
     "Grayjay|cask/install_grayjay.sh"
     "Helium|cask/install_helium.sh"
+    "Blankie|cask/install_blankie.sh"
+    "Macabolic|cask/install_macabolic.sh"
     "Beeper|cask/install_beeper.sh"
 
     # ── dev tools ──
