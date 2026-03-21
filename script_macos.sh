@@ -54,13 +54,11 @@ STEPS=(
     # ── brew cask apps (GUI applications) ──
     "VLC|cask/install_vlc.sh"
     "Signal|cask/install_signal.sh"
-    "LibreWolf|cask/install_librewolf.sh"
     "Zen Browser|cask/install_zen_browser.sh"
     "Ungoogled Chromium|cask/install_ungoogled_chromium.sh"
     "OBS Studio|cask/install_obs.sh"
     "HandBrake|cask/install_handbrake.sh"
     "Moonlight|cask/install_moonlight.sh"
-    "Angry IP Scanner|cask/install_angry_ip_scanner.sh"
     "VSCodium|cask/install_vscodium.sh"
     "Proton VPN|cask/install_proton_vpn.sh"
     "Proton Pass|cask/install_proton_pass.sh"
