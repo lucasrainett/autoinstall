@@ -50,10 +50,12 @@ STEPS=(
     "Python|brew/install_python.sh"
     "Terraform|brew/install_terraform.sh"
     "GitHub CLI|brew/install_github_cli.sh"
+    "Sunshine|brew/install_sunshine.sh"
 
     # ── brew cask apps (GUI applications) ──
     "VLC|cask/install_vlc.sh"
     "Signal|cask/install_signal.sh"
+    "OnlyOffice|cask/install_onlyoffice.sh"
     "Zen Browser|cask/install_zen_browser.sh"
     "Ungoogled Chromium|cask/install_ungoogled_chromium.sh"
     "OBS Studio|cask/install_obs.sh"
@@ -71,11 +73,14 @@ STEPS=(
     "Minecraft|cask/install_minecraft.sh"
     "Heroic Games Launcher|cask/install_heroic.sh"
     "OrcaSlicer|cask/install_orca_slicer.sh"
+    "Grayjay|cask/install_grayjay.sh"
+    "Helium|cask/install_helium.sh"
     "Beeper|cask/install_beeper.sh"
 
     # ── dev tools ──
     "Volta|other/install_volta.sh"
     "Claude Code|other/install_claude.sh"
+    "OpenClaw|other/install_openclaw.sh"
     "AWS CLI|other/install_aws_cli.sh"
     "Go|other/install_go.sh"
     "Rust|other/install_rust.sh"
