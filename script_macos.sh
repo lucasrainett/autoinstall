@@ -45,8 +45,8 @@ STEPS=(
 
     # ── brew formulae (CLI tools & services) ──
     "Common Tools|brew/install_common_tools.sh"
-    "Docker|brew/install_docker.sh"
-    "Tailscale|brew/install_tailscale.sh"
+    "Docker|cask/install_docker.sh"
+    "Tailscale|cask/install_tailscale.sh"
     "Python|brew/install_python.sh"
     "Terraform|brew/install_terraform.sh"
     "GitHub CLI|brew/install_github_cli.sh"
@@ -86,7 +86,6 @@ STEPS=(
     # ── dev tools ──
     "Volta|other/install_volta.sh"
     "Claude Code|other/install_claude.sh"
-    "OpenClaw|other/install_openclaw.sh"
     "AWS CLI|other/install_aws_cli.sh"
     "Go|other/install_go.sh"
     "Rust|other/install_rust.sh"

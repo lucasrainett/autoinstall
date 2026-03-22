@@ -4,6 +4,7 @@
 
 [ "$AUTOINSTALL_UPDATE" != "true" ] && [ -f ~/.ssh/id_ed25519 ] && echo "SSH key already exists, skipping." && exit 0
 
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
 ssh-keygen -t ed25519 -N '' -C "lucas@rainett.dev" -f ~/.ssh/id_ed25519
 
 # add to macOS keychain

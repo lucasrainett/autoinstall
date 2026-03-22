@@ -8,8 +8,9 @@ curl https://get.volta.sh | bash -s -- --skip-setup
 export VOLTA_HOME="$HOME/.volta"
 export PATH="$VOLTA_HOME/bin:$PATH"
 
-# install latest Node LTS
+# install latest Node LTS and pnpm
 volta install node
+volta install pnpm
 
 # hook into shell configs
 for RC_FILE in "$HOME/.zshrc" "$HOME/.bashrc"; do

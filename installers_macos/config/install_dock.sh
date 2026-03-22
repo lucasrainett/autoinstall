@@ -21,9 +21,6 @@ defaults write com.apple.dock show-recents -bool false
 defaults write com.apple.dock launchanim -bool false
 
 # ── set pinned Dock apps ──────────────────────────────────────
-# clear existing Dock items
-defaults write com.apple.dock persistent-apps -array
-
 # helper function to add apps to Dock
 add_dock_app() {
     local app_path="$1"
@@ -33,12 +30,28 @@ add_dock_app() {
     fi
 }
 
-add_dock_app "/System/Applications/Utilities/Terminal.app"
-add_dock_app "/Applications/Zen Browser.app"
-add_dock_app "/Applications/Beeper.app"
-add_dock_app "/Applications/Proton Pass.app"
-add_dock_app "/Applications/Proton Mail.app"
-add_dock_app "/Applications/Signal.app"
+# build list of apps that exist
+DOCK_APPS=(
+    "/System/Applications/Utilities/Terminal.app"
+    "/Applications/Zen Browser.app"
+    "/Applications/Beeper.app"
+    "/Applications/Proton Pass.app"
+    "/Applications/Proton Mail.app"
+    "/Applications/Signal.app"
+)
+
+# only clear and rebuild if at least some apps exist
+HAS_APPS=false
+for app in "${DOCK_APPS[@]}"; do
+    [ -d "$app" ] && HAS_APPS=true && break
+done
+
+if $HAS_APPS; then
+    defaults write com.apple.dock persistent-apps -array
+    for app in "${DOCK_APPS[@]}"; do
+        add_dock_app "$app"
+    done
+fi
 
 # ── apply changes ─────────────────────────────────────────────
 killall Dock 2>/dev/null

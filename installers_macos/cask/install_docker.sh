@@ -3,6 +3,6 @@
 
 [ "$AUTOINSTALL_UPDATE" != "true" ] && command -v docker &>/dev/null && echo "Docker already installed, skipping." && exit 0
 
-brew install --cask docker
+brew install --cask docker-desktop
 
 echo "Docker Desktop installed. Launch it from Applications to complete setup."

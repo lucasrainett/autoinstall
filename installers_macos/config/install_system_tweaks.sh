@@ -54,14 +54,9 @@ mkdir -p "$HOME/Screenshots"
 defaults write com.apple.screencapture location -string "$HOME/Screenshots"
 # save as PNG
 defaults write com.apple.screencapture type -string "png"
-# disable shadow in screenshots
-defaults write com.apple.screencapture disable-shadow -bool true
 
 # ── security ──────────────────────────────────────────────────
 echo "  Configuring security settings..."
-# require password immediately after sleep/screen saver
-defaults write com.apple.screensaver askForPassword -int 1
-defaults write com.apple.screensaver askForPasswordDelay -int 0
 # enable firewall
 sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on 2>/dev/null
 
@@ -73,14 +68,14 @@ defaults write NSGlobalDomain NSNavPanelExpandedStateForSaveMode2 -bool true
 # expand print panel by default
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint -bool true
 defaults write NSGlobalDomain PMPrintingExpandedStateForPrint2 -bool true
-# disable the "Are you sure you want to open this application?" dialog
-defaults write com.apple.LaunchServices LSQuarantine -bool false
 # disable Resume system-wide
 defaults write com.apple.systempreferences NSQuitAlwaysKeepsWindows -bool false
 
-# ── Terminal: increase scrollback ─────────────────────────────
-defaults write com.apple.Terminal "Default Window Settings" -string "Pro"
-defaults write com.apple.Terminal "Startup Window Settings" -string "Pro"
+# ── Terminal: set Pro profile if available ─────────────────────
+if defaults read com.apple.Terminal "Window Settings" 2>/dev/null | grep -q '"Pro"'; then
+    defaults write com.apple.Terminal "Default Window Settings" -string "Pro"
+    defaults write com.apple.Terminal "Startup Window Settings" -string "Pro"
+fi
 
 # ── apply changes ─────────────────────────────────────────────
 killall Finder 2>/dev/null

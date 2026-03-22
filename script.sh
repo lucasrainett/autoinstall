@@ -62,7 +62,6 @@ STEPS=(
     # ── dev tools ──
     "Volta|other/install_volta.sh"
     "Claude Code|other/install_claude.sh"
-    "OpenClaw|other/install_openclaw.sh"
     "AWS CLI|other/install_aws_cli.sh"
     "Go|other/install_go.sh"
     "Rust|other/install_rust.sh"
@@ -323,7 +322,6 @@ for entry in "${STEPS[@]}"; do
     [[ "$SCRIPT" == apt/* ]] && continue
     [[ "$SCRIPT" == other/install_volta.sh ]] && continue
     [[ "$SCRIPT" == other/install_claude.sh ]] && continue
-    [[ "$SCRIPT" == other/install_openclaw.sh ]] && continue
     [[ "$SCRIPT" == other/install_aws_cli.sh ]] && continue
     [[ "$SCRIPT" == other/install_go.sh ]] && continue
     [[ "$SCRIPT" == other/install_rust.sh ]] && continue

@@ -11,7 +11,6 @@ defaults write com.apple.appleseed.FeedbackAssistant "Autogather" -bool false
 
 # ── disable Siri data collection ──────────────────────────────
 echo "  Disabling Siri analytics..."
-defaults write com.apple.assistant.support "Assistant Enabled" -bool false
 defaults write com.apple.Siri StatusMenuVisible -bool false
 defaults write com.apple.Siri UserHasDeclinedEnable -bool true
 

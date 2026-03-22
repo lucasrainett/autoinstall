@@ -7,7 +7,6 @@ echo "Installing common development tools..."
 TOOLS=(
     git
     curl
-    wget
     jq
     tree
     htop
