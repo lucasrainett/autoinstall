@@ -7,22 +7,26 @@ LOG_FILE="$HOME/.autoinstall.log"
 # ── flags ──────────────────────────────────────────────────────
 export AUTOINSTALL_UPDATE=false
 DRY_RUN=false
+AUTO_YES=false
 SELECTED_APPS=()
 
 for arg in "$@"; do
     case "$arg" in
         --update)  AUTOINSTALL_UPDATE=true ;;
         --dry-run) DRY_RUN=true ;;
+        --yes)     AUTO_YES=true ;;
         --help)
             echo "Usage: ./script.sh [options] [app names...]"
             echo ""
             echo "Options:"
             echo "  --update    Re-install apps even if already present"
             echo "  --dry-run   Show what would be installed without doing anything"
+            echo "  --yes       Skip confirmation prompts, install everything"
             echo "  --help      Show this help"
             echo ""
             echo "Examples:"
-            echo "  ./script.sh                   Install everything"
+            echo "  ./script.sh                   Install everything (interactive)"
+            echo "  ./script.sh --yes             Install everything without prompts"
             echo "  ./script.sh docker volta      Install only Docker and Volta"
             echo "  ./script.sh --update beeper   Force re-install Beeper"
             echo "  ./script.sh --dry-run         Preview all steps"
@@ -32,92 +36,100 @@ for arg in "$@"; do
     esac
 done
 
-# ── steps ──────────────────────────────────────────────────────
+# ── steps (Name|script|Description) ──────────────────────────
 STEPS=(
     # ── system config & security ──
-    "Disable Telemetry|config/install_disable_telemetry.sh"
-    "Power Profile|config/install_power_profile.sh"
-    "System Tweaks|config/install_system_tweaks.sh"
-    "Theme|config/install_theme.sh"
-    "SSH Key|config/install_ssh.sh"
-    "Git Config|config/install_git_config.sh"
-    "Dotfiles|config/install_dotfiles.sh"
-    "GNOME Settings|config/install_gnome_settings.sh"
-    "GNOME Extensions|config/install_gnome_extensions.sh"
-    "Taskbar|config/install_taskbar.sh"
+    "Disable Telemetry|config/install_disable_telemetry.sh|Disable Ubuntu telemetry, crash reporting, and tracking services"
+    "Power Profile|config/install_power_profile.sh|Set system power profile to performance mode"
+    "System Tweaks|config/install_system_tweaks.sh|Tune inotify watchers, swappiness, file limits, SSD TRIM, SSH hardening, fixed workspaces"
+    "Theme|config/install_theme.sh|Apply dark theme, custom wallpaper, and ZorinGrey-Dark icons"
+    "SSH Key|config/install_ssh.sh|Generate an ED25519 SSH key for GitHub authentication"
+    "Git Config|config/install_git_config.sh|Set git user name, email, default branch, and pull strategy"
+    "Dotfiles|config/install_dotfiles.sh|Deploy shell aliases and dotfiles from the repo"
+    "GNOME Settings|config/install_gnome_settings.sh|Export or restore GNOME desktop settings (dconf)"
+    "GNOME Extensions|config/install_gnome_extensions.sh|Install GNOME Shell extensions (Caffeine)"
+    "Taskbar|config/install_taskbar.sh|Configure GNOME taskbar layout and pinned apps"
 
     # ── system packages & services ──
-    "Common Tools|apt/install_common_tools.sh"
-    "Firewall|apt/install_firewall.sh"
-    "Docker|apt/install_docker.sh"
-    "Tailscale|apt/install_tailscale.sh"
-    "Python|apt/install_python.sh"
-    "Terraform|apt/install_terraform.sh"
-    "GitHub CLI|apt/install_github_cli.sh"
+    "Common Tools|apt/install_common_tools.sh|Install essential CLI tools: git, curl, htop, build-essential, gnupg, etc."
+    "Firewall|apt/install_firewall.sh|Install and enable UFW firewall with sensible defaults"
+    "Docker|apt/install_docker.sh|Container platform for building, shipping, and running applications"
+    "Tailscale|apt/install_tailscale.sh|Zero-config VPN using WireGuard, with exit node firewall rules"
+    "Python|apt/install_python.sh|Install Python 3 with pip, venv, and dev headers"
+    "Terraform|apt/install_terraform.sh|Infrastructure as code tool for provisioning cloud resources"
+    "GitHub CLI|apt/install_github_cli.sh|Official GitHub CLI for managing repos, PRs, and issues from the terminal"
 
-    # ── removals ──
-    "Remove Brave|remove/install_remove_brave.sh"
-    "Remove LibreOffice|remove/install_remove_libreoffice.sh"
+    # ── removals (pre-installed apps) ──
+    "Remove Brave|remove/install_remove_brave.sh|Uninstall Brave browser and its repo/keys"
+    "Remove LibreOffice|remove/install_remove_libreoffice.sh|Uninstall LibreOffice suite (replaced by OnlyOffice)"
+    "Remove Thunderbird|remove/install_remove_thunderbird.sh|Uninstall Thunderbird email client (replaced by Proton Mail)"
+    "Remove Rhythmbox|remove/install_remove_rhythmbox.sh|Uninstall Rhythmbox music player"
+    "Remove Videos|remove/install_remove_totem.sh|Uninstall GNOME Videos/Totem (replaced by VLC)"
+    "Remove Cheese|remove/install_remove_cheese.sh|Uninstall Cheese webcam app"
+    "Remove Shotwell|remove/install_remove_shotwell.sh|Uninstall Shotwell photo manager"
+    "Remove Maps|remove/install_remove_maps.sh|Uninstall GNOME Maps"
+    "Remove Weather|remove/install_remove_weather.sh|Uninstall GNOME Weather"
+    "Remove Simple Scan|remove/install_remove_simple_scan.sh|Uninstall Simple Scan document scanner"
 
     # ── dev tools ──
-    "Volta|other/install_volta.sh"
-    "Claude Code|other/install_claude.sh"
-    "AWS CLI|other/install_aws_cli.sh"
-    "Go|other/install_go.sh"
-    "Rust|other/install_rust.sh"
-    "JetBrains Toolbox|other/install_jetbrains_toolbox.sh"
+    "Volta|other/install_volta.sh|JavaScript tool manager — install and switch Node.js/pnpm versions per project"
+    "Claude Code|other/install_claude.sh|AI coding assistant by Anthropic for the terminal"
+    "AWS CLI|other/install_aws_cli.sh|Official command line interface for Amazon Web Services"
+    "Go|other/install_go.sh|Fast, statically typed language by Google for building scalable systems"
+    "Rust|other/install_rust.sh|Systems programming language focused on safety, speed, and concurrency"
+    "JetBrains Toolbox|other/install_jetbrains_toolbox.sh|Manage and update JetBrains IDEs (IntelliJ, WebStorm, GoLand, etc.)"
 
     # ── flatpak apps (GearLever first, needed by AppImages) ──
-    "GearLever|flatpak/install_gearlever.sh"
-    "Flatseal|flatpak/install_flatseal.sh"
-    "Warehouse|flatpak/install_warehouse.sh"
-    "Extension Manager|flatpak/install_extension_manager.sh"
-    "VLC|flatpak/install_vlc.sh"
-    "Signal|flatpak/install_signal.sh"
-    "OnlyOffice|flatpak/install_onlyoffice.sh"
-    "VSCodium|deb/install_vscodium.sh"
-"LibreWolf|flatpak/install_librewolf.sh"
-    "Zen Browser|flatpak/install_zen_browser.sh"
-    "Ungoogled Chromium|flatpak/install_ungoogled_chromium.sh"
-    "Boxes|flatpak/install_boxes.sh"
-    "DistroShelf|flatpak/install_distroshelf.sh"
-    "Pods|flatpak/install_pods.sh"
-    "Mission Center|flatpak/install_mission_center.sh"
-    "Angry IP Scanner|flatpak/install_angry_ip_scanner.sh"
-    "Solaar|flatpak/install_solaar.sh"
-    "Moonlight|flatpak/install_moonlight.sh"
-    "Stream Controller|flatpak/install_stream_controller.sh"
-    "OBS Studio|flatpak/install_obs.sh"
-    "HandBrake|flatpak/install_handbrake.sh"
-    "Parabolic|flatpak/install_parabolic.sh"
-    "Boxy SVG|flatpak/install_boxy_svg.sh"
-    "Minder|flatpak/install_minder.sh"
-    "Blanket|flatpak/install_blanket.sh"
-    "Alpaca|flatpak/install_alpaca.sh"
-    "Bazaar|flatpak/install_bazaar.sh"
-    "Grayjay|flatpak/install_grayjay.sh"
-    "OrcaSlicer|flatpak/install_orca_slicer.sh"
-    "Proton VPN|deb/install_proton_vpn.sh"
-    "Lutris|flatpak/install_lutris.sh"
-    "Heroic Games Launcher|flatpak/install_heroic.sh"
-    "Bottles|flatpak/install_bottles.sh"
+    "GearLever|flatpak/install_gearlever.sh|AppImage manager — integrate, update, and organize AppImage files"
+    "Flatseal|flatpak/install_flatseal.sh|Manage Flatpak app permissions (filesystem, network, devices)"
+    "Warehouse|flatpak/install_warehouse.sh|Manage installed Flatpak apps, runtimes, and leftover data"
+    "Extension Manager|flatpak/install_extension_manager.sh|Browse, install, and manage GNOME Shell extensions"
+    "VLC|flatpak/install_vlc.sh|Versatile media player supporting almost every audio and video format"
+    "Signal|flatpak/install_signal.sh|End-to-end encrypted messaging app for private communication"
+    "OnlyOffice|flatpak/install_onlyoffice.sh|Office suite compatible with MS Office formats (docs, sheets, slides)"
+    "VSCodium|deb/install_vscodium.sh|VS Code without Microsoft telemetry — free, open-source code editor"
+    "LibreWolf|flatpak/install_librewolf.sh|Privacy-focused Firefox fork with tracking protection built in"
+    "Zen Browser|flatpak/install_zen_browser.sh|Privacy-first browser built on Firefox with a minimal UI"
+    "Ungoogled Chromium|flatpak/install_ungoogled_chromium.sh|Chromium browser with Google services and tracking removed"
+    "Boxes|flatpak/install_boxes.sh|GNOME virtual machine manager for running other operating systems"
+    "DistroShelf|flatpak/install_distroshelf.sh|Manage Linux containers (distrobox) with a graphical interface"
+    "Pods|flatpak/install_pods.sh|Graphical Podman container manager for images and running containers"
+    "Mission Center|flatpak/install_mission_center.sh|System monitor showing CPU, RAM, disk, network, and GPU usage"
+    "Angry IP Scanner|flatpak/install_angry_ip_scanner.sh|Fast network scanner for discovering hosts and open ports"
+    "Solaar|flatpak/install_solaar.sh|Manage Logitech wireless devices (battery, buttons, DPI settings)"
+    "Moonlight|flatpak/install_moonlight.sh|Game streaming client — play PC games on other devices via network"
+    "Stream Controller|flatpak/install_stream_controller.sh|Elgato Stream Deck controller for Linux"
+    "OBS Studio|flatpak/install_obs.sh|Screen recording and live streaming software"
+    "HandBrake|flatpak/install_handbrake.sh|Video transcoder — convert videos between formats and compress them"
+    "Parabolic|flatpak/install_parabolic.sh|Download videos and audio from YouTube and other sites"
+    "Boxy SVG|flatpak/install_boxy_svg.sh|Vector graphics editor for creating SVG illustrations and icons"
+    "Minder|flatpak/install_minder.sh|Mind mapping tool for organizing ideas and brainstorming"
+    "Blanket|flatpak/install_blanket.sh|Ambient sound mixer for focus, relaxation, or sleep"
+    "Alpaca|flatpak/install_alpaca.sh|Chat with local AI models (LLMs) through a simple interface"
+    "Bazaar|flatpak/install_bazaar.sh|Browse and discover Flatpak apps from Flathub"
+    "Grayjay|flatpak/install_grayjay.sh|Multi-platform video player aggregating YouTube, Twitch, and more"
+    "OrcaSlicer|flatpak/install_orca_slicer.sh|3D printer slicer for converting models to G-code (FDM printers)"
+    "Proton VPN|deb/install_proton_vpn.sh|Privacy-focused VPN by Proton with no-logs policy"
+    "Lutris|flatpak/install_lutris.sh|Gaming platform for managing Windows games, emulators, and Wine"
+    "Heroic Games Launcher|flatpak/install_heroic.sh|Open-source launcher for Epic Games Store and GOG games"
+    "Bottles|flatpak/install_bottles.sh|Run Windows software and games on Linux using Wine environments"
 
     # ── gaming ──
-    "Steam|deb/install_steam.sh"
-    "Minecraft|flatpak/install_minecraft.sh"
-    "Sunshine|deb/install_sunshine.sh"
+    "Steam|deb/install_steam.sh|Valve's PC gaming platform — game store, library, and community"
+    "Minecraft|flatpak/install_minecraft.sh|Sandbox game — build, explore, and survive in blocky worlds"
+    "Sunshine|deb/install_sunshine.sh|Self-hosted game stream host — stream this PC to Moonlight clients"
 
     # ── deb & appimage apps ──
-    "Proton Pass|deb/install_proton_pass.sh"
-    "Proton Mail|deb/install_proton_mail.sh"
-    "Beeper|appimage/install_beeper.sh"
-    "LM Studio|appimage/install_lmstudio.sh"
-    "Cryptomator|appimage/install_cryptomator.sh"
-    "Helium|appimage/install_helium.sh"
-    "WinBoat|appimage/install_winboat.sh"
+    "Proton Pass|deb/install_proton_pass.sh|End-to-end encrypted password manager by Proton"
+    "Proton Mail|deb/install_proton_mail.sh|End-to-end encrypted email client by Proton"
+    "Beeper|appimage/install_beeper.sh|Unified messaging — combine iMessage, WhatsApp, Telegram, Slack in one app"
+    "LM Studio|appimage/install_lmstudio.sh|Run local AI language models offline — download, manage, and chat"
+    "Cryptomator|appimage/install_cryptomator.sh|Client-side encryption for cloud storage (Dropbox, GDrive, etc.)"
+    "Helium|appimage/install_helium.sh|Lightweight web browser with built-in media download features"
+    "WinBoat|appimage/install_winboat.sh|Run Windows apps on Linux via Docker containers and RDP streaming"
 
     # ── cleanup (always last) ──
-    "Cleanup Downloads|config/install_cleanup_downloads.sh"
+    "Cleanup Downloads|config/install_cleanup_downloads.sh|Remove leftover installer files (.deb, .tar.gz, .AppImage) from Downloads"
 )
 
 TOTAL=${#STEPS[@]}
@@ -136,6 +148,22 @@ echo "════════════════════════�
 
 log() {
     echo "$1" | tee -a "$LOG_FILE"
+}
+
+# ── confirmation prompt ───────────────────────────────────────
+confirm() {
+    if $AUTO_YES; then
+        return 0
+    fi
+    while true; do
+        read -rp "  Install? [Y/n/a] " answer </dev/tty
+        case "${answer,,}" in
+            ""|y|yes) return 0 ;;
+            n|no)     return 1 ;;
+            a|all)    AUTO_YES=true; return 0 ;;
+            *)        echo "  Please answer y (yes), n (no), or a (yes to all)" ;;
+        esac
+    done
 }
 
 # ── system requirements check ──────────────────────────────────
@@ -182,56 +210,22 @@ should_run() {
     return 1
 }
 
-# ── batch flatpak pre-install ──────────────────────────────────
-batch_flatpak_install() {
-    if $DRY_RUN; then
-        return
-    fi
-
-    log ""
-    log "Pre-installing flatpak apps in batch..."
-
-    # map of flatpak script -> flatpak ID
-    FLATPAK_IDS=()
-    for entry in "${STEPS[@]}"; do
-        NAME="${entry%%|*}"
-        SCRIPT="${entry##*|}"
-
-        # only simple flatpak scripts (single flatpak install line)
-        [[ "$SCRIPT" != flatpak/install_*.sh ]] && continue
-        # skip complex scripts
-        [[ "$SCRIPT" == *zen_browser* || "$SCRIPT" == *orca_slicer* || "$SCRIPT" == *distroshelf* ]] && continue
-        # check selective filter
-        should_run "$NAME" || continue
-
-        FILEPATH="$INSTALLERS_DIR/$SCRIPT"
-        FLATPAK_ID=$(grep -oP 'flatpak install \K\S+' "$FILEPATH" 2>/dev/null)
-        [ -z "$FLATPAK_ID" ] && continue
-
-        if $AUTOINSTALL_UPDATE || ! flatpak info "$FLATPAK_ID" &>/dev/null; then
-            FLATPAK_IDS+=("$FLATPAK_ID")
-        fi
-    done
-
-    if [ ${#FLATPAK_IDS[@]} -eq 0 ]; then
-        log "  All flatpak apps already installed."
-        return
-    fi
-
-    log "  Installing ${#FLATPAK_IDS[@]} flatpak apps..."
-    flatpak install "${FLATPAK_IDS[@]}" -y --noninteractive 2>&1 | tee -a "$LOG_FILE"
-}
+# ── parse step fields ─────────────────────────────────────────
+get_name()  { echo "${1%%|*}"; }
+get_script() { local tmp="${1#*|}"; echo "${tmp%%|*}"; }
+get_desc()  { echo "${1##*|}"; }
 
 # ── main ───────────────────────────────────────────────────────
 if $DRY_RUN; then
     log "DRY RUN - no changes will be made"
     log ""
     for i in "${!STEPS[@]}"; do
-        NAME="${STEPS[$i]%%|*}"
-        SCRIPT="${STEPS[$i]##*|}"
+        NAME=$(get_name "${STEPS[$i]}")
+        SCRIPT=$(get_script "${STEPS[$i]}")
+        DESC=$(get_desc "${STEPS[$i]}")
         PROGRESS=$(( (i * 100) / TOTAL ))
         if should_run "$NAME"; then
-            log "  [$PROGRESS%] ($((i + 1))/$TOTAL) Would install: $NAME ($SCRIPT)"
+            log "  [$PROGRESS%] ($((i + 1))/$TOTAL) $NAME - $DESC"
         else
             log "  [$PROGRESS%] ($((i + 1))/$TOTAL) SKIP (not selected): $NAME"
         fi
@@ -249,12 +243,10 @@ sudo -v
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 keepalive_pid=$!
 
-# batch all simple flatpak installs for speed
-batch_flatpak_install
-
 for i in "${!STEPS[@]}"; do
-    NAME="${STEPS[$i]%%|*}"
-    SCRIPT="${STEPS[$i]##*|}"
+    NAME=$(get_name "${STEPS[$i]}")
+    SCRIPT=$(get_script "${STEPS[$i]}")
+    DESC=$(get_desc "${STEPS[$i]}")
     PROGRESS=$(( (i * 100) / TOTAL ))
 
     if ! should_run "$NAME"; then
@@ -263,7 +255,13 @@ for i in "${!STEPS[@]}"; do
     fi
 
     log ""
-    log "[$PROGRESS%] Installing $NAME... ($((i + 1))/$TOTAL)"
+    log "[$PROGRESS%] ($((i + 1))/$TOTAL) $NAME"
+    log "  $DESC"
+
+    if ! confirm; then
+        SKIPPED+=("$NAME (declined)")
+        continue
+    fi
 
     if "$INSTALLERS_DIR/$SCRIPT" 2>&1 | tee -a "$LOG_FILE"; then
         # check if it was skipped (script printed "skipping")
@@ -313,8 +311,8 @@ log "Creating desktop shortcuts..."
 
 SHORTCUT_COUNT=0
 for entry in "${STEPS[@]}"; do
-    NAME="${entry%%|*}"
-    SCRIPT="${entry##*|}"
+    NAME=$(get_name "$entry")
+    SCRIPT=$(get_script "$entry")
 
     # skip non-launchable steps
     [[ "$SCRIPT" == config/* ]] && continue
