@@ -130,7 +130,7 @@ confirm() {
     fi
     while true; do
         read -rp "  Install? [Y/n/a] " answer </dev/tty
-        case "${answer,,}" in
+        case "$(echo "$answer" | tr '[:upper:]' '[:lower:]')" in
             ""|y|yes) return 0 ;;
             n|no)     return 1 ;;
             a|all)    AUTO_YES=true; return 0 ;;
