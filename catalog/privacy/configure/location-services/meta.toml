@@ -1,0 +1,8 @@
+name = "Disable location services"
+description = "Stops Windows and its apps asking the system for your location"
+website = "https://learn.microsoft.com/windows/privacy/manage-windows-location"
+
+[windows]
+installMethod = "script"
+notes = "A machine-wide policy, so it covers every account. Applications that genuinely need location — Maps, Weather — will report it as unavailable rather than failing outright."
+requiresElevation = true

@@ -622,6 +622,26 @@ All three now recognise both packagings and remove whichever is present — an e
 
 That is the third distinct flatpak ambiguity this project has hit: **remotes** (flathub in two installations), **installations** (system and user), and now **branches**. Each produced a confident, wrong answer rather than an error, which is what made them expensive to find.
 
+### Ideas taken from the established Windows debloat projects — 2026-09-03 (user's request)
+
+Read `Raphire/Win11Debloat` (57k stars) and surveyed `ChrisTitusTech/winutil` (62k), `farag2/Sophia-Script`, `HotCakeX/Harden-Windows-Security` and `W4RH4WK/Debloat-Windows-10` for ideas. Win11Debloat's ~65 `.reg` files are the most directly useful: each is one named behaviour with the exact key, which maps cleanly onto this catalog's one-entry-per-behaviour model.
+
+**Five adopted**, each chosen because the reason is concrete rather than "it is bloat":
+
+- **Disable Windows Recall** — Recall snapshots the screen every few seconds and indexes it. Even held locally, that is a searchable record of every password and message that was ever on screen. Set in both the machine and user policy hives, since Windows honours whichever it finds.
+- **Disable Fast Startup** — the one with the sharpest justification. Fast Startup leaves the filesystem hibernated rather than closed, so any partition shared with another operating system is locked or silently corrupted when that system writes to it. It also makes firmware settings unreachable, because the machine never truly powers off.
+- **Disable update sharing** (Delivery Optimization `DODownloadMode=0`) — stops the machine seeding Microsoft's updates to strangers over the user's connection.
+- **Remove web results from Start search** — every character typed into Start is otherwise sent to Bing as it is typed.
+- **Disable location services** — machine-wide, so it covers every account.
+
+**Deliberately not adopted**, and the reason matters as much as the list: the bulk of what those projects offer is *taste* rather than debloat — taskbar alignment, Alt-Tab entry counts, animation toggles, which folder Explorer opens in, Start menu layout. Shipping those would grow the catalog without making any machine better, and every one of them is a setting Windows already exposes in its own UI. This catalog's bar is "the reason can be stated in a sentence and the reversal is exact".
+
+Also passed over: their **Edge and Brave tweaks** (browser configuration is the browser's business, and these reach into another vendor's product), and **`Disable_Bitlocker_Auto_Encryption`** — turning off disk encryption by default is the opposite of what the disk-encryption advisory recommends, and no entry here should quietly make a machine less safe.
+
+All five follow the reversal rule already established: unchecking **deletes the policy value** rather than writing the opposite, handing the decision back to Windows' own default instead of forcing the feature on.
+
+**An escaping bug was caught before commit**, worth recording because it would have failed only on a real Windows machine: the generated PowerShell had doubled backslashes in the registry paths — `HKLM:\\SOFTWARE\\Policies` where a single separator was needed. Bash collapses `\\` to `\` inside a double-quoted string, and PowerShell then received a path that no registry provider would resolve. Verified by asking bash to expand the fragment exactly as the script would: it now hands over `HKLM:\SOFTWARE\Policies\Microsoft\Windows\DeliveryOptimization`.
+
 ### Smaller known gaps
 ASCII logo/banner; progress view has no live script output, no elapsed time, and no way to cancel a running plan; mouse clicks don't work in Ghostty (third-party `ink-mouse`/SGR gap, keyboard is the reliable baseline); the "is this the best install method" catalog audit is incomplete.
 

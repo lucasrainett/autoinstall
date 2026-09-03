@@ -1,0 +1,8 @@
+name = "Disable update sharing"
+description = "Stops your machine uploading Windows updates to other people over the internet"
+website = "https://learn.microsoft.com/windows/deployment/do/waas-delivery-optimization"
+
+[windows]
+installMethod = "script"
+notes = "Delivery Optimization turns your connection into a peer for distributing Microsoft's updates to strangers. DownloadMode 0 keeps updates coming straight from Microsoft. Worth it on a metered or slow connection; harmless otherwise."
+requiresElevation = true
