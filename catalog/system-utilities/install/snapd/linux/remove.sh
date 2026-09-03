@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Nothing installed, nothing to say. Without this the script runs its whole course on a machine
+# that never had snapd and then announces "snapd removed", which is untrue and the kind of output
+# that teaches people to stop reading it.
+dpkg-query -W -f='${Status}' snapd 2>/dev/null | grep -q '^install ok installed$' || {
+  echo "snapd is not installed; nothing to do."
+  exit 0
+}
+
 # Installed snaps are removed first, because apt cannot purge snapd while they are mounted. Only
 # what is actually installed is touched; nothing is force-unmounted.
 if command -v snap >/dev/null 2>&1; then
@@ -33,5 +41,35 @@ if [ -n "$COLLATERAL" ]; then
   exit 3
 fi
 
+# Stopped and masked before the purge: a running snapd keeps its mounts busy, and dpkg then fails
+# partway through with squashfs mounts still attached — a worse state than either before or after.
+if command -v systemctl >/dev/null 2>&1; then
+  sudo systemctl stop snapd.socket snapd.service 2>/dev/null || true
+  sudo systemctl disable snapd.socket snapd.service 2>/dev/null || true
+fi
+
 sudo apt remove --purge -y "${PACKAGES[@]}"
 sudo apt autoremove -y
+
+# A purge leaves these behind, and on a machine that had snaps they are gigabytes of squashfs
+# images. Each is removed only if nothing is still mounted under it: force-unmounting would risk
+# data loss for a snap that somehow survived, and leaving a stale mount is recoverable while a
+# broken unmount is not.
+for dir in /snap /var/lib/snapd /var/cache/snapd; do
+  if [ -d "$dir" ]; then
+    if mount | grep -q " ${dir}/"; then
+      echo "Left $dir in place: something is still mounted under it."
+    else
+      sudo rm -rf "$dir"
+    fi
+  fi
+done
+
+# The per-user snap folder holds each user's snap data. Only the invoking user's is touched —
+# deleting other people's home directories is far beyond "uninstall snapd".
+USER_HOME=$(getent passwd "${SUDO_USER:-$(id -un)}" | cut -d: -f6)
+if [ -n "$USER_HOME" ] && [ -d "$USER_HOME/snap" ]; then
+  rm -rf "$USER_HOME/snap"
+fi
+
+echo "snapd removed. No apt pin was added, so 'apt install snapd' still works if you want it back."
