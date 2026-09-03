@@ -116,9 +116,9 @@ the removal of everything on screen.
 
 ## What's in the catalog
 
-**110 entries** across 13 categories — browsers, communication, dev-tools, media, gaming, creative,
+**134 entries** across 13 categories — browsers, communication, dev-tools, media, gaming, creative,
 productivity, security, privacy, system-utilities, AI, 3D printing and quality-of-life.
-Platform coverage is 90 Linux, 70 macOS, 69 Windows; an entry simply has no folder for a platform
+Platform coverage is 90 Linux, 70 macOS, 93 Windows; an entry simply has no folder for a platform
 where the software does not exist, which is how "not applicable here" is expressed.
 
 **Six profiles** — `developer`, `privacy`, `minimal`, `infrastructure`, `gaming`, `creative` —

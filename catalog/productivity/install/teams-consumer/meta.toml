@@ -1,0 +1,7 @@
+name = "Teams (personal)"
+description = "The consumer Teams chat client bundled with Windows 11"
+website = "https://www.microsoft.com/"
+
+[windows]
+installMethod = "script"
+notes = "Preinstalled, so it usually starts already selected. Unchecking it removes these packages for the current user; it can be reinstalled from the Microsoft Store. Both package names are checked: Windows renamed it between builds."

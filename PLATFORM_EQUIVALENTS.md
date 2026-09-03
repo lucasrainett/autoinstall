@@ -159,7 +159,40 @@ Zen Browser and LibreWolf are confirmed to ship official Windows and macOS build
 | Scanner | Simple Scan | — | Windows Scan app |
 
 ### Windows-only debloat targets with no current Linux/macOS counterpart
-Xbox Game Bar/Xbox app, Cortana, auto-installed OneDrive, promotional Start-menu tiles (Candy Crush and similar), consumer Skype, "Get Help"/"Tips" apps, 3D Viewer, Mixed Reality Portal, Copilot entry point, OEM trialware (McAfee/Norton and similar) — these should be added as their own catalog entries rather than forced into the existing role list above.
+
+All shipped as their own entries (2026-09-03), which is what lets a user keep some and remove
+others rather than accepting one all-or-nothing sweep:
+
+Xbox app · Xbox Game Bar · Xbox support components · Cortana · Copilot · OneDrive · Skype ·
+Get Help · Tips · 3D Viewer · Mixed Reality Portal · Weather · News · Maps · People ·
+Feedback Hub · Phone Link · Quick Assist · Dev Home · Power Automate · Alarms & Clock ·
+Media Player · Movies & TV · Clipchamp · Sound Recorder · Camera · Paint 3D · Office hub ·
+Microsoft To Do · Sticky Notes · Teams (personal) · Outlook (new) · Solitaire Collection ·
+promotional Start-menu suggestions.
+
+**Deliberately excluded**, because "preinstalled" is not the same as "bloat" and removing these
+breaks a working system: the Microsoft Store itself (nothing could be reinstalled without it),
+Windows Terminal, Calculator, Notepad, classic Paint, Photos, Snipping Tool, and anything under
+Windows Security. Edge is also absent — it is not removable as an Appx package on most builds, and
+an entry that silently fails is worse than no entry.
+
+**OEM trialware** (McAfee, Norton and similar) is *not* covered and cannot sensibly be: it varies
+by manufacturer and model, ships under names this catalog cannot predict, and is usually a normal
+installer rather than a Store package. Removing it through Settings › Apps is the honest answer.
+
+### macOS: what is actually removable
+
+Only five — **GarageBand, iMovie, Keynote, Pages, Numbers** — and the catalog covers all of them.
+
+Everything else Apple preinstalls (Chess, Stocks, News, Podcasts, TV, Music, Books, Maps,
+Reminders, Freeform, Home, Voice Memos, Mail, Safari …) lives in `/System/Applications` on the
+sealed, read-only system volume. Those cannot be deleted even as root: the volume is
+cryptographically sealed, and defeating that means disabling SIP and breaking system updates. The
+five above are removable precisely because they are App Store deliveries in `/Applications`
+instead.
+
+So the macOS list is short not because it is unfinished, but because macOS does not permit more.
+An entry promising to remove Podcasts would fail on every Mac.
 
 ## 14. Platform-exclusive items (no equivalent elsewhere)
 

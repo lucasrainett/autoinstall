@@ -1,0 +1,7 @@
+name = "Outlook (new)"
+description = "The web-based Outlook client Windows installs alongside Mail"
+website = "https://www.microsoft.com/"
+
+[windows]
+installMethod = "script"
+notes = "Preinstalled, so it usually starts already selected. Unchecking it removes the package for the current user; it can be reinstalled from the Microsoft Store."

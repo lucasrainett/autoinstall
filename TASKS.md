@@ -561,6 +561,27 @@ The logic moved out of the YAML into `scripts/lifecycle.sh`, so it can be read, 
 
 The `binary` job now also asserts that a dry-run on a **clean** runner proposes no removals, which is a direct regression test for first-run seeding — the failure that would have uninstalled 53 programs unattended.
 
+### Full preinstalled-software coverage — 2026-09-03 (user's request)
+
+*"Include all default bloat software from Windows and macOS, so users can uninstall those when running it."*
+
+**Windows: 24 new entries, taking Windows coverage from 69 to 93.** Weather, News, Tips, Feedback Hub, Maps, People, Phone Link, Quick Assist, Dev Home, Power Automate, Alarms & Clock, Media Player, Movies & TV, Clipchamp, Sound Recorder, Camera, Paint 3D, Office hub, To Do, Sticky Notes, Teams (personal), Outlook (new), Solitaire Collection, and the Xbox support components.
+
+Each is its own entry rather than one debloat sweep, which is the whole point of the desired-state model: they arrive already checked because they are installed, and the user unchecks the ones they do not want. Someone who wants Sticky Notes but not the Office hub gets exactly that.
+
+Three decisions inside it:
+- **The Xbox support components are one entry, not four.** `XboxIdentityProvider`, `XboxSpeechToTextOverlay`, `XboxGameOverlay` and `Xbox.TCUI` only make sense together; removing some and keeping others leaves the Xbox app half-working.
+- **Reinstall opens a Store *search*, not a product page.** A product link needs a package family name whose publisher segment differs per app — first-party Microsoft apps are `8wekyb3d8bbwe`, Skype and others are not — and a wrong link opens an empty Store page with no explanation.
+- **Teams checks two package names** (`MicrosoftTeams` and `MSTeams`), because Windows renamed it between builds and an entry keyed to one reports "not installed" on the other.
+
+**Deliberately excluded, and this is a judgement worth stating:** the Microsoft Store itself (nothing could be reinstalled without it), Windows Terminal, Calculator, Notepad, classic Paint, Photos, Snipping Tool and Windows Security. "Preinstalled" is not the same as "bloat", and an entry that lets someone remove the Store is a trap. Edge is also absent — it is not removable as an Appx package on most builds, and an entry that silently fails is worse than none. **OEM trialware** (McAfee, Norton) cannot sensibly be covered: it varies by manufacturer and model, ships under unpredictable names, and is usually a normal installer rather than a Store package.
+
+**macOS: already complete, and the reason is a hard limit rather than unfinished work.** Only GarageBand, iMovie, Keynote, Pages and Numbers can be removed, and all five have been entries since Phase 5. Everything else Apple preinstalls lives in `/System/Applications` on the sealed, read-only system volume — Chess, Stocks, News, Podcasts, TV, Music, Books, Maps, Reminders, Freeform, Home, Voice Memos, Mail, Safari. Those cannot be deleted even as root; the volume is cryptographically sealed, and defeating it means disabling SIP and breaking system updates. The five are removable precisely because they are App Store deliveries in `/Applications`. An entry promising to remove Podcasts would fail on every Mac, so none exists. Documented in `PLATFORM_EQUIVALENTS.md` §13.
+
+**Catalog: 134 entries — 90 Linux, 70 macOS, 93 Windows.** All 24 new entries are Windows-only, so they are filtered out entirely on Linux and macOS and add no clutter there.
+
+**Unverified, like every Windows entry:** written against Microsoft's documented package names and never executed. The lifecycle workflow now defaults to exercising all of them, which is what will actually confirm the names are right.
+
 ### Smaller known gaps
 ASCII logo/banner; progress view has no live script output, no elapsed time, and no way to cancel a running plan; mouse clicks don't work in Ghostty (third-party `ink-mouse`/SGR gap, keyboard is the reliable baseline); the "is this the best install method" catalog audit is incomplete.
 
