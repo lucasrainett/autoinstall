@@ -34,12 +34,20 @@ Deno.test("runScript - captures stdout and stderr as separate streams", async ()
 
 Deno.test("runScript - passes through the working directory", async () => {
   const dir = await Deno.makeTempDir();
-  const script = await tempScript("#!/usr/bin/env bash\npwd\n");
+  const script = await tempScript("#!/usr/bin/env bash\ntouch ran-here.txt\n");
   const result = await runScript(script, { cwd: dir });
-  // Compare realpaths in case of symlink differences (e.g. /tmp vs /private/tmp on macOS).
-  assertEquals(await Deno.realPath(result.stdout.trim()), await Deno.realPath(dir));
+
+  // Asserted by what the script *did* in that directory rather than by the path it printed.
+  // Comparing `pwd` output fails on Windows for a difference of notation, not of behaviour: Git
+  // Bash answers in its own POSIX namespace (/tmp/xyz) for a directory Deno created as
+  // D:\...\Temp\xyz, and Deno.realPath cannot resolve that form. The cwd was passed through
+  // correctly the whole time. A file appearing where it was meant to appear is also closer to
+  // what callers actually depend on than a printed string.
+  assertEquals(result.exitCode, 0);
+  assertEquals(await Deno.stat(`${dir}/ran-here.txt`).then((st) => st.isFile), true);
+
   await Deno.remove(script);
-  await Deno.remove(dir);
+  await Deno.remove(dir, { recursive: true });
 });
 
 Deno.test("runScript - passes through environment variables, merged with the inherited environment", async () => {

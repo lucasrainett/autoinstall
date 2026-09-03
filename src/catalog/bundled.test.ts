@@ -401,34 +401,42 @@ Deno.test("bundled catalog - entries that edit a shared file write a delimited, 
   assert(editors.length > 0, "found no hosts-editing entries — the test is not looking anywhere");
 });
 
-Deno.test("bundled catalog - every script is executable", async () => {
-  // The engine runs scripts as `bash <path>`, so this is not what makes them work. It matters
-  // because the whole design rests on any single operation being runnable by hand — that is how
-  // most bugs in this project were actually diagnosed — and `./detect.sh` failing with "permission
-  // denied" is a pointless obstacle at exactly that moment. Mixed modes also make every checkout
-  // show spurious diffs.
-  const notExecutable: string[] = [];
-  for await (const category of Deno.readDir(BUNDLED_CATALOG_ROOT)) {
-    if (!category.isDirectory) continue;
-    for await (const kind of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}`)) {
-      for await (
-        const id of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}`)
-      ) {
-        const entryDir = `${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}/${id.name}`;
-        for await (const platform of Deno.readDir(entryDir)) {
-          if (!platform.isDirectory) continue;
-          for await (const file of Deno.readDir(`${entryDir}/${platform.name}`)) {
-            if (!file.name.endsWith(".sh")) continue;
-            const path = `${entryDir}/${platform.name}/${file.name}`;
-            const mode = (await Deno.stat(path)).mode;
-            // Windows reports a null mode; there is nothing to check there.
-            if (mode !== null && (mode & 0o111) === 0) {
-              notExecutable.push(path.replace(BUNDLED_CATALOG_ROOT, "catalog"));
+Deno.test({
+  name: "bundled catalog - every script is executable",
+  // NTFS has no POSIX executable bit. Deno.stat().mode on Windows does not return null as this
+  // test originally assumed — it reports a synthesised mode with no exec bits set, so the check
+  // failed for all 170 entries at once. The property is real but only meaningful where the
+  // filesystem records it, and .gitattributes plus the Linux/macOS runs keep it honest.
+  ignore: Deno.build.os === "windows",
+  fn: async () => {
+    // The engine runs scripts as `bash <path>`, so this is not what makes them work. It matters
+    // because the whole design rests on any single operation being runnable by hand — that is how
+    // most bugs in this project were actually diagnosed — and `./detect.sh` failing with "permission
+    // denied" is a pointless obstacle at exactly that moment. Mixed modes also make every checkout
+    // show spurious diffs.
+    const notExecutable: string[] = [];
+    for await (const category of Deno.readDir(BUNDLED_CATALOG_ROOT)) {
+      if (!category.isDirectory) continue;
+      for await (const kind of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}`)) {
+        for await (
+          const id of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}`)
+        ) {
+          const entryDir = `${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}/${id.name}`;
+          for await (const platform of Deno.readDir(entryDir)) {
+            if (!platform.isDirectory) continue;
+            for await (const file of Deno.readDir(`${entryDir}/${platform.name}`)) {
+              if (!file.name.endsWith(".sh")) continue;
+              const path = `${entryDir}/${platform.name}/${file.name}`;
+              const mode = (await Deno.stat(path)).mode;
+              // Windows reports a null mode; there is nothing to check there.
+              if (mode !== null && (mode & 0o111) === 0) {
+                notExecutable.push(path.replace(BUNDLED_CATALOG_ROOT, "catalog"));
+              }
             }
           }
         }
       }
     }
-  }
-  assertEquals(notExecutable, [], "these catalog scripts are not executable");
+    assertEquals(notExecutable, [], "these catalog scripts are not executable");
+  },
 });

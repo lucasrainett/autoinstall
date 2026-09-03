@@ -40,27 +40,96 @@ export interface RunScriptOptions {
 }
 
 /**
- * On POSIX (Linux/macOS), the script is run under `setsid` so it becomes its own process-group
- * leader. This matters for the timeout path: a script that backgrounds another process (e.g.
- * `some-daemon &`) leaves that descendant holding the piped stdout/stderr file descriptors open,
- * so killing only the direct child isn't enough — `child.output()` won't resolve until every
- * holder of those descriptors exits, which for a lingering descendant could be much later than
- * the timeout. Killing the whole process group (`kill -SIGKILL -- -<pid>`) closes all of them at
- * once. Confirmed empirically during development: without this, a `sleep 5 &`-style script made
- * a 100ms timeout take the full 5 seconds to actually resolve.
+ * The script is run so that it becomes its own process-group leader. This matters for the timeout
+ * path: a script that backgrounds another process (e.g. `some-daemon &`) leaves that descendant
+ * holding the piped stdout/stderr file descriptors open, so killing only the direct child isn't
+ * enough — `child.output()` won't resolve until every holder of those descriptors exits, which for
+ * a lingering descendant could be much later than the timeout. Killing the whole process group
+ * (`kill -SIGKILL -- -<pid>`) closes all of them at once. Confirmed empirically during
+ * development: without this, a `sleep 5 &`-style script made a 100ms timeout take the full 5
+ * seconds to actually resolve.
  *
- * Windows has no equivalent here — this fallback path does a plain single-process kill, which has
- * the same "lingering descendant" gap. A real fix needs Windows Job Objects, which Deno's Command
- * API doesn't expose; flagged as a known limitation for Phase 7 rather than silently assumed fixed.
+ * *How* that group is created is probed rather than assumed, because the obvious assumption was
+ * wrong and shipped: this module used to decide with `Deno.build.os !== "windows"`, reading
+ * "POSIX" as "has setsid". `setsid` is a util-linux program and **macOS does not ship it**. The
+ * result was not a degraded timeout path but total failure — every spawn on macOS threw
+ * `NotFound: Failed to spawn 'setsid'`, so every detect, install and remove failed and the tool
+ * was non-functional on one of its three supported platforms. Nothing caught it because the suite
+ * had only ever run on Linux.
+ *
+ * The strategies, in preference order:
+ *
+ *   - `setsid`      — util-linux. Linux, and anywhere else that has it.
+ *   - `perl-setsid` — macOS. Perl ships with the OS and exposes the POSIX call directly, so this
+ *                     gets the same guarantee rather than giving up on it. `exec` preserves both
+ *                     pid and process-group id, so the pid Deno holds is still the group leader
+ *                     and `kill -- -<pid>` reaches the whole tree. It falls back to `setpgid(0,0)`
+ *                     if `setsid()` reports EPERM (already a group leader), which is enough for
+ *                     group-killing even though it keeps the session.
+ *   - `direct`      — Windows, or a machine with neither. Plain single-process kill, so a
+ *                     backgrounded descendant survives the timeout. A real Windows fix needs Job
+ *                     Objects, which Deno's Command API doesn't expose.
+ *
+ * The cost of `direct` is worth stating precisely, because it is larger than "an orphaned
+ * process". Measured against a script that backgrounds `sleep 8` and then hangs, with a 200ms
+ * timeout: `runScript` itself returns on time under all three strategies (~210ms), because the
+ * timeout handling below deliberately stops waiting on the pipe. But the orphan inherits the piped
+ * descriptors, and the *process* cannot exit while it holds them — so the whole application took
+ * 8024ms to exit under `direct`, against 237ms under `setsid` and 244ms under `perl-setsid`. The
+ * user-visible symptom is not a slow operation but a tool that appears to hang after finishing.
+ *
+ * Probing rather than branching on the platform name also covers the case that motivated it in the
+ * first place: a stripped-down Linux container without util-linux hits exactly the same wall.
  */
-const usesProcessGroups = Deno.build.os !== "windows";
+type SpawnStrategy = "setsid" | "perl-setsid" | "direct";
+
+/**
+ * Isolate, then become the script. Written as one statement per concern so a failure says which
+ * part failed: silently continuing without a process group would reintroduce the original bug
+ * while looking like it worked.
+ */
+const PERL_ISOLATE =
+  'POSIX::setsid() or POSIX::setpgid(0, 0) or die "cannot isolate process group: $!\\n"; ' +
+  'exec @ARGV or die "exec failed: $!\\n";';
+
+let strategyCache: SpawnStrategy | undefined;
+
+/** True when the command exists and runs. Any failure means "not usable", never a throw. */
+async function canRun(cmd: string, args: string[]): Promise<boolean> {
+  try {
+    const { success } = await new Deno.Command(cmd, {
+      args,
+      stdin: "null",
+      stdout: "null",
+      stderr: "null",
+    }).output();
+    return success;
+  } catch {
+    // NotFound when the binary is absent, NotCapable when --allow-run is scoped narrowly.
+    return false;
+  }
+}
+
+/** Probed once per process: ~170 detect scripts must not each pay for two subprocess probes. */
+async function spawnStrategy(): Promise<SpawnStrategy> {
+  if (strategyCache !== undefined) return strategyCache;
+  if (Deno.build.os === "windows") return (strategyCache = "direct");
+  if (await canRun("setsid", ["--version"])) return (strategyCache = "setsid");
+  if (await canRun("perl", ["-MPOSIX", "-e", "exit 0"])) return (strategyCache = "perl-setsid");
+  return (strategyCache = "direct");
+}
 
 export async function runScript(
   scriptPath: string,
   options: RunScriptOptions = {},
 ): Promise<ScriptResult> {
   const shell = options.shell ?? "bash";
-  const useSetsid = usesProcessGroups && options.preserveControllingTerminal !== true;
+  // preserveControllingTerminal deliberately opts out of isolation entirely — see the option's
+  // own documentation for why sudo needs the terminal.
+  const strategy: SpawnStrategy = options.preserveControllingTerminal === true
+    ? "direct"
+    : await spawnStrategy();
+  const useProcessGroup = strategy !== "direct";
   // A script that does not need the terminal must not be given it. Deno's default is to *inherit*
   // stdin, so every spawned script held the same tty the interface reads keys from and swallowed
   // whatever the user typed while it ran. With ~80 detect scripts running back to back at startup
@@ -71,23 +140,21 @@ export async function runScript(
   // The exception is a script keeping the controlling terminal on purpose: `sudo` reads the
   // password from stdin, so denying it there would break elevation entirely.
   const stdin = options.preserveControllingTerminal === true ? "inherit" : "null";
-  const command = useSetsid
-    ? new Deno.Command("setsid", {
-      args: [shell, scriptPath],
-      cwd: options.cwd,
-      env: options.env,
-      stdin,
-      stdout: "piped",
-      stderr: "piped",
+  const shared = {
+    cwd: options.cwd,
+    env: options.env,
+    stdin,
+    stdout: "piped",
+    stderr: "piped",
+  } as const;
+  const command = strategy === "setsid"
+    ? new Deno.Command("setsid", { args: [shell, scriptPath], ...shared })
+    : strategy === "perl-setsid"
+    ? new Deno.Command("perl", {
+      args: ["-MPOSIX", "-e", PERL_ISOLATE, shell, scriptPath],
+      ...shared,
     })
-    : new Deno.Command(shell, {
-      args: [scriptPath],
-      cwd: options.cwd,
-      env: options.env,
-      stdin,
-      stdout: "piped",
-      stderr: "piped",
-    });
+    : new Deno.Command(shell, { args: [scriptPath], ...shared });
 
   const child = command.spawn();
 
@@ -102,7 +169,7 @@ export async function runScript(
           // Without that, `child.pid` is not a group leader and `kill -- -<pid>` would signal
           // whatever unrelated group happens to carry that id — including, potentially, this
           // process's own.
-          if (useSetsid) {
+          if (useProcessGroup) {
             await new Deno.Command("kill", { args: ["-SIGKILL", "--", `-${child.pid}`] }).output();
           } else {
             child.kill("SIGKILL");
