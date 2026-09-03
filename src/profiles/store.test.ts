@@ -1,7 +1,8 @@
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
 import { loadProfileFromUrl, loadProfiles } from "./store.ts";
+import { fromFileUrl } from "@std/path";
 
-const FIXTURE_ROOT = new URL("./testdata/profiles", import.meta.url).pathname;
+const FIXTURE_ROOT = fromFileUrl(new URL("./testdata/profiles", import.meta.url));
 
 Deno.test("loadProfiles - loads a valid profile, id from filename", async () => {
   const { profiles, errors } = await loadProfiles(FIXTURE_ROOT);

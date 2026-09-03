@@ -5,8 +5,9 @@
 import { assert, assertEquals } from "@std/assert";
 import { loadCatalog } from "./loader.ts";
 import { validateCatalog } from "./validator.ts";
+import { fromFileUrl } from "@std/path";
 
-const BUNDLED_CATALOG_ROOT = new URL("../../catalog", import.meta.url).pathname;
+const BUNDLED_CATALOG_ROOT = fromFileUrl(new URL("../../catalog", import.meta.url));
 
 /** Reads every Linux operation script of every entry that installs via AppImage. */
 async function linuxAppImageScripts(): Promise<{ path: string; source: string }[]> {

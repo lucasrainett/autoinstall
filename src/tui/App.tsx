@@ -81,9 +81,9 @@ import {
   requestSudoAccess,
   startSudoKeepAlive,
 } from "../elevation/session.ts";
-import { dirname, join } from "@std/path";
+import { dirname, fromFileUrl, join } from "@std/path";
 
-const CATALOG_ROOT = new URL("../../catalog", import.meta.url).pathname;
+const CATALOG_ROOT = fromFileUrl(new URL("../../catalog", import.meta.url));
 
 /** Deno.consoleSize() throws outright when stdin/stdout/stderr aren't a real terminal (e.g. piped
  * output) — falls back to a reasonable default rather than crashing the whole app. */
@@ -111,7 +111,7 @@ const FULL_WIDTH_SCREENS = new Set<Screen>(["help", "history", "profiles", "noti
  * than being allowed to hold up startup. */
 const DETECT_TIMEOUT_MS = 60_000;
 
-const PROFILES_ROOT = new URL("../../profiles", import.meta.url).pathname;
+const PROFILES_ROOT = fromFileUrl(new URL("../../profiles", import.meta.url));
 
 /** Held as a constant rather than written inline: the leading space matters (it separates this
  * from the status word before it), and an inline JSX literal loses it to the linter's autofix. */

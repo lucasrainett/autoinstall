@@ -1,0 +1,17 @@
+# Catalog scripts must have LF line endings on every platform, including Windows.
+#
+# This is not a style preference. Windows entries are executed through Git Bash (see
+# exec/shell-resolution.ts), and bash reading a CRLF script treats the trailing \r as part of the
+# last token on every line: `set -e\r` becomes an unknown command, and a quoted string spanning a
+# line break silently gains a carriage return. The failure mode is `$'\r': command not found`,
+# which names neither the file nor the real cause.
+#
+# Git for Windows sets core.autocrlf=true by default, so without this file a clone on Windows —
+# including a GitHub Actions windows-latest checkout — converts all 170 entries' scripts to CRLF
+# and every one of them breaks.
+* text=auto eol=lf
+
+# Binary files git must never touch.
+*.png binary
+*.jpg binary
+*.ico binary

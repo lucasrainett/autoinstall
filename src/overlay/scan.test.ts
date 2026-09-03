@@ -1,7 +1,8 @@
 import { assert, assertEquals } from "@std/assert";
 import { scanOverlayCatalog } from "./scan.ts";
+import { fromFileUrl } from "@std/path";
 
-const FIXTURE_ROOT = new URL("./testdata/overlay-catalog", import.meta.url).pathname;
+const FIXTURE_ROOT = fromFileUrl(new URL("./testdata/overlay-catalog", import.meta.url));
 
 Deno.test("scanOverlayCatalog - an override entry with no meta.toml has meta undefined (inherit from core)", async () => {
   const { entries } = await scanOverlayCatalog(FIXTURE_ROOT);

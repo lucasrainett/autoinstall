@@ -7,9 +7,10 @@ import {
   syncOverlayRepos,
 } from "./bootstrap.ts";
 import type { GitRunner } from "../overlay/git.ts";
+import { fromFileUrl } from "@std/path";
 
-const BUNDLED_CATALOG = new URL("../../catalog", import.meta.url).pathname;
-const BUNDLED_PROFILES = new URL("../../profiles", import.meta.url).pathname;
+const BUNDLED_CATALOG = fromFileUrl(new URL("../../catalog", import.meta.url));
+const BUNDLED_PROFILES = fromFileUrl(new URL("../../profiles", import.meta.url));
 
 function recordingGit(
   fail: (args: string[]) => boolean = () => false,

@@ -1,5 +1,11 @@
-# Runs on every push and pull request. Fast checks only — the cross-OS lifecycle tests live in
-# catalog-lifecycle.yml because they install real software and take much longer.
+# Runs on every push and pull request.
+#
+# The type-check and unit suite run on all three operating systems, because that is where the tool
+# runs. What stays out of here is the *catalog lifecycle* — actually installing real software —
+# which lives in catalog-lifecycle.yml because it takes hours and depends on third-party endpoints.
+# Those are different things, and an earlier version of this file conflated them: it kept the whole
+# of CI on Linux on the grounds that "cross-OS testing lives in the other workflow", which left the
+# engine itself verified on one OS out of three.
 name: CI
 
 on:
@@ -8,8 +14,14 @@ on:
 
 jobs:
   check:
-    name: Type-check, lint, format, test
-    runs-on: ubuntu-latest
+    name: Type-check and test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      # One OS failing must not cancel the others: "does this break on Windows only" is exactly
+      # the question this matrix exists to answer, and it is unanswerable if the run is cancelled.
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: denoland/setup-deno@v2
@@ -17,10 +29,23 @@ jobs:
           deno-version: v2.x
 
       - run: deno task check
+      - run: deno task test
+
+  style:
+    name: Lint and format
+    runs-on: ubuntu-latest
+    # Deliberately not on the matrix. Lint rules and formatting are properties of the source text,
+    # so all three runners would compute the same answer from the same bytes — three copies of one
+    # result, and three chances for a spurious line-ending failure to make the build red.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - run: deno task lint
       # --check rather than rewriting: CI must fail on unformatted code, not silently fix it.
       - run: deno fmt --check src/ main.tsx
-      - run: deno task test
 
   catalog:
     name: Catalog conventions

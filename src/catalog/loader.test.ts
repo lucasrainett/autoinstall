@@ -1,7 +1,8 @@
 import { assert, assertEquals, assertStringIncludes, assertThrows } from "@std/assert";
 import { loadCatalog, parseEntryMeta } from "./loader.ts";
+import { fromFileUrl } from "@std/path";
 
-const FIXTURE_ROOT = new URL("./testdata/mixed", import.meta.url).pathname;
+const FIXTURE_ROOT = fromFileUrl(new URL("./testdata/mixed", import.meta.url));
 
 Deno.test("loadCatalog - loads the valid entry correctly and infers category/kind/id from directory position", async () => {
   const { entries } = await loadCatalog(FIXTURE_ROOT);

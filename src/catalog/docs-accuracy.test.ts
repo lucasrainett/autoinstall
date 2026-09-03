@@ -1,5 +1,6 @@
 import { assert, assertEquals } from "@std/assert";
 import { loadCatalog } from "./loader.ts";
+import { fromFileUrl } from "@std/path";
 
 // README quotes concrete catalog counts, which is the useful thing to quote and also the thing
 // that silently rots — a review found it claiming a test count 10 short of reality. Volatile
@@ -8,7 +9,7 @@ import { loadCatalog } from "./loader.ts";
 // wrong.
 Deno.test("README's catalog counts match the catalog on disk", async () => {
   const readme = await Deno.readTextFile(new URL("../../README.md", import.meta.url));
-  const { entries } = await loadCatalog(new URL("../../catalog", import.meta.url).pathname);
+  const { entries } = await loadCatalog(fromFileUrl(new URL("../../catalog", import.meta.url)));
 
   const categories = new Set(entries.map((e) => e.category)).size;
   assert(

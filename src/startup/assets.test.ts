@@ -1,7 +1,8 @@
 import { assert, assertEquals } from "@std/assert";
 import { isCompiledBinary, materializeAssetDir } from "./assets.ts";
+import { fromFileUrl } from "@std/path";
 
-const BUNDLED_CATALOG = new URL("../../catalog", import.meta.url).pathname;
+const BUNDLED_CATALOG = fromFileUrl(new URL("../../catalog", import.meta.url));
 
 Deno.test("isCompiledBinary - false when running from source, which is how the test suite runs", () => {
   assertEquals(isCompiledBinary(), false);
@@ -32,8 +33,11 @@ Deno.test("materializeAssetDir - the returned root is always usable by a spawned
   const { root } = await materializeAssetDir(BUNDLED_CATALOG, "/tmp/unused-from-source");
   const probe = `${root}/dev-tools/install/jq/linux/detect.sh`;
 
+  // The path goes in as an argv element, not interpolated into the -c string. That is what
+  // exec/runner.ts does (`args: [scriptPath]`), and it is the only form that survives a Windows
+  // path: inside a command string bash would read the backslashes of C:\Users\... as escapes.
   const output = await new Deno.Command("bash", {
-    args: ["-c", `test -r "${probe}" && echo READABLE || echo UNREADABLE`],
+    args: ["-c", 'test -r "$1" && echo READABLE || echo UNREADABLE', "_", probe],
     stdout: "piped",
   }).output();
   assertEquals(new TextDecoder().decode(output.stdout).trim(), "READABLE");

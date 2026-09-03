@@ -9,7 +9,7 @@
 // No flags launches the interactive TUI; --dry-run prints the plan and exits without touching the
 // script runner; --yes runs the plan for the current remembered selection with no confirmation.
 
-import { dirname, join } from "@std/path";
+import { dirname, fromFileUrl, join } from "@std/path";
 import { render } from "ink";
 import { parseCliArgs } from "./src/cli/args.ts";
 import { runCli } from "./src/cli/run.ts";
@@ -37,7 +37,7 @@ import {
   startSudoKeepAlive,
 } from "./src/elevation/session.ts";
 
-const CATALOG_ROOT = new URL("./catalog", import.meta.url).pathname;
+const CATALOG_ROOT = fromFileUrl(new URL("./catalog", import.meta.url));
 
 const args = parseCliArgs(Deno.args);
 

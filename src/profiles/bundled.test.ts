@@ -7,9 +7,10 @@ import { assert, assertEquals } from "@std/assert";
 import { loadProfiles } from "./store.ts";
 import { loadCatalog } from "../catalog/loader.ts";
 import { entryKey } from "../catalog/types.ts";
+import { fromFileUrl } from "@std/path";
 
-const PROFILES_ROOT = new URL("../../profiles", import.meta.url).pathname;
-const CATALOG_ROOT = new URL("../../catalog", import.meta.url).pathname;
+const PROFILES_ROOT = fromFileUrl(new URL("../../profiles", import.meta.url));
+const CATALOG_ROOT = fromFileUrl(new URL("../../catalog", import.meta.url));
 
 Deno.test("bundled profiles - all load with zero errors", async () => {
   const { errors } = await loadProfiles(PROFILES_ROOT);
