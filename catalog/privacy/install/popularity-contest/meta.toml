@@ -1,0 +1,8 @@
+name = "Popularity contest (popcon)"
+description = "Submits the list of packages installed on this machine to Debian/Ubuntu"
+website = "https://popcon.ubuntu.com/"
+
+[linux]
+installMethod = "apt"
+notes = "Anonymous by design and genuinely useful to distribution maintainers, which is why it is opt-in on install rather than simply bloat. Listed so the choice is visible and reversible rather than made once at install time and forgotten."
+requiresElevation = true

@@ -1,0 +1,8 @@
+name = "Ubuntu hardware report"
+description = "Sends a one-off hardware and installation survey to Canonical"
+website = "https://github.com/ubuntu/ubuntu-report"
+
+[linux]
+installMethod = "apt"
+notes = "Reports at install time rather than continuously: hardware, locale, installation choices. Removing it stops any future report; anything already sent is gone."
+requiresElevation = true
