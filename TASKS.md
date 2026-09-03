@@ -537,6 +537,14 @@ Also: the README screenshot had drifted to `[1 of 79]` against 90 Linux entries,
 
 **Unchanged and worth restating at release:** every macOS and Windows entry is verified by package-registry lookup only and has never been executed. Cross-OS CI exists as a workflow but has never run, because that needs the repository pushed.
 
+### Committed — 2026-09-03
+
+The rewrite is on `rewrite/typescript-tui` as a single commit: **1,130 files, 24,435 insertions**, with `.old/` preserving the previous scripts. `master` still points at `8ef0332`, so nothing has been overwritten and the old tool remains exactly where it was until the branch is merged deliberately.
+
+Verified rather than assumed: a **clean clone of the branch** passes `deno task check` with zero type errors and all **513 tests**, which is the check that matters — it proves the commit is self-contained and does not depend on anything left behind in a working tree. Executable bits survived the commit (688 catalog scripts, all `100755`), which git records and would otherwise silently drop.
+
+**What committing unblocks:** the cross-OS CI workflow has existed for days and has never run, because it needs the repository pushed. That workflow is the only route to executing the 70 macOS and 69 Windows entries, which remain the project's largest untested surface. Pushing this branch is what turns that from a plan into evidence.
+
 ### Smaller known gaps
 ASCII logo/banner; progress view has no live script output, no elapsed time, and no way to cancel a running plan; mouse clicks don't work in Ghostty (third-party `ink-mouse`/SGR gap, keyboard is the reliable baseline); the "is this the best install method" catalog audit is incomplete.
 
@@ -855,31 +863,11 @@ A `deno task compile` now makes this repeatable, and four tests in `src/startup/
   - Tests: N/A as a unit test — success is verified by the CI cross-OS smoke test (Phase 9) actually running the compiled binary on all three runners.
 - [x] macOS/Linux bootstrap one-liner with checksum verification (replacing the current unverified `curl | bash`). **Done** — see above; the same verification path, and it uses `shasum -a 256` where `sha256sum` is absent (macOS).
   - Tests: checksum-verification logic rejects a tampered/mismatched fixture download and accepts a matching one.
-- [~] Release process: versioning, changelog generation, binary signing/checksums. **Mostly done**: `.github/workflows/release.yml` builds all six targets on a tag, publishes one `SHA256SUMS` generated from the artifacts actually being released, generates release notes, and attaches signed build provenance via GitHub's OIDC identity so a downloader can verify the binaries came from this workflow. **Still missing: real code-signing.** Provenance is not the same thing — macOS Gatekeeper and Windows SmartScreen need vendor certificates (an Apple Developer ID, an Authenticode certificate), which a repository cannot self-issue. Documented rather than pretended away.
-  - Tests: version-string parsing/comparison logic (shared with 1.11) is covered there; the release packaging step itself is **integration/manual** (exercised by actually cutting a release).
-
-**Phase 9 documentation and CI — 2026-09-02.**
-
-**README rewritten.** The previous one claimed "early build — the catalog loader and validator are implemented", which had been wrong for weeks. It now documents the tool as it is: what the interface looks like, the desired-state model (a checked box means "this should be on my machine", which is the one idea a user has to understand), the keys, the catalog layout and detect exit-code contract, what the tool will and will not do with elevated access, and a Status section naming the real gaps rather than implying none exist.
-
-**CONTRIBUTING.md** covers adding an entry, the exit-code contract, and the two rules the test suite enforces (no `sudo` in `detect.sh`; package-manager entries must implement exit 2). It is written around the failures this project actually shipped — re-run safety, never overwriting user-owned files, refusing rather than damaging, failing with a sentence instead of exit 127 — and tells contributors to verify identifiers against the live registries, because every category added so far has contained at least one wrong guess.
-
-**SECURITY.md** states the elevation model, the trust boundaries (bundled catalog, overlay repos, URL-loaded profiles all run with your privileges), the deliberate limits that look like missing features but are not (private keys are never deleted, removals stop rather than take collateral, SSH hardening refuses without a key), and the known gaps — unexecuted macOS/Windows entries, unsigned binaries, and the raw-mode terminal on external `kill`.
-
-**Two CI workflows.** `ci.yml` runs type-check, lint, format-check, the full test suite, catalog schema validation, the convention tests, a `bash -n` parse of all 532 catalog scripts, and cross-compiles all five targets on every push. `catalog-lifecycle.yml` is the fix for the largest verification gap: it runs the full `detect → install → detect → install-again → remove → detect` cycle on **real macOS and Windows runners**, and separately executes the compiled binary natively on each OS — something never done for those platforms. It is weekly and manually dispatchable rather than per-PR, because these install real software from third-party endpoints and a flaky vendor should not teach people to ignore red builds.
-
-**A real defect found by running the workflow's own logic before trusting it**: on GitHub's Linux runners there is no flatpak and no Flathub remote, so every flatpak entry — and every AppImage entry, since those install through Gear Lever which is itself a flatpak — would have failed permanently. The workflow now installs both first. Validated by executing the lifecycle loop verbatim against real entries in the container: `jq` and `cmake` passed cleanly, and the loop correctly reported the failing entry rather than passing silently.
-
-**Documentation drift found and fixed — 2026-09-02.** `PROJECT_DEFINITION.md`, the authoritative "what the tool does" document and the one cited as `§n` throughout this file, had silently fallen out of step with the implementation. It still described `cleanup` as a live kind (zero entries use it), still specified a strictly-subtractive **Cleanup profile**, and never mentioned desired-state selection at all — the single most important concept a user has to understand. §2 now leads with desired state, records that `cleanup` is unused and why, and states plainly that **the Cleanup persona is not built because it conflicts with additive-only profiles**: removing software is unchecking, and a profile that could uncheck things would be a profile that could uninstall things. That conflict needs either a separate deselect mechanism or an explicit subtractive-profile concept; it is recorded rather than papered over. §14 also now documents the deliberate reversal asymmetries (SSH keys never deleted, removals that would take collateral are skipped).
-
-`PLATFORM_EQUIVALENTS.md` was checked for the same drift and is fine — it maps *which software* per platform, not how it is installed, so the install-method changes do not affect it.
-
-**Two documents added** that were missing rather than stale: `TROUBLESHOOTING.md`, written entirely from failures that actually occurred (wrecked terminal after an external kill, declined sudo, missing flatpak, collateral-removal skips, unreadable config, timeouts), and `ARCHITECTURE.md`, which maps the modules and explains the decisions that look wrong without their history — the deliberate script duplication, polling for terminal size, elevated scripts keeping the controlling terminal, and the compiled binary extracting its own catalog.
-
-**Still open in this phase: `LICENSE`.** Deliberately not chosen — picking a licence assigns rights and is the project owner's decision, not something to guess at. For a tool meant to be used and forked by anyone, MIT or Apache-2.0 are the conventional choices (Apache-2.0 additionally grants patent rights); GPL-3.0 if derivative works should stay open. Say which and it takes a minute.
-
-## Phase 9 — Project sustainability
-
+- [x] Release process: versioning, changelog generation, binary signing/checksums. **Done, with signing prepared rather than active.**
+  - `release.yml` builds all six targets on a tag, publishes one `SHA256SUMS` generated from the artefacts actually being released, and attaches build provenance signed with GitHub's OIDC identity.
+  - **Versioning fixed** (2026-09-03): the workflow now stamps `src/version.ts` from the tag before compiling. Previously every build carried a hardcoded `0.1.0`, which would have made the update check tell users of every later release that they were out of date.
+  - **Signing is wired and inert.** Windows Authenticode via `osslsigncode` on the Linux runner; macOS `codesign` plus `notarytool` on a macOS runner, importing into a throwaway keychain so the key is not left reachable by later steps. Both gated on the `SIGNING_ENABLED` repository variable: off, and signing is skipped and the release publishes unsigned; on with a secret missing, the build **fails deliberately** rather than publishing something presented as signed when it is not. Required secrets are documented in `SECURITY.md`.
+  - **Still blocked on certificates**, which cannot be self-issued. That is the only remaining piece.
 - [x] LICENSE — **MIT**, added 2026-09-02 under the repository author's name. Chosen as the conventional default for a personal tool that others may fork; swap it if you want something else, since this is a legal choice rather than a technical one.
   - Tests: N/A (not code).
 - [x] README rewrite: de-personalized, per-OS quick start, no assumptions about who's running it
