@@ -1,0 +1,7 @@
+name = "GitY"
+description = "Graphical git client for GNOME"
+website = "https://github.com/MarkDeepwell/GitY"
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux only: a GTK application with no macOS or Windows build."

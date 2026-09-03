@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Exit 0 = installed and current, 1 = not installed, 2 = update available.
-flatpak info org.gimp.GIMP &>/dev/null || exit 1
+# Presence is asked of `flatpak list`, not `flatpak info`. With two branches of the same app
+# installed — master and stable, say — `info` refuses to answer and exits non-zero, which reported
+# installed software as absent and had the tool offer to install yet another copy.
+flatpak list --columns=application 2>/dev/null | grep -qx "org.gimp.GIMP" || exit 1
 
 # Deployed commit vs the cached remote commit; "--cached" keeps this offline, and an unknown
 # remote simply reports "current" rather than inventing an update.
@@ -8,7 +11,9 @@ flatpak info org.gimp.GIMP &>/dev/null || exit 1
 scope=--user
 flatpak info --user org.gimp.GIMP &>/dev/null || scope=--system
 
-installed=$(flatpak info "$scope" --show-commit org.gimp.GIMP 2>/dev/null)
+# The update check needs one specific installation and branch. When that cannot be resolved —
+# several branches present — the honest answer is "installed, and no update is being claimed".
+installed=$(flatpak info "$scope" --show-commit org.gimp.GIMP 2>/dev/null) || exit 0
 remote=$(flatpak remote-info "$scope" --cached flathub org.gimp.GIMP --show-commit 2>/dev/null)
 if [ -n "$installed" ] && [ -n "$remote" ] && [ "$installed" != "$remote" ]; then
   exit 2

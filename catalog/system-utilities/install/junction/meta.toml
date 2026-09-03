@@ -1,0 +1,7 @@
+name = "Junction"
+description = "Chooses which application opens a link each time you click one"
+website = "https://github.com/sonnyp/Junction"
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux only: it works through the XDG desktop portal, which does not exist on macOS or Windows."

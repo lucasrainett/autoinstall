@@ -23,7 +23,7 @@ more there is shows at a glance. Press Enter to review the plan, then confirm.
 ```
 ┌──────────────────────────────────────┐┌────────────────────────────┐
 │ 📚 Catalog                          ┃││ 📋 Details                 │
-│ / (press / to search)  [1 of 91]    ┃││ Git                        │
+│ / (press / to search)  [1 of 114]    ┃││ Git                        │
 │ 🟨 🔧 dev-tools                      ┃││ Distributed version control│
 │   ✅ Git                            ┃││ https://git-scm.com        │
 │   ⬜ GitHub CLI                     │││ ● Installed · selected     │
@@ -37,7 +37,7 @@ more there is shows at a glance. Press Enter to review the plan, then confirm.
 ┌──────────────────────────────────────────────────────────────────────┐
 │ ⚡ Status                                                             │
 │ ↑↓ move · space select · / search · p profiles · ? help · Enter apply │
-│ ready — 91 entries diagnosed                                          │
+│ ready — 114 entries diagnosed                                          │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -116,9 +116,9 @@ the removal of everything on screen.
 
 ## What's in the catalog
 
-**134 entries** across 13 categories — browsers, communication, dev-tools, media, gaming, creative,
+**157 entries** across 13 categories — browsers, communication, dev-tools, media, gaming, creative,
 productivity, security, privacy, system-utilities, AI, 3D printing and quality-of-life.
-Platform coverage is 91 Linux, 71 macOS, 96 Windows; an entry simply has no folder for a platform
+Platform coverage is 114 Linux, 78 macOS, 100 Windows; an entry simply has no folder for a platform
 where the software does not exist, which is how "not applicable here" is expressed.
 
 **Six profiles** — `developer`, `privacy`, `minimal`, `infrastructure`, `gaming`, `creative` —

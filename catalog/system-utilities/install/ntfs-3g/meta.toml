@@ -1,0 +1,8 @@
+name = "NTFS support"
+description = "Read and write NTFS drives, the filesystem Windows uses"
+website = "https://github.com/tuxera/ntfs-3g"
+
+[linux]
+installMethod = "apt"
+notes = "Linux only: macOS needs a commercial driver for NTFS writes, and Windows uses NTFS natively."
+requiresElevation = true

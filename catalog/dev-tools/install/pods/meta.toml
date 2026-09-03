@@ -1,0 +1,7 @@
+name = "Pods"
+description = "Graphical manager for Podman containers"
+website = "https://github.com/marhkb/pods"
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux only: a GTK application with no macOS or Windows build. Podman Desktop is the cross-platform equivalent and has its own entry."

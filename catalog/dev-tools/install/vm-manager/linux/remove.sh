@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Remove whichever packaging is actually present. Detect recognises both, so removal has to as
+# well — otherwise unchecking this would silently do nothing on a machine that used the flatpak.
+if command -v flatpak >/dev/null 2>&1; then
+  if flatpak info --user org.gnome.Boxes &>/dev/null; then
+    flatpak uninstall --user org.gnome.Boxes -y
+    exit 0
+  fi
+  if flatpak info --system org.gnome.Boxes &>/dev/null; then
+    flatpak uninstall --system org.gnome.Boxes -y
+    exit 0
+  fi
+fi
+
 PACKAGES=("gnome-boxes")
 
 # `apt remove` silently drags out every reverse-dependency too. Measured on a real machine:

@@ -1,0 +1,7 @@
+name = "MarkText"
+description = "Distraction-free Markdown editor"
+website = "https://marktext.app/"
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux only in this catalog: MarkText ships macOS and Windows builds, but neither Homebrew nor winget packages them, so there is no unattended install path."

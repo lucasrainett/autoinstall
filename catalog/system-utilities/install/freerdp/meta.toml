@@ -1,0 +1,10 @@
+name = "FreeRDP"
+description = "Remote Desktop client for connecting to Windows machines"
+website = "https://www.freerdp.com/"
+
+[linux]
+installMethod = "apt"
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"

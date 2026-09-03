@@ -1,0 +1,7 @@
+name = "Handy"
+description = "Offline speech-to-text you can trigger anywhere with a hotkey"
+website = "https://github.com/cjpais/Handy"
+
+[linux]
+installMethod = "appimage"
+notes = "Managed through Gear Lever like every other AppImage here, so it gets a launcher entry and update tracking rather than being a loose executable."

@@ -604,6 +604,24 @@ Three decisions inside it:
 
 **Catalog: 134 entries — 91 Linux, 71 macOS, 96 Windows.**
 
+### Everything installed on the reference machine is now catalogued — 2026-09-03 (user's request)
+
+Listed what was actually installed and added all of it: **23 new entries**, taking the catalog to **157 entries — 114 Linux, 78 macOS, 100 Windows.** Every identifier was verified against Flathub, the Homebrew API or the winget manifest repository before being written, and every new entry's `detect.sh` was then run against the real machine — 23 of 23 report correctly.
+
+Equivalents were added wherever they genuinely exist: Element on all three platforms, RustDesk and Claude Desktop on macOS and Windows, Podman, QEMU, WireGuard and FreeRDP with their Homebrew and winget counterparts. Where none exists the entry is honestly single-platform: LACT drives kernel GPU interfaces, Junction works through the XDG portal, Pods and gitg and GitY are GTK applications, and Distrobox builds on host integration that exists nowhere else. **MarkText and Organic Maps ship macOS and Windows builds but neither Homebrew nor winget packages them**, so there is no unattended install path and the entry says so rather than pretending.
+
+**Two entries were dropped rather than guessed at.** Ghostty has no GitHub releases and no Linux repository this machine could name — its copy came from a downloaded `.deb` with no origin — and T3 Code has no identifiable upstream at all. Inventing a download URL for either would have produced an entry that fails on someone else's machine.
+
+**The audit found three more detection bugs, all the same shape as Steam's** — an entry that knows one packaging and is blind to the others:
+
+1. **Every flatpak entry misreported an app installed on two branches.** `flatpak info <id>` refuses to answer when both `master` and `stable` are present, exits non-zero, and detect concluded "not installed" — for software installed *twice*. The tool would then have offered a third copy. Presence is now asked of `flatpak list`, which is unambiguous; the update comparison is skipped when a single branch cannot be resolved, because "installed, and no update is being claimed" is the honest answer. **50 detect scripts rewritten.**
+2. **`vm-manager` reported GNOME Boxes absent** while the flatpak was installed, because it only checked the apt package.
+3. **`winboat` reported absent** while installed from its `.deb`, because the entry only knew the AppImage.
+
+All three now recognise both packagings and remove whichever is present — an entry that can detect two packagings but remove only one makes unchecking silently do nothing.
+
+That is the third distinct flatpak ambiguity this project has hit: **remotes** (flathub in two installations), **installations** (system and user), and now **branches**. Each produced a confident, wrong answer rather than an error, which is what made them expensive to find.
+
 ### Smaller known gaps
 ASCII logo/banner; progress view has no live script output, no elapsed time, and no way to cancel a running plan; mouse clicks don't work in Ghostty (third-party `ink-mouse`/SGR gap, keyboard is the reliable baseline); the "is this the best install method" catalog audit is incomplete.
 

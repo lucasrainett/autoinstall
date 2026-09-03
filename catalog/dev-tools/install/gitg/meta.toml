@@ -1,0 +1,7 @@
+name = "gitg"
+description = "GNOME's git repository viewer"
+website = "https://wiki.gnome.org/Apps/Gitg"
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux only: a GTK application with no macOS or Windows build."

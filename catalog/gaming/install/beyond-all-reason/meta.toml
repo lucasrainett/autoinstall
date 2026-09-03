@@ -1,0 +1,7 @@
+name = "Beyond All Reason"
+description = "Free real-time strategy game"
+website = "https://www.beyondallreason.info/"
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux entry only: the Windows and macOS builds are delivered through the game's own launcher rather than a package manager."

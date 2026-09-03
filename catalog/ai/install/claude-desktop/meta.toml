@@ -1,0 +1,14 @@
+name = "Claude Desktop"
+description = "Anthropic's desktop application for Claude"
+website = "https://claude.ai/download"
+
+[linux]
+installMethod = "apt"
+notes = "Anthropic's own apt repository at downloads.claude.ai, which is where this machine's copy came from. Separate from the Claude Code CLI, which has its own entry."
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

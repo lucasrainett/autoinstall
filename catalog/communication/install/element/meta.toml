@@ -1,0 +1,12 @@
+name = "Element"
+description = "Matrix client for encrypted chat"
+website = "https://element.io/"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

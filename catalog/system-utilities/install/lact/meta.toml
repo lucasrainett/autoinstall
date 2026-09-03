@@ -1,0 +1,7 @@
+name = "LACT"
+description = "Control panel for AMD and NVIDIA GPU fan curves, clocks and power limits"
+website = "https://github.com/ilya-zlobintsev/LACT"
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux only: it drives the amdgpu and nvidia kernel interfaces directly, which have no counterpart on macOS or Windows."
