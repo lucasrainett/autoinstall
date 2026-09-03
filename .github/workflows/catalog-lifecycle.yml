@@ -1,19 +1,21 @@
-# The fix for this project's largest verification gap: every macOS and Windows entry is currently
-# verified only against package registries and vendor docs, and has never actually been executed.
+# The fix for this project's largest verification gap: every macOS and Windows entry is verified
+# only against package registries and vendor docs, and has never actually been executed.
 # GitHub-hosted runners are real macOS (Apple Silicon) and Windows machines with admin rights, so
-# they can run the full lifecycle the Linux container harness already runs.
+# they can run the same full lifecycle the Linux container harness runs.
 #
 # Deliberately NOT a dry-run smoke test. The bugs this project has actually shipped — a gpg prompt
-# that only appears on the second run, an installer that refuses when already present — are
-# invisible to anything that does not install, re-install and remove for real.
+# that only appears on the second run, an installer that refuses when already present, a flatpak
+# command that is ambiguous when two remotes are configured — are all invisible to anything that
+# does not install, re-install and remove for real.
 name: Catalog lifecycle
 
 on:
   workflow_dispatch:
     inputs:
       entries:
-        description: "Space-separated entry keys, e.g. dev-tools/install/jq dev-tools/install/git"
-        required: true
+        description: 'Space-separated entry keys, or "all" for every entry on each platform'
+        required: false
+        default: "all"
   schedule:
     # Weekly rather than per-PR: these install real software from third-party endpoints, so a
     # failure is as likely to mean "vendor had a bad day" as "we broke something". Keeping it off
@@ -22,10 +24,13 @@ on:
 
 jobs:
   lifecycle:
-    name: ${{ matrix.os }}
+    name: Lifecycle on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    # Installing real software from real vendors is slow; the default 360-minute cap is generous
+    # but a hung installer should not hold a runner for six hours.
+    timeout-minutes: 120
     strategy:
-      fail-fast: false
+      fail-fast: false   # one platform's failure must not hide another's result
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
@@ -51,44 +56,31 @@ jobs:
             Windows) echo "dir=windows" >> "$GITHUB_OUTPUT" ;;
           esac
 
-      # detect → install → detect → install again → remove → detect.
+      # The logic lives in scripts/lifecycle.sh so it can be read, syntax-checked and run by hand
+      # against a VM — the same property every catalog script has, and for the same reason.
       #
-      # The second install is the point: it catches the re-run failures that a single pass cannot
-      # see. An entry with no folder for this platform is skipped rather than failed — a missing
-      # folder is how "not applicable here" is expressed.
+      # `shell: bash` on the Windows runner is Git Bash, which is exactly what the tool itself
+      # assumes for Windows entries, so this exercises the real execution path rather than a
+      # PowerShell approximation of it.
       - name: Run the lifecycle
+        id: run
         shell: bash
         env:
-          ENTRIES: ${{ github.event.inputs.entries || 'dev-tools/install/jq' }}
+          LIFECYCLE_LOG_DIR: lifecycle-logs
         run: |
-          set -uo pipefail
-          overall=0
-          for key in $ENTRIES; do
-            d="catalog/$key/${{ steps.plat.outputs.dir }}"
-            if [ ! -d "$d" ]; then
-              echo "::notice::$key has no ${{ steps.plat.outputs.dir }} folder — not applicable, skipping"
-              continue
-            fi
-            echo "::group::$key"
+          bash scripts/lifecycle.sh "${{ steps.plat.outputs.dir }}" \
+            ${{ github.event.inputs.entries || 'all' }}
 
-            bash "$d/detect.sh"; before=$?
-            echo "detect(before)=$before"
-
-            bash "$d/install.sh" || { echo "::error::$key install failed"; overall=1; echo "::endgroup::"; continue; }
-
-            bash "$d/detect.sh"; after=$?
-            [ "$after" -eq 0 ] || { echo "::error::$key detect did not report installed (got $after)"; overall=1; }
-
-            bash "$d/install.sh" || { echo "::error::$key is not safe to re-run"; overall=1; }
-
-            bash "$d/remove.sh" || { echo "::error::$key remove failed"; overall=1; }
-
-            bash "$d/detect.sh"; gone=$?
-            [ "$gone" -eq 0 ] && { echo "::error::$key still reports installed after removal"; overall=1; }
-
-            echo "::endgroup::"
-          done
-          exit $overall
+      # Uploaded whether the run passed or failed — a failure is precisely when the per-entry
+      # output is worth keeping, and Actions console logs are awkward to diff between weeks.
+      - name: Collect per-entry logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lifecycle-${{ matrix.os }}
+          path: lifecycle-logs/
+          retention-days: 90
+          if-no-files-found: warn
 
   binary:
     name: Run the compiled binary on ${{ matrix.os }}
@@ -105,10 +97,28 @@ jobs:
 
       # Cross-compiling produces a correctly-formatted binary but proves nothing about whether it
       # runs. This executes it natively — the step that has never been done for macOS or Windows.
+      #
+      # --dry-run on a fresh runner also exercises first-run seeding: with no saved selection it
+      # must seed from what the image already has and plan nothing, rather than proposing to strip
+      # the machine. That regression shipped once and is worth catching here.
       - name: Compile and dry-run natively
         shell: bash
         run: |
           deno task compile
           bin=dist/autoinstall
           [ "${{ runner.os }}" = "Windows" ] && bin=dist/autoinstall.exe
-          "$bin" --dry-run
+          "$bin" --dry-run | tee dry-run.txt
+
+          if grep -qE "^  remove " dry-run.txt; then
+            echo "::error::a first run on a clean machine proposed removals — first-run seeding is broken"
+            exit 1
+          fi
+
+      - name: Collect the dry-run output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dry-run-${{ matrix.os }}
+          path: dry-run.txt
+          retention-days: 90
+          if-no-files-found: warn

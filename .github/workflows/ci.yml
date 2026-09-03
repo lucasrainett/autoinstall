@@ -62,6 +62,9 @@ jobs:
           - x86_64-apple-darwin
           - aarch64-apple-darwin
           - x86_64-pc-windows-msvc
+          # Released but previously never compile-checked here, so a break in it would only have
+          # surfaced during a release build.
+          - aarch64-pc-windows-msvc
     steps:
       - uses: actions/checkout@v4
       - uses: denoland/setup-deno@v2

@@ -545,6 +545,22 @@ Verified rather than assumed: a **clean clone of the branch** passes `deno task 
 
 **What committing unblocks:** the cross-OS CI workflow has existed for days and has never run, because it needs the repository pushed. That workflow is the only route to executing the 70 macOS and 69 Windows entries, which remain the project's largest untested surface. Pushing this branch is what turns that from a plan into evidence.
 
+### CI review before release — 2026-09-03 (user's question: "is the github actions ready? will that collect logs?")
+
+`ci.yml` was ready. `catalog-lifecycle.yml` — the workflow that exists specifically to close the macOS/Windows verification gap — **was not, and would not have produced usable evidence.** Five defects:
+
+1. **The weekly run exercised one entry.** `ENTRIES` defaulted to `dev-tools/install/jq`, so the scheduled job that is supposed to verify 70 macOS and 69 Windows entries tested exactly one, on all three platforms. Now defaults to `all`.
+2. **Nothing was collected.** No artifacts, no job summary — output went to the Actions console log only, which expires and is awkward to compare between weeks. Now writes a per-entry log file, uploads them as an artifact (`if: always()`, since a failure is precisely when they are worth keeping, 90-day retention), and emits a markdown results table to the job summary.
+3. **A declined removal counted as failure.** `remove.sh` exits **3** when the collateral guard refuses to take unrelated packages with it — a correct, protective outcome. The workflow treated any non-zero exit as a failure, so the guard working as designed would have shown as a red build.
+4. **A failed removal could pass silently.** The post-removal check was `[ "$gone" -eq 0 ]`, but `detect` returns **2** for "present but outdated". An entry that removal left behind in that state reported success. Reproduced with a deliberately broken fixture: the old check passed it, the new one catches it — `still reports present after removal (detect=2)`.
+5. **`aarch64-pc-windows-msvc` was released but never compile-checked**, so a break in that target would first have appeared during a release build. CI and release matrices now match exactly, asserted by comparing the two files.
+
+Also added: the lifecycle **skips an entry already present on the runner** rather than counting it as a pass. Exercising it would have removed software the runner image shipped, and proved nothing — the install step has nothing to install. Verified locally, where it correctly refused to touch an installed `jq`.
+
+The logic moved out of the YAML into `scripts/lifecycle.sh`, so it can be read, syntax-checked and run by hand against a VM — the same property every catalog script has, for the same reason. Both paths verified in the container against purpose-built fixtures: a well-behaved entry passes, an entry whose removal silently does nothing fails.
+
+The `binary` job now also asserts that a dry-run on a **clean** runner proposes no removals, which is a direct regression test for first-run seeding — the failure that would have uninstalled 53 programs unattended.
+
 ### Smaller known gaps
 ASCII logo/banner; progress view has no live script output, no elapsed time, and no way to cancel a running plan; mouse clicks don't work in Ghostty (third-party `ink-mouse`/SGR gap, keyboard is the reliable baseline); the "is this the best install method" catalog audit is incomplete.
 
