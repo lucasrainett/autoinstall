@@ -1,0 +1,8 @@
+name = "GNOME Maps"
+description = "Map application that ships preinstalled on Ubuntu-family desktops"
+website = "https://apps.gnome.org/Maps/"
+
+[linux]
+installMethod = "apt"
+notes = "Preinstalled on most Ubuntu-family desktops, so it usually starts already selected. Unchecking it purges the package."
+requiresElevation = true

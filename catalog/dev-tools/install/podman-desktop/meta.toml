@@ -1,0 +1,12 @@
+name = "Podman Desktop"
+description = "Graphical tool for managing containers and Kubernetes, officially cross-platform"
+website = "https://podman-desktop.io"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

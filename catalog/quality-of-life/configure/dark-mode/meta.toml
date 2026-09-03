@@ -1,0 +1,14 @@
+name = "Dark mode"
+description = "Switches the desktop to its dark colour scheme"
+
+[linux]
+installMethod = "script"
+notes = "Sets the GNOME colour-scheme preference. Needs a running desktop session, so it is inert on a headless machine."
+
+[macos]
+installMethod = "script"
+notes = "Switches the system appearance to Dark."
+
+[windows]
+installMethod = "script"
+notes = "Sets the app and system theme registry values to dark."

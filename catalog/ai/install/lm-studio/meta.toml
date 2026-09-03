@@ -1,0 +1,12 @@
+name = "LM Studio"
+description = "Runs local large language models with a desktop interface"
+website = "https://lmstudio.ai/"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

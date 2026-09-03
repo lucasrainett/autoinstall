@@ -1,0 +1,8 @@
+name = "Developer system limits"
+description = "Raises inotify watchers and open-file limits, which large projects exhaust"
+website = "https://www.kernel.org/doc/Documentation/sysctl/fs.txt"
+
+[linux]
+installMethod = "script"
+notes = "Carried over from the old repo. File watchers run out silently — editors and bundlers just stop noticing changes — so the failure this prevents is one that never announces itself. Written as two drop-in files, removed by deleting exactly those files."
+requiresElevation = true

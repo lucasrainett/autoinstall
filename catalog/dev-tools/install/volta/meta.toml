@@ -1,0 +1,12 @@
+name = "Volta"
+description = "JavaScript tool manager for pinning and switching Node/npm/pnpm versions per project"
+website = "https://volta.sh"
+
+[linux]
+installMethod = "script"
+
+[macos]
+installMethod = "script"
+
+[windows]
+installMethod = "winget"

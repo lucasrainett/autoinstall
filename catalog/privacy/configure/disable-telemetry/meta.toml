@@ -1,0 +1,17 @@
+name = "Disable telemetry"
+description = "Turns off crash reporting, usage statistics, and telemetry collection, and blocks the domains that receive them"
+
+[linux]
+installMethod = "script"
+notes = "Masks the crash-reporting services, null-routes Ubuntu's telemetry domains, and turns off GNOME's usage reporting. Telemetry packages themselves are left installed — removing them belongs to a cleanup-kind entry, so this one stays cleanly reversible."
+requiresElevation = true
+
+[macos]
+installMethod = "script"
+notes = "Turns off submission of diagnostics and usage data to Apple."
+requiresElevation = true
+
+[windows]
+installMethod = "script"
+notes = "Sets the telemetry level to the minimum the edition allows and disables the data-collection scheduled tasks."
+requiresElevation = true

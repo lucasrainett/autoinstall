@@ -1,0 +1,14 @@
+name = "GitHub CLI"
+description = "Official command line tool for managing GitHub pull requests, issues, repos, and Actions"
+website = "https://cli.github.com"
+
+[linux]
+installMethod = "apt"
+notes = "Registers GitHub's own apt repo first."
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

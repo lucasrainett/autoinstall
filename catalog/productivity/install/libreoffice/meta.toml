@@ -1,0 +1,16 @@
+name = "LibreOffice"
+description = "Full office suite (documents, spreadsheets, presentations) that ships preinstalled on Ubuntu-family desktops"
+website = "https://www.libreoffice.org/"
+
+[linux]
+installMethod = "apt"
+notes = "Preinstalled on most Ubuntu-family desktops, so it usually starts already selected. Unchecking it purges the whole suite (36 packages on a stock install)."
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+notes = "Not preinstalled on macOS, so this installs it rather than removing it as the Linux side does."
+
+[windows]
+installMethod = "winget"
+notes = "Not preinstalled on Windows either — an ordinary install."

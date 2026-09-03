@@ -1,0 +1,13 @@
+name = "CMake"
+description = "Cross-platform build system generator"
+website = "https://cmake.org"
+
+[linux]
+installMethod = "apt"
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

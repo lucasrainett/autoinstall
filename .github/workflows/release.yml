@@ -1,0 +1,198 @@
+# Builds every target, publishes SHA256SUMS alongside them, and attaches build provenance.
+#
+# The checksum file is not decoration: both bootstrap scripts refuse to execute a download that is
+# missing from it or does not match. A release without SHA256SUMS is therefore unusable by them,
+# which is deliberate — an unverified binary run with the user's privileges is the one thing this
+# project should not ship.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build (must already exist)"
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true   # a partial release is worse than none: the missing target looks unsupported
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+          - aarch64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # All targets cross-compile from Linux. The catalog is embedded and extracted at startup,
+      # because a spawned bash cannot read Deno's virtual filesystem.
+      # A compiled binary has no repository to ask for its own version, so it is written into the
+      # source immediately before compiling. Without this every release reported the hardcoded
+      # placeholder, and the built-in update check told every user of every release that they were
+      # out of date — permanently, and wrongly.
+      - name: Stamp the version from the tag
+        run: |
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          VERSION="${TAG#v}"
+          printf 'export const TOOL_VERSION = "%s";\n' "$VERSION" > src/version.ts
+          printf 'export function isDevelopmentBuild(version: string = TOOL_VERSION): boolean {\n  return version.endsWith("-dev");\n}\n' >> src/version.ts
+          echo "Stamped version: $VERSION"
+
+      - name: Compile
+        run: |
+          ext=""
+          case "${{ matrix.target }}" in *windows*) ext=".exe" ;; esac
+          mkdir -p dist
+          deno compile --target ${{ matrix.target }} \
+            --allow-read --allow-run --allow-write --allow-env --allow-net \
+            --include ./catalog --include ./profiles \
+            --output "dist/autoinstall-${{ matrix.target }}${ext}" main.tsx
+
+      # Authenticode signing for the Windows binaries, done here via osslsigncode so no Windows
+      # runner is needed. Skipped cleanly when signing is switched off: an unsigned release is a
+      # documented limitation, not a reason to fail the build and leave users with no binaries.
+      - name: Sign Windows binary
+        if: contains(matrix.target, 'windows') && vars.SIGNING_ENABLED == 'true'
+        env:
+          CERT_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: |
+          if [ -z "${CERT_BASE64:-}" ]; then
+            echo "SIGNING_ENABLED is on but WINDOWS_CERT_BASE64 is empty. Refusing to publish a" >&2
+            echo "binary that would be presented as signed when it is not." >&2
+            exit 1
+          fi
+          sudo apt-get update -qq && sudo apt-get install -y -qq osslsigncode
+          echo "$CERT_BASE64" | base64 -d > /tmp/cert.pfx
+          bin="dist/autoinstall-${{ matrix.target }}.exe"
+          osslsigncode sign \
+            -pkcs12 /tmp/cert.pfx -pass "$CERT_PASSWORD" \
+            -n "autoinstall" -i "https://github.com/${{ github.repository }}" \
+            -t http://timestamp.digicert.com \
+            -in "$bin" -out "$bin.signed"
+          mv "$bin.signed" "$bin"
+          rm -f /tmp/cert.pfx
+          echo "Signed $bin"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.target }}
+          path: dist/
+
+  # macOS signing and notarisation must run on macOS: codesign and notarytool ship with Xcode and
+  # have no Linux equivalent. A separate job so the other targets are not held up, and skipped
+  # entirely until certificates exist.
+  sign-macos:
+    name: Sign and notarise macOS binaries
+    needs: build
+    if: vars.SIGNING_ENABLED == 'true'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: staging
+          merge-multiple: true
+
+      - name: Import signing certificate
+        env:
+          CERT_BASE64: ${{ secrets.APPLE_CERT_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+        run: |
+          if [ -z "${CERT_BASE64:-}" ]; then
+            echo "SIGNING_ENABLED is on but APPLE_CERT_BASE64 is empty." >&2
+            exit 1
+          fi
+          # A throwaway keychain, unlocked only for this job: importing into the runner's login
+          # keychain would leave the private key reachable by every later step.
+          echo "$CERT_BASE64" | base64 -d > /tmp/cert.p12
+          security create-keychain -p runner build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p runner build.keychain
+          security import /tmp/cert.p12 -k build.keychain -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k runner build.keychain
+          rm -f /tmp/cert.p12
+
+      - name: Sign and notarise
+        env:
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+        run: |
+          for bin in staging/autoinstall-*-apple-darwin; do
+            # --options runtime enables the hardened runtime, which notarisation requires.
+            codesign --force --timestamp --options runtime \
+              --sign "Developer ID Application: $TEAM_ID" "$bin"
+            codesign --verify --strict --verbose=2 "$bin"
+
+            # notarytool takes an archive, not a bare executable.
+            ditto -c -k --keepParent "$bin" "$bin.zip"
+            xcrun notarytool submit "$bin.zip" \
+              --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD" --wait
+            # A bare executable cannot be stapled; the notarisation ticket is fetched on first run
+            # instead, which needs the machine to be online once. Said here so nobody hunts for a
+            # staple that was never possible.
+            rm -f "$bin.zip"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-macos
+          path: staging/autoinstall-*-apple-darwin
+          overwrite: true
+
+  release:
+    name: Publish
+    # sign-macos is skipped when signing is off, and a skipped dependency would otherwise block
+    # this job — hence always(), with an explicit check that the build itself succeeded.
+    needs: [build, sign-macos]
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: staging
+          merge-multiple: true
+
+      # One checksum file covering every asset, generated from the artifacts actually being
+      # published rather than from a separate build.
+      - name: Generate SHA256SUMS
+        working-directory: staging
+        run: |
+          sha256sum autoinstall-* > SHA256SUMS
+          cat SHA256SUMS
+
+      # Signs the provenance of these exact binaries with GitHub's OIDC identity, so a downloader
+      # can verify they were built by this workflow from this repository. This is not the same as
+      # code-signing: macOS Gatekeeper and Windows SmartScreen need vendor certificates, which a
+      # repository cannot self-issue. That limitation is documented rather than pretended away.
+      - uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: staging/autoinstall-*
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          gh release create "$TAG" staging/* \
+            --repo "${{ github.repository }}" \
+            --title "$TAG" \
+            --generate-notes \
+            --verify-tag || gh release upload "$TAG" staging/* --repo "${{ github.repository }}" --clobber

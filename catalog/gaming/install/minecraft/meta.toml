@@ -1,0 +1,12 @@
+name = "Minecraft"
+description = "Official Minecraft launcher for Java and Bedrock editions"
+website = "https://www.minecraft.net/"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

@@ -1,0 +1,14 @@
+name = "AWS CLI"
+description = "Official command line interface for managing Amazon Web Services"
+website = "https://aws.amazon.com/cli"
+
+[linux]
+installMethod = "direct-download"
+notes = "Downloads the official installer zip and runs its install script, which places files under /usr/local."
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

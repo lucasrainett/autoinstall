@@ -1,0 +1,114 @@
+# The fix for this project's largest verification gap: every macOS and Windows entry is currently
+# verified only against package registries and vendor docs, and has never actually been executed.
+# GitHub-hosted runners are real macOS (Apple Silicon) and Windows machines with admin rights, so
+# they can run the full lifecycle the Linux container harness already runs.
+#
+# Deliberately NOT a dry-run smoke test. The bugs this project has actually shipped — a gpg prompt
+# that only appears on the second run, an installer that refuses when already present — are
+# invisible to anything that does not install, re-install and remove for real.
+name: Catalog lifecycle
+
+on:
+  workflow_dispatch:
+    inputs:
+      entries:
+        description: "Space-separated entry keys, e.g. dev-tools/install/jq dev-tools/install/git"
+        required: true
+  schedule:
+    # Weekly rather than per-PR: these install real software from third-party endpoints, so a
+    # failure is as likely to mean "vendor had a bad day" as "we broke something". Keeping it off
+    # the PR path stops flaky upstreams from training everyone to ignore red builds.
+    - cron: "0 4 * * 1"
+
+jobs:
+  lifecycle:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      # GitHub's Linux runners ship neither flatpak nor the Flathub remote, so without this every
+      # flatpak entry — and every AppImage entry, since those install through Gear Lever which is
+      # itself a flatpak — would fail permanently and train everyone to ignore this workflow.
+      - name: Install flatpak (Linux runners only)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq flatpak
+          sudo flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+      - name: Select the platform folder to exercise
+        id: plat
+        shell: bash
+        run: |
+          case "${{ runner.os }}" in
+            Linux)   echo "dir=linux"   >> "$GITHUB_OUTPUT" ;;
+            macOS)   echo "dir=macos"   >> "$GITHUB_OUTPUT" ;;
+            Windows) echo "dir=windows" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      # detect → install → detect → install again → remove → detect.
+      #
+      # The second install is the point: it catches the re-run failures that a single pass cannot
+      # see. An entry with no folder for this platform is skipped rather than failed — a missing
+      # folder is how "not applicable here" is expressed.
+      - name: Run the lifecycle
+        shell: bash
+        env:
+          ENTRIES: ${{ github.event.inputs.entries || 'dev-tools/install/jq' }}
+        run: |
+          set -uo pipefail
+          overall=0
+          for key in $ENTRIES; do
+            d="catalog/$key/${{ steps.plat.outputs.dir }}"
+            if [ ! -d "$d" ]; then
+              echo "::notice::$key has no ${{ steps.plat.outputs.dir }} folder — not applicable, skipping"
+              continue
+            fi
+            echo "::group::$key"
+
+            bash "$d/detect.sh"; before=$?
+            echo "detect(before)=$before"
+
+            bash "$d/install.sh" || { echo "::error::$key install failed"; overall=1; echo "::endgroup::"; continue; }
+
+            bash "$d/detect.sh"; after=$?
+            [ "$after" -eq 0 ] || { echo "::error::$key detect did not report installed (got $after)"; overall=1; }
+
+            bash "$d/install.sh" || { echo "::error::$key is not safe to re-run"; overall=1; }
+
+            bash "$d/remove.sh" || { echo "::error::$key remove failed"; overall=1; }
+
+            bash "$d/detect.sh"; gone=$?
+            [ "$gone" -eq 0 ] && { echo "::error::$key still reports installed after removal"; overall=1; }
+
+            echo "::endgroup::"
+          done
+          exit $overall
+
+  binary:
+    name: Run the compiled binary on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # Cross-compiling produces a correctly-formatted binary but proves nothing about whether it
+      # runs. This executes it natively — the step that has never been done for macOS or Windows.
+      - name: Compile and dry-run natively
+        shell: bash
+        run: |
+          deno task compile
+          bin=dist/autoinstall
+          [ "${{ runner.os }}" = "Windows" ] && bin=dist/autoinstall.exe
+          "$bin" --dry-run

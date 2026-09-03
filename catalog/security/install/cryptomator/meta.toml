@@ -1,0 +1,13 @@
+name = "Cryptomator"
+description = "Client-side encryption for cloud storage — creates encrypted vaults that work with any cloud provider"
+website = "https://cryptomator.org"
+
+[linux]
+installMethod = "appimage"
+notes = "Uses the vendor's primary Linux download. The Flathub build is sandboxed and cannot reach vaults outside the paths it is granted, so it is not used here. Integrated with Gear Lever for the launcher entry, icon, and updates."
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

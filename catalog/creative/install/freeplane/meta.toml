@@ -1,0 +1,12 @@
+name = "Freeplane"
+description = "Mind mapping and knowledge management tool"
+website = "https://www.freeplane.org/"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

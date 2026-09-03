@@ -1,0 +1,15 @@
+name = "Tailscale"
+description = "Private mesh VPN that connects your machines directly"
+website = "https://tailscale.com/"
+
+[linux]
+installMethod = "apt"
+notes = "Tailscale's own apt repo, which is their documented Linux channel. Installing does not connect the machine to anything — run `sudo tailscale up` yourself to sign in."
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+notes = "The cask is tailscale-app; the plain tailscale formula is the CLI only."
+
+[windows]
+installMethod = "winget"

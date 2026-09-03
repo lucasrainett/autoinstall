@@ -1,0 +1,12 @@
+name = "Encrypted DNS"
+description = "Encrypts DNS queries to your existing resolver when it supports it"
+website = "https://www.freedesktop.org/software/systemd/man/resolved.conf.html"
+
+[linux]
+installMethod = "script"
+notes = "Turns on opportunistic DNS-over-TLS in systemd-resolved. Deliberately does NOT change which resolver you use: overriding it with a public one would break split-horizon DNS, VPN and Tailscale MagicDNS names, and internal hostnames. The trade-off is honest — queries are encrypted only where the resolver already supports it."
+requiresElevation = true
+
+[windows]
+installMethod = "script"
+notes = "Windows 11 resolves DNS-over-HTTPS per configured server, so this enables auto-upgrade for the resolvers already in use rather than replacing them. Older builds have no support and the entry reports that rather than pretending."

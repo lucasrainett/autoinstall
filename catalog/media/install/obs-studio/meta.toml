@@ -1,0 +1,12 @@
+name = "OBS Studio"
+description = "Screen recording and live streaming studio"
+website = "https://obsproject.com/"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

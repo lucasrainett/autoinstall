@@ -1,0 +1,83 @@
+# Runs on every push and pull request. Fast checks only — the cross-OS lifecycle tests live in
+# catalog-lifecycle.yml because they install real software and take much longer.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    name: Type-check, lint, format, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - run: deno task check
+      - run: deno task lint
+      # --check rather than rewriting: CI must fail on unformatted code, not silently fix it.
+      - run: deno fmt --check src/ main.tsx
+      - run: deno task test
+
+  catalog:
+    name: Catalog conventions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # Schema validation plus the conventions that are easy to break by hand: every operation
+      # script present, the detect exit-code contract, no sudo in detect, AppImages going through
+      # Gear Lever, and the duplicated collateral guard not having drifted between copies.
+      - name: Load and validate the real catalog
+        run: deno run --allow-read --allow-run --allow-env scripts/inspect-catalog.ts
+
+      - name: Convention tests
+        run: deno test --allow-all src/catalog/bundled.test.ts src/profiles/bundled.test.ts
+
+      # A parse error here is a broken entry no unit test would catch, since the engine only ever
+      # hands these to bash at run time.
+      - name: Shell syntax of every catalog script
+        run: |
+          failed=0
+          while IFS= read -r f; do
+            bash -n "$f" || { echo "syntax error: $f"; failed=1; }
+          done < <(find catalog -name '*.sh')
+          exit $failed
+
+  compile:
+    name: Compile for ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      # All targets cross-compile from Linux. The catalog is embedded with --include; the binary
+      # extracts it at startup because a spawned `bash` cannot read Deno's virtual filesystem.
+      - name: Compile
+        run: |
+          deno compile --target ${{ matrix.target }} \
+            --allow-read --allow-run --allow-write --allow-env --allow-net \
+            --include ./catalog --include ./profiles \
+            --output "dist/autoinstall-${{ matrix.target }}" main.tsx
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: autoinstall-${{ matrix.target }}
+          path: dist/

@@ -1,0 +1,12 @@
+name = "LibreWolf"
+description = "Firefox fork with enhanced privacy defaults, no telemetry, and uBlock Origin"
+website = "https://librewolf.net"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

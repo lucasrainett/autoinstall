@@ -1,0 +1,7 @@
+name = "Gear Lever"
+description = "Manages AppImages: desktop integration, updates and removal"
+website = "https://github.com/mijorus/gearlever"
+
+[linux]
+installMethod = "flatpak"
+notes = "This catalog's AppImage entries install through Gear Lever, so it is a dependency of several of them as well as useful on its own."

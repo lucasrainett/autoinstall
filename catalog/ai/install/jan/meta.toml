@@ -1,0 +1,12 @@
+name = "Jan"
+description = "Open-source local AI assistant that runs models on your own machine"
+website = "https://jan.ai/"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

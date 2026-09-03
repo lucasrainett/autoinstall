@@ -1,0 +1,13 @@
+name = "Beeper"
+description = "Unified messaging app combining iMessage, WhatsApp, Telegram, Slack, and more into one inbox"
+website = "https://www.beeper.com"
+
+[linux]
+installMethod = "appimage"
+notes = "Integrated with Gear Lever, which manages the AppImage and adds the launcher entry, icon, and updates."
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

@@ -1,0 +1,13 @@
+name = "Git"
+description = "Distributed version control system"
+website = "https://git-scm.com"
+
+[linux]
+installMethod = "apt"
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

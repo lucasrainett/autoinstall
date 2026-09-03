@@ -1,0 +1,11 @@
+name = "Blanket"
+description = "Plays background ambient sounds to help you focus"
+website = "https://github.com/rafaelmardojai/blanket"
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux-only: there is no vendor build for macOS or Windows."
+
+[macos]
+installMethod = "homebrew"
+notes = "Blankie is the macOS counterpart to Blanket — the same idea, a different application, which is why one entry covers both."

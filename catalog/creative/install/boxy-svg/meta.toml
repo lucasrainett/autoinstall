@@ -1,0 +1,7 @@
+name = "Boxy SVG"
+description = "Vector graphics editor that works directly in the SVG format"
+website = "https://boxy-svg.com/"
+
+[linux]
+installMethod = "flatpak"
+notes = "Flathub is the vendor's Linux channel. macOS and Windows builds are sold through their own stores rather than a package manager, so they are not covered here."

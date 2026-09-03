@@ -1,0 +1,15 @@
+name = "Desktop wallpaper"
+description = "Sets a plain dark gradient wallpaper, shipped with the entry"
+website = "https://help.gnome.org/users/gnome-help/stable/look-background.html"
+
+[linux]
+installMethod = "script"
+notes = "Sets both the light and dark wallpaper keys, since GNOME picks between them by theme and setting only one leaves the other unchanged. The image ships next to the entry — no download, and the same picture on every machine."
+
+[macos]
+installMethod = "script"
+notes = "Applies to every display via AppleScript. macOS caches the desktop picture, so the entry restarts the Dock to make the change appear immediately."
+
+[windows]
+installMethod = "script"
+notes = "Writes the wallpaper path and asks Windows to reload it through SystemParametersInfo; a registry write alone does not take effect until sign-out."

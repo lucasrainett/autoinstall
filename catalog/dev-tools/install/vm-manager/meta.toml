@@ -1,0 +1,16 @@
+name = "VM Manager"
+description = "Graphical virtual machine manager — GNOME Boxes on Linux, UTM on macOS, VirtualBox on Windows"
+website = "https://gnome.org/boxes"
+
+[linux]
+installMethod = "apt"
+notes = "Installs GNOME Boxes."
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+notes = "Installs UTM."
+
+[windows]
+installMethod = "winget"
+notes = "Installs VirtualBox (Hyper-V is a built-in Windows feature instead of a separate app, so it isn't installed this way)."

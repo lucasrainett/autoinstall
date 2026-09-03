@@ -1,0 +1,12 @@
+name = "OrcaSlicer"
+description = "Slicer that prepares 3D models for printing"
+website = "https://github.com/SoftFever/OrcaSlicer"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

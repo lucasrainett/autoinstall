@@ -1,0 +1,16 @@
+name = "Thunderbird"
+description = "Email, calendar and newsgroup client that ships preinstalled on Ubuntu-family desktops"
+website = "https://www.thunderbird.net/"
+
+[linux]
+installMethod = "script"
+notes = "On Ubuntu 24.04 Thunderbird is a snap; the apt package is only a shim that fails without it. This entry therefore manages the snap, and also clears the leftover shim when removing."
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+notes = "Not preinstalled on macOS, so here this is an ordinary install rather than the debloat entry it is on Ubuntu-family Linux."
+
+[windows]
+installMethod = "winget"
+notes = "Not preinstalled on Windows either — an ordinary install."

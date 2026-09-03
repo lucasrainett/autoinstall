@@ -1,0 +1,32 @@
+{
+  "nodeModulesDir": "auto",
+  "tasks": {
+    "test": "deno test --allow-read --allow-run --allow-write --allow-env src/",
+    "check": "deno check src/ main.tsx",
+    "fmt": "deno fmt src/ main.tsx",
+    "lint": "deno lint src/ main.tsx",
+    "start": "deno run --allow-read --allow-run --allow-write --allow-env --allow-net main.tsx",
+    "compile": "deno compile --allow-read --allow-run --allow-write --allow-env --allow-net --include ./catalog --include ./profiles --output dist/autoinstall main.tsx"
+  },
+  "imports": {
+    "@std/toml": "jsr:@std/toml@1",
+    "@std/path": "jsr:@std/path@1",
+    "@std/assert": "jsr:@std/assert@1",
+    "@std/testing": "jsr:@std/testing@1",
+    "react": "npm:react@19",
+    "@types/react": "npm:@types/react@19",
+    "ink": "npm:ink@7",
+    "@ink-tools/ink-mouse": "npm:@ink-tools/ink-mouse@2",
+    "zod": "npm:zod@^4.5.4",
+    "ink-text-input": "npm:ink-text-input@^6.0.0"
+  },
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
+  },
+  "fmt": {
+    "indentWidth": 2,
+    "lineWidth": 100
+  }
+}

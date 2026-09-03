@@ -1,0 +1,12 @@
+name = "VLC"
+description = "Media player that plays essentially any audio or video format"
+website = "https://www.videolan.org/vlc/"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

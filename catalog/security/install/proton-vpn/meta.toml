@@ -1,0 +1,14 @@
+name = "Proton VPN"
+description = "Privacy-focused VPN with a no-logs policy and Secure Core servers"
+website = "https://protonvpn.com"
+
+[linux]
+installMethod = "apt"
+notes = "Registers Proton's own repo via a 'release' .deb first, then installs proton-vpn-gnome-desktop."
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

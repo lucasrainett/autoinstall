@@ -1,0 +1,12 @@
+name = "Heroic Games Launcher"
+description = "Open-source launcher for Epic, GOG and Amazon games"
+website = "https://heroicgameslauncher.com/"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

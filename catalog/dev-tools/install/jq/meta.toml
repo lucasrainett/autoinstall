@@ -1,0 +1,13 @@
+name = "jq"
+description = "Command-line JSON processor"
+website = "https://jqlang.org"
+
+[linux]
+installMethod = "apt"
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

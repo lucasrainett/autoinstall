@@ -1,0 +1,39 @@
+# Domains null-routed by privacy/configure/tracker-blocking.
+#
+# Deliberately short and conservative. A 100,000-line blocklist breaks sites in ways that are
+# maddening to diagnose months later, and this tool's job is not to be a content blocker — a
+# browser extension does that better, with per-site exceptions and a visible off switch. What a
+# hosts file is genuinely good at is stopping analytics that no site needs to function, from every
+# application on the machine including ones with no extension support.
+#
+# The rule for anything added here: blocking it must not break a page or an app. Endpoints that
+# double as login, CDN or deep-link infrastructure are deliberately absent — connect.facebook.net
+# breaks "log in with Facebook", graph.facebook.com breaks the apps themselves, t.co breaks links.
+# Blocking those is a legitimate choice, but not one this entry should make on the user's behalf.
+
+# --- Google analytics and ad serving ---
+google-analytics.com
+www.google-analytics.com
+ssl.google-analytics.com
+adservice.google.com
+pagead2.googlesyndication.com
+doubleclick.net
+ad.doubleclick.net
+stats.g.doubleclick.net
+
+# --- Product analytics SDKs (app telemetry, not page function) ---
+app-measurement.com
+api.mixpanel.com
+api.segment.io
+api.amplitude.com
+static.hotjar.com
+
+# --- Audience measurement ---
+scorecardresearch.com
+b.scorecardresearch.com
+quantserve.com
+
+# --- Social advertising endpoints ---
+analytics.twitter.com
+ads.linkedin.com
+an.facebook.com

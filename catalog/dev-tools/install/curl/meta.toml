@@ -1,0 +1,10 @@
+name = "curl"
+description = "Command-line tool for transferring data with URLs"
+website = "https://curl.se"
+
+[linux]
+installMethod = "apt"
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"

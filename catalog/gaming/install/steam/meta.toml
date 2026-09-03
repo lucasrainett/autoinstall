@@ -1,0 +1,9 @@
+name = "Steam"
+description = "Valve's game store and library client"
+website = "https://store.steampowered.com/"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

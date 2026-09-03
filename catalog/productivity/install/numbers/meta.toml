@@ -1,0 +1,8 @@
+name = "Numbers"
+description = "Apple's spreadsheet app, preinstalled on macOS"
+website = "https://www.apple.com/numbers/"
+
+[macos]
+installMethod = "script"
+notes = "Preinstalled on most Macs, so it usually starts already selected. Unchecking it deletes the bundle; it can be reinstalled from the App Store, which is what makes that reversible."
+requiresElevation = true

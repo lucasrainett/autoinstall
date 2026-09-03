@@ -1,0 +1,7 @@
+name = "Windows suggestions and promoted apps"
+description = "Turns off Start-menu app promotions, tips, and suggested content in Settings"
+website = "https://learn.microsoft.com/windows/configuration/windows-spotlight"
+
+[windows]
+installMethod = "script"
+notes = "Per-user policy values under HKCU, so no elevation and no effect on other accounts. Turning it back on restores Windows' defaults rather than whatever the machine shipped with."

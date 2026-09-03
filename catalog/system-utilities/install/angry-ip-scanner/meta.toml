@@ -1,0 +1,12 @@
+name = "Angry IP Scanner"
+description = "Fast network scanner for finding hosts and open ports"
+website = "https://angryip.org/"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

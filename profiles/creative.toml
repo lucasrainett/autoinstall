@@ -1,0 +1,9 @@
+name = "Creative"
+description = "Tools for image editing, vector graphics, video and audio production"
+entries = [
+  "creative/install/gimp",
+  "creative/install/boxy-svg",
+  "media/install/obs-studio",
+  "media/install/handbrake",
+  "media/install/vlc",
+]

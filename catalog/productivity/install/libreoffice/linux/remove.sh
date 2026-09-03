@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PACKAGES=("libreoffice")
+
+# The suite's own packages are expected casualties — a stock install carries 36 of them, and
+# measuring a real installation confirmed removal touches nothing outside that family (the shared
+# `ure`/`python3-uno` libraries are left to autoremove). Anything outside the family still aborts.
+EXPECTED_PREFIX="libreoffice"
+COLLATERAL=$(apt-get -s remove --purge "${PACKAGES[@]}" 2>/dev/null |
+  awk '/^Remv/ {print $2}' |
+  grep -v "^${EXPECTED_PREFIX}" || true)
+
+if [ -n "$COLLATERAL" ]; then
+  echo "Skipping removal of ${PACKAGES[*]}: apt would also remove unrelated software:"
+  printf '  - %s\n' $COLLATERAL
+  echo "Left installed. Remove those packages explicitly first if that is really intended."
+  # Exit 3, not 0: the engine verifies each action by re-running detect.sh afterwards, and this
+  # entry is deliberately still installed. Reporting success would make that check call a correct,
+  # protective decision a failure; 3 means "declined, nothing changed".
+  exit 3
+fi
+
+sudo apt remove --purge -y "${PACKAGES[@]}"
+sudo apt autoremove -y

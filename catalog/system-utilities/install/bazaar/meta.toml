@@ -1,0 +1,7 @@
+name = "Bazaar"
+description = "Browses and installs Flatpak applications"
+website = "https://github.com/kolunmi/bazaar"
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux-only by design: it manages Flatpak/AppImage/GNOME internals that exist only on Linux."

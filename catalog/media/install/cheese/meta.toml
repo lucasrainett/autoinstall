@@ -1,0 +1,8 @@
+name = "Cheese"
+description = "GNOME webcam application that ships preinstalled on Ubuntu-family desktops"
+website = "https://apps.gnome.org/Cheese/"
+
+[linux]
+installMethod = "apt"
+notes = "Preinstalled on most Ubuntu-family desktops, so it usually starts already selected. Unchecking it purges the package."
+requiresElevation = true

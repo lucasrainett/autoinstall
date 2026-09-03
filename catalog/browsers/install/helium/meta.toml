@@ -1,0 +1,14 @@
+name = "Helium"
+description = "Private, fast, and honest web browser based on Chromium"
+website = "https://helium.computer"
+
+[linux]
+installMethod = "appimage"
+notes = "Integrated with Gear Lever, which manages the AppImage and adds the launcher entry, icon, and updates."
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "direct-download"
+notes = "Downloads the official mini-installer from GitHub releases and runs it silently (/silent /install)."

@@ -1,0 +1,12 @@
+name = "Zen Browser"
+description = "Privacy-focused browser based on Firefox, with a built-in sidebar and split views"
+website = "https://zen-browser.app"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

@@ -1,0 +1,8 @@
+name = "iMovie"
+description = "Apple's video editor, preinstalled on macOS"
+website = "https://www.apple.com/imovie/"
+
+[macos]
+installMethod = "script"
+notes = "Preinstalled on most Macs, so it usually starts already selected. Unchecking it deletes the bundle; it can be reinstalled from the App Store, which is what makes that reversible."
+requiresElevation = true

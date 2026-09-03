@@ -1,0 +1,13 @@
+name = "Proton Pass"
+description = "End-to-end encrypted password manager with secure password generation and autofill"
+website = "https://proton.me/pass"
+
+[linux]
+installMethod = "deb"
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

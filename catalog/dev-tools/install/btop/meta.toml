@@ -1,0 +1,14 @@
+name = "btop"
+description = "Resource monitor showing CPU, memory, disks, network, and processes — the cross-platform equivalent of htop, which has no native Windows port"
+website = "https://github.com/aristocratos/btop"
+
+[linux]
+installMethod = "apt"
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"
+notes = "Installs btop4win, a Windows-specific fork of btop, since the original has no native Windows port."

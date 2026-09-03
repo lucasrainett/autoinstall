@@ -1,0 +1,7 @@
+name = "Minder"
+description = "Mind-mapping tool for GNOME"
+website = "https://github.com/phase1geo/Minder"
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux only: Minder is a GTK application with no macOS or Windows build."

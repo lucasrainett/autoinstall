@@ -1,0 +1,12 @@
+name = "ONLYOFFICE Desktop Editors"
+description = "Office suite with strong Microsoft Office format compatibility"
+website = "https://www.onlyoffice.com/"
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"
