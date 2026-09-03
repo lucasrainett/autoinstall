@@ -582,6 +582,28 @@ Three decisions inside it:
 
 **Unverified, like every Windows entry:** written against Microsoft's documented package names and never executed. The lifecycle workflow now defaults to exercising all of them, which is what will actually confirm the names are right.
 
+### Cross-platform equivalents audit — 2026-09-03 (user's question)
+
+*"Check if it is possible to add other platform equivalent options."* A different question from "should every app exist everywhere": this is about *different software doing the same job*, the way Solaar and Logi Options+ already share one entry. Audited every entry missing a platform and split them by whether the **behaviour** transfers.
+
+**Four gained a real counterpart:**
+
+- **`finder-tweaks` → `file-manager-tweaks`.** The behaviour — show hidden files, show extensions, prefer a list view — was never macOS-specific; only the application was. Now covers Nautilus via gsettings and File Explorer via its HKCU settings. Renamed because an id naming one platform's file manager was the reason nobody noticed the other two were missing. Linux has no extensions toggle to set: it never hides them.
+- **`power-profile` → Windows.** `powercfg /setactive` with the High performance GUID, duplicating the scheme first so it works on machines where the manufacturer's power slider hides it. **macOS deliberately omitted**: Apple Silicon offers Low Power Mode as a toggle, not a performance profile, so there is nothing equivalent to switch on.
+- **`automatic-updates` → Windows.** The interesting half is the reversal: Windows updates automatically out of the box, so the entry's job is to *undo* a policy that turned it off. Unchecking it therefore **deletes that policy** rather than setting `NoAutoUpdate=1` — unchecking a security entry must never leave the machine less safe than it was found.
+- **`system-limits` → macOS.** Only the open-file half applies, since macOS has no inotify. Installed as a LaunchDaemon rather than a bare `launchctl limit`, which does not survive a reboot — an entry whose effect quietly disappears overnight is worse than one that never applied. Removal says plainly that the raised limit persists until the next reboot, because `launchctl` cannot lower it in place.
+
+**Assessed and correctly left alone**, each for a reason rather than for lack of time:
+- `suggested-content` (Windows only) — neither GNOME nor macOS advertises applications in its menus, so there is no behaviour to port.
+- `dock-autohide` (no Linux) — GNOME, Zorin and KDE each ship a different dock; `dash-to-dock`'s schema is not even installed on the reference machine.
+- `tracker-blocking` (no Windows) — its hosts file needs an elevated shell, and Windows elevation is still unsolved.
+- `encrypted-dns` (no macOS) — needs a signed configuration profile.
+- `background-services` (no macOS) — launchd agents are SIP-protected.
+- The Linux-only **flatpak and GNOME tooling** (Flatseal, Gear Lever, Warehouse, Bazaar, Extension Manager, DistroShelf) and the WINE managers (Bottles, Lutris) have no counterpart because the concepts they manage do not exist elsewhere.
+- `ssh-hardening` on Windows would mean editing `%ProgramData%\ssh\sshd_config` for an optional server component most machines never enable — a genuine gap, but one worth doing deliberately rather than in a sweep.
+
+**Catalog: 134 entries — 91 Linux, 71 macOS, 96 Windows.**
+
 ### Smaller known gaps
 ASCII logo/banner; progress view has no live script output, no elapsed time, and no way to cancel a running plan; mouse clicks don't work in Ghostty (third-party `ink-mouse`/SGR gap, keyboard is the reliable baseline); the "is this the best install method" catalog audit is incomplete.
 
