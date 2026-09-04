@@ -1,0 +1,53 @@
+name: An entry did not work
+description: Something in the catalog failed to install, remove, or was detected wrongly.
+labels: ["entry"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Most reports about this tool are about one catalog entry on one platform, and almost all of
+        them are answerable from the entry key plus the detect exit code. The fields below ask for
+        exactly that, so the first reply can be a fix rather than a request for more information.
+  - type: input
+    id: entry
+    attributes:
+      label: Entry key
+      description: Shown in the details pane, e.g. `browsers/install/librewolf`.
+      placeholder: category/kind/id
+    validations: { required: true }
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: ["Linux (Debian/Ubuntu)", "macOS", "Windows"]
+    validations: { required: true }
+  - type: dropdown
+    id: operation
+    attributes:
+      label: Which operation
+      options: ["install", "remove", "update", "detect (wrong state shown)"]
+    validations: { required: true }
+  - type: textarea
+    id: detect
+    attributes:
+      label: What the detect script says
+      description: |
+        Every operation is a standalone script, so you can run the check by hand. From a clone:
+
+        ```
+        bash catalog/<entry key>/<platform>/detect.sh; echo "exit: $?"
+        ```
+
+        0 means installed and current, 1 means absent, 2 means an update is available. Any other
+        exit code is itself the bug.
+      render: shell
+  - type: textarea
+    id: output
+    attributes:
+      label: Output from the failing operation
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Tool version
+      description: From `autoinstall --version`.

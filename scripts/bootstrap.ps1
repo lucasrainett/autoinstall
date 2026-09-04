@@ -21,20 +21,16 @@
 [CmdletBinding()]
 param(
     [string]$Version = "latest",
+    # Kept in step with DEFAULT_UPDATE_REPO in src/version.ts, which the running tool uses to
+    # check for its own updates. Overridable so a fork publishing its own releases works
+    # unmodified.
     [string]$Repo = $env:AUTOINSTALL_REPO
 )
 
 $ErrorActionPreference = "Stop"
 
 if ([string]::IsNullOrWhiteSpace($Repo)) {
-    Write-Error @"
-No repository configured. This project's own repository name is not settled yet, so the bootstrap
-cannot guess where to download from.
-
-Set it explicitly:
-    `$env:AUTOINSTALL_REPO = 'owner/name'
-    .\bootstrap.ps1
-"@
+    $Repo = "lucasrainett/autoinstall"
 }
 
 # Git for Windows provides Git Bash, which every catalog script runs through, and git itself for
@@ -63,7 +59,23 @@ $releaseUrl = if ($Version -eq "latest") {
 }
 
 Write-Host "Resolving release from $Repo..."
-$release = Invoke-RestMethod -Uri $releaseUrl -Headers @{ "User-Agent" = "autoinstall-bootstrap" }
+# Handled explicitly rather than left to $ErrorActionPreference: a bare 404 from Invoke-RestMethod
+# does not say what was being looked for. The two realistic causes are a repository with no
+# releases yet and a wrong name, so the message names both.
+try {
+    $release = Invoke-RestMethod -Uri $releaseUrl -Headers @{ "User-Agent" = "autoinstall-bootstrap" }
+} catch {
+    Write-Error @"
+Could not find a $Version release for $Repo.
+
+Either that repository has not published a release yet, or the name is wrong.
+Check https://github.com/$Repo/releases - and if you meant a different repository:
+
+    `$env:AUTOINSTALL_REPO = 'owner/name'
+    .\bootstrap.ps1
+"@
+    exit 1
+}
 
 $binaryAsset = $release.assets | Where-Object { $_.name -eq $asset }
 $sumsAsset = $release.assets | Where-Object { $_.name -eq "SHA256SUMS" }

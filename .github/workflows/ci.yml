@@ -75,6 +75,21 @@ jobs:
           done < <(find catalog -name '*.sh')
           exit $failed
 
+  windows-invocation:
+    name: Git Bash to Windows tools
+    runs-on: windows-latest
+    # The catalog's Windows entries are bash scripts driving native .exe tools through Git Bash.
+    # Nothing else in CI exercises that bridge: the unit suite mocks the shell, and the compile
+    # jobs never run a script. TASKS.md tracked this as an open question for months because
+    # answering it needed a Windows machine.
+    steps:
+      - uses: actions/checkout@v4
+      # `shell: bash` on a Windows runner *is* Git Bash, which is exactly what the tool assumes
+      # for Windows entries — so this exercises the real execution path, not an approximation.
+      - name: Probe the native-tool bridge
+        shell: bash
+        run: bash scripts/windows-invocation-check.sh
+
   compile:
     name: Compile for ${{ matrix.target }}
     runs-on: ubuntu-latest

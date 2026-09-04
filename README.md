@@ -73,7 +73,7 @@ something just because you have not told it you want that yet.
 Requires [Deno](https://deno.com/) to run from source. Prebuilt binaries need nothing at all.
 
 ```bash
-git clone <your-fork-or-this-repo> autoinstall
+git clone https://github.com/lucasrainett/autoinstall.git
 cd autoinstall
 deno task start            # launches the interactive interface
 ```
@@ -192,9 +192,16 @@ for example) receive it from your config at run time.
 The engine, the interface and the catalog are working and used. Honest gaps, kept current in
 `TASKS.md`:
 
-- **macOS and Windows entries have never been executed** — they are verified against package
-  registries and vendor documentation, not by running them. Cross-OS CI is the planned fix, and
-  this is the largest gap in the project.
+- **macOS and Windows catalog entries have never been executed** — they are verified against
+  package registries and vendor documentation, not by running them. This is the largest gap in
+  the project. The workflow that would close it (`catalog-lifecycle.yml`, a full
+  install/re-install/remove on real runners) is written but has not run yet.
+- The **engine** underneath them *is* verified on all three platforms: CI runs the type-check and
+  the full unit suite on Linux, macOS and Windows on every push, plus a Windows job that exercises
+  the Git Bash bridge the Windows entries drive `winget`, `powershell.exe` and `reg.exe` through.
+  This is worth stating because the first such run found the tool was completely non-functional on
+  macOS — it shelled out to `setsid`, which is util-linux and does not exist there, so every
+  install, removal and detection failed. Nothing had caught it in months of Linux-only testing.
 - Entries needing a real init system (Docker, Proton VPN, the firewall, Thunderbird's snap)
   cannot be verified in the Linux container harness and need a VM.
 - **Binaries are not code-signed**, so macOS Gatekeeper and Windows SmartScreen will warn. The

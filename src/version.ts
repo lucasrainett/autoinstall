@@ -11,3 +11,20 @@ export const TOOL_VERSION = "0.0.0-dev";
 export function isDevelopmentBuild(version: string = TOOL_VERSION): boolean {
   return version.endsWith("-dev");
 }
+
+/**
+ * The repository this build checks for updates and downloads releases from.
+ *
+ * Held here rather than at each use site because three places need to agree — the update check,
+ * `scripts/bootstrap.sh` and `scripts/bootstrap.ps1` — and a release where they disagree fails in
+ * a way nobody notices until a user cannot download an upgrade.
+ *
+ * Overridable by environment so a fork is usable without editing source: a fork that publishes its
+ * own releases sets AUTOINSTALL_UPDATE_REPO and everything follows.
+ */
+export const DEFAULT_UPDATE_REPO = "lucasrainett/autoinstall";
+
+export function updateRepo(env: { get(k: string): string | undefined } = Deno.env): string {
+  const configured = env.get("AUTOINSTALL_UPDATE_REPO");
+  return configured !== undefined && configured.length > 0 ? configured : DEFAULT_UPDATE_REPO;
+}

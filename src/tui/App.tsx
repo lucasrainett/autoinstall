@@ -38,7 +38,7 @@ import { writeManifest } from "../manifest/store.ts";
 import { readManifest } from "../manifest/store.ts";
 import { importManifest } from "../manifest/apply.ts";
 import { checkForUpdate } from "../update/version.ts";
-import { isDevelopmentBuild, TOOL_VERSION } from "../version.ts";
+import { isDevelopmentBuild, TOOL_VERSION, updateRepo } from "../version.ts";
 import { entryKey } from "../catalog/types.ts";
 import { entriesForPlatform } from "../catalog/applicable.ts";
 import { formatScanProgress, progressBar, spinnerFrame } from "./spinner.ts";
@@ -517,14 +517,15 @@ export function AppShell() {
       ];
       setNotices(collected);
 
-      // Non-blocking, and opt-in: this project's own repo name isn't settled yet (Phase 8), so
-      // rather than hardcoding a guess that would 404 for everyone, the check only runs when a
-      // repo is configured via AUTOINSTALL_UPDATE_REPO ("owner/name").
-      const updateRepo = Deno.env.get("AUTOINSTALL_UPDATE_REPO");
+      // Non-blocking. This used to be opt-in behind AUTOINSTALL_UPDATE_REPO because the project's
+      // own repository name was unsettled, which meant the update check never ran for anybody --
+      // a released binary would silently never mention a newer version. The name is settled now,
+      // so it defaults to it and the environment variable remains as a fork override.
+      const repo = updateRepo();
       // Skipped for a working-copy build: its version is not a release number, so every comparison
       // would report "out of date" and the notice would appear on every single run.
-      if (updateRepo !== undefined && updateRepo.length > 0 && !isDevelopmentBuild()) {
-        checkForUpdate(TOOL_VERSION, updateRepo)
+      if (!isDevelopmentBuild()) {
+        checkForUpdate(TOOL_VERSION, repo)
           .then((r) => {
             if (r.ok && r.status === "update-available") {
               setNotices((n) => [

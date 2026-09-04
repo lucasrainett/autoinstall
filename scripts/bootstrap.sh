@@ -6,19 +6,10 @@
 # If the checksum is missing or does not match, nothing is executed.
 set -euo pipefail
 
-REPO="${AUTOINSTALL_REPO:-}"
+# Kept in step with DEFAULT_UPDATE_REPO in src/version.ts, which the running tool uses to check
+# for its own updates. Overridable so a fork publishing its own releases works unmodified.
+REPO="${AUTOINSTALL_REPO:-lucasrainett/autoinstall}"
 VERSION="${1:-latest}"
-
-if [ -z "$REPO" ]; then
-  cat >&2 <<'MSG'
-No repository configured. This project's own repository name is not settled yet, so the bootstrap
-cannot guess where to download from.
-
-Set it explicitly:
-    AUTOINSTALL_REPO=owner/name ./bootstrap.sh
-MSG
-  exit 1
-fi
 
 case "$(uname -s)" in
   Darwin) os="apple-darwin" ;;
@@ -36,7 +27,21 @@ api="https://api.github.com/repos/${REPO}/releases/${VERSION}"
 [ "$VERSION" = "latest" ] || api="https://api.github.com/repos/${REPO}/releases/tags/${VERSION}"
 
 echo "Resolving release from ${REPO}..."
-release=$(curl -fsSL "$api")
+# Handled explicitly rather than left to `set -e`: without this the script dies on curl's own
+# terse "error: 404" with no indication of what was being looked for. The two realistic causes are
+# a repository that has published no releases yet and a typo in AUTOINSTALL_REPO, and the message
+# names both.
+if ! release=$(curl -fsSL "$api" 2>/dev/null); then
+  {
+    echo "Could not find a ${VERSION} release for ${REPO}."
+    echo
+    echo "Either that repository has not published a release yet, or the name is wrong."
+    echo "Check https://github.com/${REPO}/releases — and if you meant a different repository:"
+    echo
+    echo "    AUTOINSTALL_REPO=owner/name $0"
+  } >&2
+  exit 1
+fi
 
 url=$(printf '%s' "$release" | grep -o "\"browser_download_url\": *\"[^\"]*${asset}\"" | cut -d'"' -f4 | head -1)
 sums_url=$(printf '%s' "$release" | grep -o '"browser_download_url": *"[^"]*SHA256SUMS"' | cut -d'"' -f4 | head -1)
