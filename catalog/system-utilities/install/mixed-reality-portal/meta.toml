@@ -1,6 +1,8 @@
 name = "Mixed Reality Portal"
-description = "Windows Mixed Reality headset setup app, preinstalled on Windows"
+description = "Windows Mixed Reality headset setup app, removed in Windows 11 24H2"
 website = "https://www.microsoft.com/windows/windows-mixed-reality"
+
+capabilities = ["mixed-reality"]
 
 [windows]
 installMethod = "script"

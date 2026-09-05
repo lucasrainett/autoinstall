@@ -2,6 +2,8 @@ name = "GIMP"
 description = "Raster image editor for photo retouching and image composition"
 website = "https://www.gimp.org/"
 
+capabilities = ["raster-graphics"]
+
 [linux]
 installMethod = "flatpak"
 

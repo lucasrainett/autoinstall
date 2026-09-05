@@ -1,6 +1,8 @@
 name = "Desktop wallpaper"
 description = "Sets a plain dark gradient wallpaper, shipped with the entry"
-website = "https://help.gnome.org/users/gnome-help/stable/look-background.html"
+website = "https://help.gnome.org/gnome-help/look-background.html"
+
+capabilities = ["desktop-appearance"]
 
 [linux]
 installMethod = "script"

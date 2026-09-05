@@ -1,0 +1,9 @@
+name = "VirtualBox"
+description = "Graphical virtual machine manager by Oracle"
+website = "https://www.virtualbox.org/"
+
+capabilities = ["virtualization"]
+
+[windows]
+installMethod = "winget"
+notes = "Hyper-V is a built-in Windows feature rather than a separate app, so it is not installed this way."

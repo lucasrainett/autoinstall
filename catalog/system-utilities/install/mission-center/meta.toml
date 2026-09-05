@@ -2,14 +2,8 @@ name = "Mission Center"
 description = "System monitor showing CPU, memory, disk, network and GPU usage"
 website = "https://missioncenter.io/"
 
+capabilities = ["system-monitoring"]
+
 [linux]
 installMethod = "flatpak"
-notes = "Linux-only: the macOS and Windows equivalents ship with the OS (Activity Monitor, Task Manager)."
-
-[windows]
-installMethod = "winget"
-notes = "System Informer (formerly Process Hacker), the Windows counterpart to Mission Center — a task manager with far more detail than the built-in one. macOS needs no entry: Activity Monitor ships with the system."
-
-[macos]
-installMethod = "homebrew"
-notes = "Stats is the macOS counterpart: a menu-bar system monitor. Activity Monitor ships with macOS but shows far less."
+notes = "GTK4/libadwaita, so Linux-only. Stats (macOS) and System Informer (Windows) are separate programs for the same capability and have their own entries."

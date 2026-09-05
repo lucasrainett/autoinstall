@@ -1,6 +1,8 @@
 name = "Automatic security updates"
 description = "Applies security updates automatically in the background, so a machine stays patched without being tended"
 
+capabilities = ["automatic-updates"]
+
 [linux]
 installMethod = "apt"
 notes = "Installs unattended-upgrades and enables the periodic update/upgrade switches. Only Ubuntu's security origin is applied automatically — the default — so it will not silently pull in unrelated version changes."

@@ -2,6 +2,8 @@ name = "Terraform"
 description = "Infrastructure-as-code tool by HashiCorp for defining and provisioning cloud infrastructure"
 website = "https://developer.hashicorp.com/terraform"
 
+capabilities = ["infrastructure-as-code", "cloud-cli"]
+
 [linux]
 installMethod = "apt"
 notes = "Registers HashiCorp's own apt repo first."

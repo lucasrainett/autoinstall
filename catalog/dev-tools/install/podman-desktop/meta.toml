@@ -1,6 +1,8 @@
 name = "Podman Desktop"
-description = "Graphical tool for managing containers and Kubernetes, officially cross-platform"
+description = "Desktop app for managing containers, pods, images and Kubernetes clusters"
 website = "https://podman-desktop.io"
+
+capabilities = ["container-gui", "containers"]
 
 [linux]
 installMethod = "flatpak"

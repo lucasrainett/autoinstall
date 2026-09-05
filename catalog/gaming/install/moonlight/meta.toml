@@ -1,6 +1,8 @@
 name = "Moonlight"
-description = "Streams games from a host PC to this machine"
+description = "Streams games — or the whole desktop — from a host PC to this machine"
 website = "https://moonlight-stream.org/"
+
+capabilities = ["game-streaming-client", "remote-desktop"]
 
 [linux]
 installMethod = "flatpak"

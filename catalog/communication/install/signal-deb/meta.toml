@@ -2,6 +2,8 @@ name = "Signal (deb)"
 description = "Private messenger, from Signal's own apt repository"
 website = "https://signal.org/"
 
+capabilities = ["messaging", "video-calls", "encryption"]
+
 [linux]
 installMethod = "apt"
 notes = "Signal's own apt repository — the channel signal.org documents. Preferred over Flathub, which is community-maintained rather than published by Signal."

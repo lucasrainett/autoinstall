@@ -2,6 +2,8 @@ name = "VLC"
 description = "Media player that plays essentially any audio or video format"
 website = "https://www.videolan.org/vlc/"
 
+capabilities = ["video-playback", "music-playback", "video-transcoding"]
+
 [linux]
 installMethod = "flatpak"
 

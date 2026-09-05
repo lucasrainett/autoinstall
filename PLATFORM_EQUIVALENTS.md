@@ -114,8 +114,11 @@ Zen Browser and LibreWolf are confirmed to ship official Windows and macOS build
 | Flatpak permission manager | Flatseal | N/A | N/A — Flatpak-specific concept, not solved by WSL either (§15) |
 | Flatpak app/runtime cleanup | Warehouse | N/A | N/A — Flatpak-specific concept, not solved by WSL either (§15) |
 | AppImage integration | GearLever | N/A | N/A — AppImage-specific concept |
-| Flathub storefront | Bazaar | N/A | N/A — Flathub-specific concept, not solved by WSL either (§15) |
+| App storefront | Bazaar (Flathub) | Built in — Mac App Store | Built in — Microsoft Store |
 | Zero-config VPN mesh | Tailscale | Tailscale | Tailscale |
+| Phone ↔ desktop linking | **KDE Connect** (`kdeconnect`; Zorin Connect is a fork of it) | **KDE Connect** (cask `kde-connect`, verified live) — Apple's own Continuity covers part of the role but only for iPhones | **KDE Connect** (`KDE.KDEConnect`, verified live in winget-pkgs) — Windows also ships Phone Link, which has its own entry for removal |
+| GPU tuning (fan curves, clocks, power limits) | LACT | N/A — macOS exposes no GPU tuning; Apple Silicon has no user-adjustable clocks or power limits, and fan-only tools such as Macs Fan Control do not fill this role | **MSI Afterburner** (`Guru3D.Afterburner`, verified live in winget-pkgs at `manifests/g/Guru3D/Afterburner`) — same verbs, AMD and NVIDIA alike. **Not** GPU-Z or CPU-Z: those are read-only monitors and belong to the *System monitor* row above, not here. |
+| Per-link browser chooser | Junction | **Browserosaurus** (cask `browserosaurus`, verified live on formulae.brew.sh) | **BrowserSelect** (`zumoshi.BrowserSelect`, verified live in winget-pkgs at `manifests/z/zumoshi/BrowserSelect`, v1.4.1) — not actively developed, but the best-maintained real option found. Browser Tamer appears in winget's search index with no manifest in the repo, so it was rejected. |
 
 ## 10. Gaming
 

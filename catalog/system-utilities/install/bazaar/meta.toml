@@ -1,7 +1,11 @@
 name = "Bazaar"
 description = "Browses and installs Flatpak applications"
-website = "https://github.com/kolunmi/bazaar"
+website = "https://usebazaar.org/"
+
+capabilities = ["app-storefront", "package-management"]
 
 [linux]
 installMethod = "flatpak"
-notes = "Linux-only by design: it manages Flatpak/AppImage/GNOME internals that exist only on Linux."
+notes = """
+Not applicable elsewhere for a different reason than "the concept does not exist" — it plainly does. An app storefront is exactly what the Microsoft Store and the Mac App Store are. The difference is that both ship with the operating system and are not something this tool installs, whereas Linux has no store by default and Bazaar supplies one. So the row is N/A because the need is already met, not because the need is absent.
+"""

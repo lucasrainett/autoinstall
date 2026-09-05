@@ -1,6 +1,8 @@
 name = "Skype"
-description = "Consumer Skype client that ships preinstalled on Windows"
-website = "https://www.skype.com/"
+description = "Retired Microsoft chat and calling app, shut down in May 2025 in favour of Teams Free"
+website = "https://support.microsoft.com/en-us/skype/skype-is-retiring-in-may-2025-what-you-need-to-know"
+
+capabilities = ["messaging", "video-calls"]
 
 [windows]
 installMethod = "script"

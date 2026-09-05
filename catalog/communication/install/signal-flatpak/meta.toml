@@ -2,6 +2,8 @@ name = "Signal (Flatpak)"
 description = "Private messenger, sandboxed from Flathub"
 website = "https://signal.org/"
 
+capabilities = ["messaging", "video-calls", "encryption"]
+
 [linux]
 installMethod = "flatpak"
 notes = "NOT vendor-verified: flathub.org reports verified=false for org.signal.Signal, so this build is community-maintained rather than published by Signal. Listed so a machine that already has it can manage and remove it; prefer the deb entry for new installs."

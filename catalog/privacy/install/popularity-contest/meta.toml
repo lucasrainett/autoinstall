@@ -1,6 +1,8 @@
 name = "Popularity contest (popcon)"
-description = "Submits the list of packages installed on this machine to Debian/Ubuntu"
+description = "Weekly opt-in report of which packages are installed, submitted to Debian/Ubuntu"
 website = "https://popcon.ubuntu.com/"
+
+capabilities = ["telemetry-collection"]
 
 [linux]
 installMethod = "apt"

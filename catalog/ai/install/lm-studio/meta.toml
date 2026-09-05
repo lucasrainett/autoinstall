@@ -2,6 +2,8 @@ name = "LM Studio"
 description = "Runs local large language models with a desktop interface"
 website = "https://lmstudio.ai/"
 
+capabilities = ["local-llm", "ai-chat"]
+
 [linux]
 installMethod = "flatpak"
 

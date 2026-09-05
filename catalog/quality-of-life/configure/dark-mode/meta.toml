@@ -1,6 +1,8 @@
 name = "Dark mode"
 description = "Switches the desktop to its dark colour scheme"
 
+capabilities = ["desktop-appearance"]
+
 [linux]
 installMethod = "script"
 notes = "Sets the GNOME colour-scheme preference. Needs a running desktop session, so it is inert on a headless machine."

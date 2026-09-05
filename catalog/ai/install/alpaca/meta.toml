@@ -2,6 +2,8 @@ name = "Alpaca"
 description = "Chat client for local and remote large language models"
 website = "https://github.com/Jeffser/Alpaca"
 
+capabilities = ["local-llm", "ai-chat"]
+
 [linux]
 installMethod = "flatpak"
 notes = "Linux only: a GTK application. Jan covers the same role across all three platforms and has its own entry."

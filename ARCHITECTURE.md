@@ -69,11 +69,19 @@ the only real cost.
 Ink holds stdin in raw mode. Both were tested in isolation; both work before raw mode and never
 after. Polling `Deno.consoleSize()` every 250 ms is the version that works.
 
-**Elevated scripts keep the controlling terminal; everything else is isolated with `setsid`.**
+**Elevated scripts keep the controlling terminal; everything else runs in its own process group.**
 `sudo`'s credential cache is keyed by terminal, so a session-isolated script can never match the
 credential acquired up front and fails with "a terminal is required to read the password". The
 cost is that elevated scripts have no process group to kill on timeout, so the call returns on time
 but may leave an orphan.
+
+*How* that process group is created is probed at run time, not decided by platform. `setsid` is a
+util-linux program and does not exist on macOS; assuming "not Windows" meant "has setsid" made the
+tool throw on every single spawn there, so every install, removal and detection failed. macOS uses
+Perl's `POSIX::setsid` instead, which ships with the OS and — since `exec` preserves both pid and
+process-group id — gives the identical guarantee. Windows has neither and falls back to a
+single-process kill, where an orphan holding the output pipe delays process *exit*: measured at
+8024 ms against 237 ms, so the symptom is a tool that appears to hang after finishing.
 
 **The compiled binary extracts the catalog on startup.** `deno compile --include` embeds files in a
 virtual filesystem readable only by the binary's own Deno APIs — a spawned `bash` cannot see them,

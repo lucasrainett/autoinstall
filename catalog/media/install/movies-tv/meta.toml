@@ -1,6 +1,8 @@
 name = "Movies & TV"
-description = "Microsoft's video player and rental storefront"
-website = "https://www.microsoft.com/"
+description = "Microsoft's video player for films bought before the store shut in 2025"
+website = "https://support.microsoft.com/en-us/windows/apps/watch-movies-and-tv-shows-on-the-microsoft-movies-tv-app"
+
+capabilities = ["video-playback"]
 
 [windows]
 installMethod = "script"

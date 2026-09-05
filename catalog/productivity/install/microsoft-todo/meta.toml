@@ -1,6 +1,8 @@
 name = "Microsoft To Do"
 description = "Microsoft's task list app"
-website = "https://www.microsoft.com/"
+website = "https://www.microsoft.com/en-us/microsoft-365/microsoft-to-do-list-app"
+
+capabilities = ["task-management"]
 
 [windows]
 installMethod = "script"

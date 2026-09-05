@@ -1,6 +1,8 @@
 name = "gitg"
-description = "GNOME's git repository viewer"
-website = "https://wiki.gnome.org/Apps/Gitg"
+description = "GNOME git GUI for browsing history, cloning repos and committing changes"
+website = "https://gitlab.gnome.org/GNOME/gitg"
+
+capabilities = ["version-control"]
 
 [linux]
 installMethod = "flatpak"

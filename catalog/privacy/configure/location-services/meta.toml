@@ -1,6 +1,8 @@
 name = "Disable location services"
 description = "Stops Windows and its apps asking the system for your location"
-website = "https://learn.microsoft.com/windows/privacy/manage-windows-location"
+website = "https://support.microsoft.com/en-us/windows/windows-location-service-and-privacy-3a8eee0a-5b0b-dc07-eede-2a5ca1c49088"
+
+capabilities = ["location-services"]
 
 [windows]
 installMethod = "script"

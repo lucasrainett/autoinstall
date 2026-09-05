@@ -1,6 +1,8 @@
 name = "Beeper"
-description = "Unified messaging app combining iMessage, WhatsApp, Telegram, Slack, and more into one inbox"
+description = "Unified inbox for WhatsApp, Telegram, Signal, Slack, Discord and other chat networks"
 website = "https://www.beeper.com"
+
+capabilities = ["messaging", "sms"]
 
 [linux]
 installMethod = "appimage"

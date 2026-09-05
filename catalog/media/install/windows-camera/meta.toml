@@ -1,6 +1,8 @@
 name = "Camera"
-description = "The Windows camera app"
-website = "https://www.microsoft.com/"
+description = "The Windows camera app: photos, video, and QR, document and whiteboard scanning"
+website = "https://support.microsoft.com/en-us/windows/hardware/camera/how-to-use-the-windows-camera-app"
+
+capabilities = ["webcam", "document-scanning"]
 
 [windows]
 installMethod = "script"

@@ -1,6 +1,6 @@
 # Builds every target, publishes SHA256SUMS alongside them, and attaches build provenance.
 #
-# The checksum file is not decoration: both bootstrap scripts refuse to execute a download that is
+# The checksum file is not decoration: both installers refuse to install a download that is
 # missing from it or does not match. A release without SHA256SUMS is therefore unusable by them,
 # which is deliberate — an unverified binary run with the user's privileges is the one thing this
 # project should not ship.

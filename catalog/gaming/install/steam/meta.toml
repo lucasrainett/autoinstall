@@ -2,6 +2,8 @@ name = "Steam"
 description = "Valve's game store and library client"
 website = "https://store.steampowered.com/"
 
+capabilities = ["game-store", "game-launcher", "messaging", "game-overlay", "screen-recording", "live-streaming", "game-streaming-host", "game-streaming-client"]
+
 [macos]
 installMethod = "homebrew"
 

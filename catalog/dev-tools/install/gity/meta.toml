@@ -1,6 +1,8 @@
 name = "GitY"
-description = "Graphical git client for GNOME"
-website = "https://github.com/MarkDeepwell/GitY"
+description = "Fast native browser for git history: branches, tags, commits, diffs and search"
+website = "https://github.com/deepwell/gity"
+
+capabilities = ["version-control"]
 
 [linux]
 installMethod = "flatpak"

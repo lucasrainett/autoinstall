@@ -23,7 +23,7 @@ more there is shows at a glance. Press Enter to review the plan, then confirm.
 ```
 ┌──────────────────────────────────────┐┌────────────────────────────┐
 │ 📚 Catalog                          ┃││ 📋 Details                 │
-│ / (press / to search)  [1 of 122]    ┃││ Git                        │
+│ / (press / to search)  [1 of 123]    ┃││ Git                        │
 │ 🟨 🔧 dev-tools                      ┃││ Distributed version control│
 │   ✅ Git                            ┃││ https://git-scm.com        │
 │   ⬜ GitHub CLI                     │││ ● Installed · selected     │
@@ -37,7 +37,7 @@ more there is shows at a glance. Press Enter to review the plan, then confirm.
 ┌──────────────────────────────────────────────────────────────────────┐
 │ ⚡ Status                                                             │
 │ ↑↓ move · space select · / search · p profiles · ? help · Enter apply │
-│ ready — 122 entries diagnosed                                          │
+│ ready — 123 entries diagnosed                                          │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -68,29 +68,58 @@ appears already checked: it *is* on your machine. Uncheck it to get rid of it.
 On a first run everything currently installed starts checked, so the tool never proposes removing
 something just because you have not told it you want that yet.
 
-## Quick start
+## Install
 
-Requires [Deno](https://deno.com/) to run from source. Prebuilt binaries need nothing at all.
+Linux and macOS:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/lucasrainett/autoinstall/master/install | bash
+```
+
+Windows (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/lucasrainett/autoinstall/master/install.ps1 | iex
+```
+
+That downloads the binary for your machine, checks it against the release's `SHA256SUMS` and
+refuses to install anything that does not match, then puts it on your PATH. It installs the tool
+and stops — nothing is inspected or changed until you run it. There is no runtime to install: the
+binary is self-contained.
+
+Then:
+
+```bash
+autoinstall              # the interactive interface
+autoinstall --dry-run    # print the plan and exit, touching nothing
+autoinstall --yes        # apply your saved selection without prompting
+autoinstall --yes --with-updates   # ...and update anything that has an update
+```
+
+On Windows you also need [Git for Windows](https://git-scm.com/download/win) — every catalog
+script runs through Git Bash. The installer says so if it is missing.
+
+<details>
+<summary>Other ways to install</summary>
+
+Pick a version, or install somewhere else:
+
+```bash
+VERSION=v0.2.0 curl -fsSL .../install | bash          # a specific release
+AUTOINSTALL_INSTALL_DIR=~/bin curl -fsSL .../install | bash
+curl -fsSL .../install | bash -s -- --no-modify-path  # leave shell profiles alone
+```
+
+From source, which needs [Deno](https://deno.com/):
 
 ```bash
 git clone https://github.com/lucasrainett/autoinstall.git
 cd autoinstall
-deno task start            # launches the interactive interface
+deno task start            # run it
+deno task compile          # or build a binary → dist/autoinstall
 ```
 
-Non-interactive modes:
-
-```bash
-deno task start --dry-run  # print the plan and exit, touching nothing
-deno task start --yes      # apply your saved selection without prompting
-deno task start --yes --with-updates   # ...and update anything that has an update
-```
-
-Build a self-contained binary (no Deno needed on the target machine):
-
-```bash
-deno task compile          # → dist/autoinstall
-```
+</details>
 
 ## Keys
 
@@ -107,6 +136,7 @@ deno task compile          # → dist/autoinstall
 | `u` | mark the entry under the cursor for update (only if it shows ↑) |
 | `U` | mark every selected entry that has an update |
 | `e` / `i` | export / import your selection as a manifest |
+| `r` | after a run that failed: report it on GitHub, with the error attached and your paths, hostname and credentials removed |
 | `?` | full help |
 | `Enter` | review the plan, then apply |
 | `ctrl+c` | quit |
@@ -116,9 +146,9 @@ the removal of everything on screen.
 
 ## What's in the catalog
 
-**170 entries** across 13 categories — browsers, communication, dev-tools, media, gaming, creative,
+**181 entries** across 13 categories — browsers, communication, dev-tools, media, gaming, creative,
 productivity, security, privacy, system-utilities, AI, 3D printing and quality-of-life.
-Platform coverage is 122 Linux, 78 macOS, 105 Windows; an entry simply has no folder for a platform
+Platform coverage is 123 Linux, 82 macOS, 110 Windows; an entry simply has no folder for a platform
 where the software does not exist, which is how "not applicable here" is expressed.
 
 **Six profiles** — `developer`, `privacy`, `minimal`, `infrastructure`, `gaming`, `creative` —
@@ -205,7 +235,7 @@ The engine, the interface and the catalog are working and used. Honest gaps, kep
 - Entries needing a real init system (Docker, Proton VPN, the firewall, Thunderbird's snap)
   cannot be verified in the Linux container harness and need a VM.
 - **Binaries are not code-signed**, so macOS Gatekeeper and Windows SmartScreen will warn. The
-  bootstrap scripts verify SHA256 checksums and refuse an unverified download, which is a
+  installers verify SHA256 checksums and refuse an unverified download, which is a
   different guarantee: it proves the file matches the release, not who built it.
 
 ```bash

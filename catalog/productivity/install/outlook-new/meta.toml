@@ -1,6 +1,8 @@
 name = "Outlook (new)"
-description = "The web-based Outlook client Windows installs alongside Mail"
-website = "https://www.microsoft.com/"
+description = "Microsoft's web-app mail client that replaced Windows Mail, Calendar and People"
+website = "https://support.microsoft.com/en-us/office/outlook-for-windows-the-future-of-mail-calendar-and-people-on-windows-11-715fc27c-e0f4-4652-9174-47faa751b199"
+
+capabilities = ["email", "calendar", "contacts", "task-management"]
 
 [windows]
 installMethod = "script"

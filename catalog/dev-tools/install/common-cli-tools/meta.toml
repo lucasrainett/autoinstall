@@ -2,6 +2,8 @@ name = "Common CLI tools"
 description = "The small command-line utilities almost everything else assumes: unzip, tree, tmux, htop, build tools"
 website = "https://www.gnu.org/software/"
 
+capabilities = ["terminal-tools", "build-tools", "system-monitoring"]
+
 [linux]
 installMethod = "apt"
 notes = "Carried over from the old repo's install_common_tools.sh. Entries already exist for git, curl, jq and cmake individually, so this covers only what was left: archive tools, a process viewer, tmux, and the build-essential toolchain other installers depend on."

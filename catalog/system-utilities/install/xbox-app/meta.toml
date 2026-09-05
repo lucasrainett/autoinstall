@@ -1,6 +1,8 @@
 name = "Xbox app"
-description = "Microsoft's Xbox app and Game Bar overlay, preinstalled on Windows"
-website = "https://www.xbox.com/"
+description = "Xbox game library and Game Pass store, with cloud gaming and console remote play"
+website = "https://www.xbox.com/en-US/apps/xbox-app-on-pc"
+
+capabilities = ["game-launcher", "game-store", "game-streaming-client", "messaging"]
 
 [windows]
 installMethod = "script"

@@ -1,6 +1,8 @@
 name = "Videos (Totem)"
 description = "GNOME video player that ships preinstalled on Ubuntu-family desktops"
-website = "https://apps.gnome.org/Totem/"
+website = "https://gitlab.gnome.org/GNOME/totem"
+
+capabilities = ["video-playback"]
 
 [linux]
 installMethod = "apt"

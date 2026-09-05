@@ -1,6 +1,8 @@
 name = "Zen Browser"
-description = "Privacy-focused browser based on Firefox, with a built-in sidebar and split views"
+description = "Firefox-based browser with workspaces, split view, compact mode and vertical tabs"
 website = "https://zen-browser.app"
+
+capabilities = ["web-browsing"]
 
 [linux]
 installMethod = "flatpak"

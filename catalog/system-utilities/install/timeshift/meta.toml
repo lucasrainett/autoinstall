@@ -2,6 +2,8 @@ name = "Timeshift"
 description = "Filesystem snapshots you can roll back to, like System Restore"
 website = "https://github.com/linuxmint/timeshift"
 
+capabilities = ["disk-snapshots"]
+
 [linux]
 installMethod = "apt"
 notes = "Installing it does not schedule anything: Timeshift takes no snapshot until configured, which it cannot be unattended because it needs to be told which device to store them on. Worth having before a session of unchecking system packages. macOS and Windows need no entry — Time Machine and System Restore already ship with them."

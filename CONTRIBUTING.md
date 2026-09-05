@@ -124,3 +124,23 @@ extraction anchored on the wrong string.
 
 Anything touching real OS state (installing, elevation, terminal rendering) is verified by running
 it in a container and saying so, not by a unit test that mocks the interesting part away.
+
+**Assume nothing about the other two platforms.** CI runs the type-check and the full suite on
+Linux, macOS and Windows on every push, so you will find out — but the traps are worth knowing
+before you hit them, because each of these shipped:
+
+- *A POSIX tool is not a Linux tool.* `setsid` is util-linux and does not exist on macOS. Probe for
+  what you need rather than branching on `Deno.build.os !== "windows"`.
+- *`new URL(…, import.meta.url).pathname` is broken on Windows* — it yields `/C:/Users/…`, which is
+  not a path — and percent-encodes spaces everywhere. Use `fromFileUrl()`.
+- *Windows has no POSIX mode bits.* `Deno.chmod` throws there, and `Deno.stat().mode` does not
+  return null as you might expect; it reports a synthesised mode. Skip such a test with
+  `ignore: Deno.build.os === "windows"` rather than weakening it for everyone.
+- *Paths cross a namespace boundary.* Git Bash's `pwd` answers `/tmp/x` for what Deno created as
+  `D:\…\Temp\x`. Assert on what a script *did*, not on path strings it printed.
+- *Never interpolate a path into a `bash -c` string*, where `C:\Users\…` backslashes become
+  escapes. Pass it as an argv element, which is what `exec/runner.ts` does.
+
+Line endings are pinned to LF by `.gitattributes`. Do not override it: Windows entries run through
+Git Bash, and a CRLF script fails with `$'\r': command not found`, which names neither the file
+nor the cause.

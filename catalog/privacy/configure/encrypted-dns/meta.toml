@@ -1,6 +1,8 @@
 name = "Encrypted DNS"
 description = "Encrypts DNS queries to your existing resolver when it supports it"
-website = "https://www.freedesktop.org/software/systemd/man/resolved.conf.html"
+website = "https://www.freedesktop.org/software/systemd/man/latest/resolved.conf.html"
+
+capabilities = ["dns-privacy"]
 
 [linux]
 installMethod = "script"

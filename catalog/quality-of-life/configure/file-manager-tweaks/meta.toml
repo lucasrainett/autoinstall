@@ -1,6 +1,8 @@
 name = "File manager defaults"
 description = "Shows hidden files and file extensions, and uses a list view, in whichever file manager this platform ships"
-website = "https://support.apple.com/guide/mac-help/change-finder-preferences-mchlp3011/mac"
+website = "https://support.apple.com/guide/mac-help/change-finder-settings-mchlp2803/mac"
+
+capabilities = ["desktop-appearance", "file-management"]
 
 [macos]
 installMethod = "script"

@@ -2,6 +2,8 @@ name = "Tailscale"
 description = "Private mesh VPN that connects your machines directly"
 website = "https://tailscale.com/"
 
+capabilities = ["mesh-vpn", "vpn", "ssh", "file-transfer"]
+
 [linux]
 installMethod = "apt"
 notes = "Tailscale's own apt repo, which is their documented Linux channel. Installing does not connect the machine to anything — run `sudo tailscale up` yourself to sign in."

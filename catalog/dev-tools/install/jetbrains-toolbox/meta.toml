@@ -2,6 +2,8 @@ name = "JetBrains Toolbox"
 description = "Manages installs and updates for JetBrains IDEs (IntelliJ IDEA, PyCharm, WebStorm, etc.)"
 website = "https://www.jetbrains.com/toolbox-app"
 
+capabilities = ["ide-management"]
+
 [linux]
 installMethod = "direct-download"
 notes = "Downloads the official tarball and extracts it to ~/.local/share/JetBrains/Toolbox, symlinked from ~/.local/bin/jetbrains-toolbox."

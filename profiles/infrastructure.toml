@@ -5,6 +5,10 @@ entries = [
   "dev-tools/install/terraform",
   "dev-tools/install/docker",
   "dev-tools/install/podman-desktop",
-  "dev-tools/install/vm-manager",
+  # One VM manager per platform — GNOME Boxes, UTM and VirtualBox are different programs, so
+  # they are different entries. Whichever applies to the machine is the one that acts.
+  "dev-tools/install/gnome-boxes",
+  "dev-tools/install/utm",
+  "dev-tools/install/virtualbox",
   "dev-tools/install/go",
 ]

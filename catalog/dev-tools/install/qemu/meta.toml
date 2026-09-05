@@ -2,6 +2,8 @@ name = "QEMU"
 description = "Machine emulator and virtualiser"
 website = "https://www.qemu.org/"
 
+capabilities = ["emulation", "virtualization"]
+
 [linux]
 installMethod = "apt"
 requiresElevation = true

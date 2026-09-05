@@ -2,6 +2,8 @@ name = "Performance power profile"
 description = "Switches the system power profile to performance"
 website = "https://gitlab.freedesktop.org/upower/power-profiles-daemon"
 
+capabilities = ["power-management"]
+
 [linux]
 installMethod = "script"
 notes = "Carried over from the old repo. Reverting sets 'balanced', which is the default on every machine that ships power-profiles-daemon — the previous value was never recorded, so a known default is the only honest reversal. On a laptop this costs battery life."

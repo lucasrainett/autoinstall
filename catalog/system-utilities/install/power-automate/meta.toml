@@ -1,6 +1,8 @@
 name = "Power Automate"
 description = "Microsoft's desktop automation tool, preinstalled on Windows 11"
-website = "https://www.microsoft.com/"
+website = "https://www.microsoft.com/en-us/power-platform/products/power-automate"
+
+capabilities = ["desktop-automation"]
 
 [windows]
 installMethod = "script"

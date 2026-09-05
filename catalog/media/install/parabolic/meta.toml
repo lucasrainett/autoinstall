@@ -2,6 +2,8 @@ name = "Parabolic"
 description = "Downloads video and audio from the web, built on yt-dlp"
 website = "https://github.com/NickvisionApps/Parabolic"
 
+capabilities = ["media-download"]
+
 [linux]
 installMethod = "flatpak"
 notes = "Flathub is the vendor's recommended Linux channel."

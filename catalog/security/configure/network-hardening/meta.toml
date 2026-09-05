@@ -1,6 +1,8 @@
 name = "Network hardening"
 description = "Kernel network settings that ignore redirects, source routing and spoofed addresses"
-website = "https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt"
+website = "https://docs.kernel.org/networking/ip-sysctl.html"
+
+capabilities = ["system-hardening"]
 
 [linux]
 installMethod = "script"

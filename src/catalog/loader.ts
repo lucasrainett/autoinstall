@@ -1,6 +1,7 @@
 import { parse as parseToml } from "@std/toml";
 import { z } from "zod";
 import { parseTomlOrThrow, parseWith, strictTable } from "../schema/parse.ts";
+import { CAPABILITY_NAMES } from "./capabilities.ts";
 import {
   type CatalogEntry,
   type CatalogIssue,
@@ -31,6 +32,9 @@ const EntryMetaSchema = strictTable({
   name: z.string().min(1, "is required and must be a non-empty string"),
   description: z.string().min(1, "is required and must be a non-empty string"),
   website: z.string().min(1, "if present, must be a non-empty string").optional(),
+  // A closed enum, not free strings: the whole point is comparing the same capability across
+  // platforms, and a typo silently creates a second capability that matches nothing.
+  capabilities: z.array(z.enum(CAPABILITY_NAMES)).optional(),
   destructive: z.boolean().optional(),
   linux: PlatformMetaSchema.optional(),
   macos: PlatformMetaSchema.optional(),
@@ -89,6 +93,7 @@ export function parseEntryMeta(raw: string, metaPath: string, kind: Kind): Entry
       name: fields.name,
       description: fields.description,
       website: fields.website,
+      ...(fields.capabilities !== undefined ? { capabilities: fields.capabilities } : {}),
       ...optionalFlags,
     };
   }
@@ -97,6 +102,7 @@ export function parseEntryMeta(raw: string, metaPath: string, kind: Kind): Entry
     name: fields.name,
     description: fields.description,
     ...(fields.website !== undefined ? { website: fields.website } : {}),
+    ...(fields.capabilities !== undefined ? { capabilities: fields.capabilities } : {}),
     ...optionalFlags,
   };
 }

@@ -1,6 +1,8 @@
 name = "Terminal advertising"
 description = "Turns off Ubuntu's message-of-the-day adverts and Pro upsell in apt output"
-website = "https://manpages.ubuntu.com/manpages/noble/man1/pro.1.html"
+website = "https://documentation.ubuntu.com/pro-client/en/latest/howtoguides/disable_enable_apt_news/"
+
+capabilities = ["advertising"]
 
 [linux]
 installMethod = "script"

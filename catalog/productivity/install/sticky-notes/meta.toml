@@ -1,6 +1,8 @@
 name = "Sticky Notes"
 description = "The Windows desktop notes app"
-website = "https://www.microsoft.com/"
+website = "https://support.microsoft.com/en-us/topic/get-started-with-sticky-notes-86b36182-fdf5-4f9b-af7a-2846f83263f5"
+
+capabilities = ["note-taking"]
 
 [windows]
 installMethod = "script"

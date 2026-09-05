@@ -1,6 +1,8 @@
 name = "Firewall"
 description = "Enables the operating system's built-in firewall, blocking unsolicited incoming connections"
 
+capabilities = ["firewall", "system-hardening"]
+
 [linux]
 installMethod = "script"
 notes = "Uses ufw, installing it if absent. Existing rules are left untouched; only the enabled state changes."

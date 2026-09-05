@@ -2,6 +2,8 @@ name = "HandBrake"
 description = "Video transcoder for converting media to widely supported formats"
 website = "https://handbrake.fr/"
 
+capabilities = ["video-transcoding"]
+
 [linux]
 installMethod = "flatpak"
 

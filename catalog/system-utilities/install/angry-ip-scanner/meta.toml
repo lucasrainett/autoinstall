@@ -2,6 +2,8 @@ name = "Angry IP Scanner"
 description = "Fast network scanner for finding hosts and open ports"
 website = "https://angryip.org/"
 
+capabilities = ["network-scanning"]
+
 [linux]
 installMethod = "flatpak"
 

@@ -1,6 +1,8 @@
 name = "Claude Desktop"
 description = "Anthropic's desktop application for Claude"
-website = "https://claude.ai/download"
+website = "https://claude.com/download"
+
+capabilities = ["ai-chat", "ai-coding-assistant", "desktop-automation"]
 
 [linux]
 installMethod = "apt"

@@ -2,6 +2,8 @@ name = "Go"
 description = "Programming language and toolchain by Google, for building fast, statically typed, compiled programs"
 website = "https://go.dev"
 
+capabilities = ["programming-language", "build-tools"]
+
 [linux]
 installMethod = "direct-download"
 notes = "Downloads the latest release tarball and extracts it to /usr/local/go, adding it to PATH via ~/.bashrc."

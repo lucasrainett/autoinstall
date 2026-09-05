@@ -1,6 +1,8 @@
 name = "WinBoat"
-description = "Runs Windows applications on Linux inside a managed Windows VM"
+description = "Runs Windows apps on Linux in a containerized Windows VM with desktop integration"
 website = "https://github.com/TibixDev/winboat"
+
+capabilities = ["windows-compatibility", "virtualization", "containers"]
 
 [linux]
 installMethod = "appimage"

@@ -2,6 +2,8 @@ name = "AWS CLI"
 description = "Official command line interface for managing Amazon Web Services"
 website = "https://aws.amazon.com/cli"
 
+capabilities = ["cloud-cli", "terminal-tools"]
+
 [linux]
 installMethod = "direct-download"
 notes = "Downloads the official installer zip and runs its install script, which places files under /usr/local."

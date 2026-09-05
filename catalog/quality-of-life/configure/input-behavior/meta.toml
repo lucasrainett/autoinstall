@@ -1,6 +1,8 @@
 name = "Keyboard and trackpad behaviour"
 description = "Tap-to-click, two-finger scrolling, and a faster key repeat"
-website = "https://help.gnome.org/users/gnome-help/stable/mouse-touchpad-click.html"
+website = "https://help.gnome.org/gnome-help/mouse-touchpad-click.html"
+
+capabilities = ["input-configuration"]
 
 [linux]
 installMethod = "script"

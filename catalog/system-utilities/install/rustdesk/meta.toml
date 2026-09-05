@@ -2,6 +2,8 @@ name = "RustDesk"
 description = "Self-hostable remote desktop, an open alternative to TeamViewer"
 website = "https://rustdesk.com/"
 
+capabilities = ["remote-desktop", "remote-assistance", "file-transfer"]
+
 [linux]
 installMethod = "flatpak"
 

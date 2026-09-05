@@ -1,7 +1,9 @@
 name = "LACT"
-description = "Control panel for AMD and NVIDIA GPU fan curves, clocks and power limits"
+description = "Control panel for AMD, NVIDIA and Intel GPU fan curves, clocks and power limits"
 website = "https://github.com/ilya-zlobintsev/LACT"
+
+capabilities = ["gpu-tuning", "system-monitoring"]
 
 [linux]
 installMethod = "flatpak"
-notes = "Linux only: it drives the amdgpu and nvidia kernel interfaces directly, which have no counterpart on macOS or Windows."
+notes = "LACT drives the amdgpu and nvidia kernel interfaces directly. MSI Afterburner is the Windows program for the same capability and has its own entry; macOS exposes no GPU tuning at all, so nothing fills it there."

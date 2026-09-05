@@ -39,6 +39,9 @@ import { readManifest } from "../manifest/store.ts";
 import { importManifest } from "../manifest/apply.ts";
 import { checkForUpdate } from "../update/version.ts";
 import { isDevelopmentBuild, TOOL_VERSION, updateRepo } from "../version.ts";
+import { issueUrl } from "../report/issue.ts";
+import { currentRedactionContext } from "../report/redact.ts";
+import { openInBrowser } from "../report/open.ts";
 import { entryKey } from "../catalog/types.ts";
 import { entriesForPlatform } from "../catalog/applicable.ts";
 import { formatScanProgress, progressBar, spinnerFrame } from "./spinner.ts";
@@ -1069,6 +1072,7 @@ export function AppShell() {
                   {screen === "done" && (
                     <DoneSummary
                       results={results}
+                      platform={platform}
                       onDismiss={() =>
                         guard("refreshing diagnostics", async () => {
                           setScreen("browse");
@@ -1264,6 +1268,7 @@ function HelpScreen() {
     ["n", "notices — startup checks, warnings, and conflicts"],
     ["e", "export your selection to a shareable manifest"],
     ["i", "import a selection from a manifest"],
+    ["r", "on the summary after a run: report a failure on GitHub"],
     ["?", "this help"],
     ["Enter", "review the plan, then apply it"],
     ["ctrl+c", "quit"],
@@ -1315,13 +1320,47 @@ function DismissableScreen(
 }
 
 function DoneSummary(
-  { results, onDismiss }: { results: readonly ExecutionResult[]; onDismiss: () => void },
+  { results, onDismiss, platform }: {
+    results: readonly ExecutionResult[];
+    onDismiss: () => void;
+    platform: Platform | undefined;
+  },
 ) {
-  useInput((_input, key) => {
-    if (key.return || key.escape) onDismiss();
+  // "opening" / a URL / an error, shown in place of the hint once `r` is pressed. A failure to
+  // open a browser is not fatal: the URL is printed so it can be copied, which is the only thing
+  // that works over SSH anyway.
+  const [reportState, setReportState] = useState<
+    { kind: "idle" } | { kind: "opening" } | { kind: "manual"; url: string; truncated: boolean }
+  >({ kind: "idle" });
+
+  const failures = results.filter((r) => r.status === "failed");
+
+  useInput((input, key) => {
+    if (key.return || key.escape) {
+      onDismiss();
+      return;
+    }
+    // Only offered when there is something to report and we know which platform folder failed —
+    // an issue that cannot say which platform it happened on is not actionable.
+    if (input === "r" && failures.length > 0 && platform !== undefined) {
+      const first = failures[0];
+      const { url, truncated } = issueUrl(updateRepo(), {
+        key: first.key,
+        action: first.key.split("/")[1] ?? "install",
+        platform,
+        error: first.message ?? "(no detail captured)",
+        output: failures.map((f) => `${f.key}: ${f.message ?? ""}`).join("\n"),
+        toolVersion: TOOL_VERSION,
+      }, currentRedactionContext());
+      setReportState({ kind: "opening" });
+      openInBrowser(url).then((opened) =>
+        setReportState(opened && !truncated ? { kind: "idle" } : { kind: "manual", url, truncated })
+      );
+    }
   });
+
   const succeeded = results.filter((r) => r.status === "success").length;
-  const failed = results.filter((r) => r.status === "failed").length;
+  const failed = failures.length;
   const skipped = results.filter((r) => r.status === "skipped").length;
   return (
     <Box flexDirection="column">
@@ -1345,6 +1384,31 @@ function DoneSummary(
       {results.filter((r) => r.status === "success" && r.message !== undefined).map((r) => (
         <Text key={r.key} color="yellow">{OUTCOME.warning} {r.key} — {r.message}</Text>
       ))}
+      {failed > 0 && reportState.kind === "idle" && (
+        <Box marginTop={1}>
+          <Text dimColor>
+            Press <Text bold>r</Text>{" "}
+            to report this on GitHub — it fills in an issue with the error, with your paths,
+            hostname and any credentials removed. Nothing is sent until you press Submit there.
+          </Text>
+        </Box>
+      )}
+      {reportState.kind === "opening" && (
+        <Box marginTop={1}>
+          <Text dimColor>Opening your browser…</Text>
+        </Box>
+      )}
+      {reportState.kind === "manual" && (
+        <Box marginTop={1} flexDirection="column">
+          {reportState.truncated && (
+            <Text color="yellow">
+              {OUTCOME.warning} The log was too long for a link, so only the end of it is included.
+            </Text>
+          )}
+          <Text dimColor>Open this to file the report:</Text>
+          <Text>{reportState.url}</Text>
+        </Box>
+      )}
       <Box marginTop={1}>
         <Text dimColor>Press Enter or Esc to go back</Text>
       </Box>

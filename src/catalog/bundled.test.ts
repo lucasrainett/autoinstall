@@ -4,6 +4,7 @@
 
 import { assert, assertEquals } from "@std/assert";
 import { loadCatalog } from "./loader.ts";
+import { entryKey } from "./types.ts";
 import { validateCatalog } from "./validator.ts";
 import { fromFileUrl } from "@std/path";
 
@@ -399,6 +400,29 @@ Deno.test("bundled catalog - entries that edit a shared file write a delimited, 
     }
   }
   assert(editors.length > 0, "found no hosts-editing entries — the test is not looking anywhere");
+});
+
+Deno.test("bundled catalog - every entry declares at least one capability", async () => {
+  // Capabilities are what make "is this available on the other platforms?" a query instead of a
+  // judgement call — see src/catalog/capabilities.ts for the wrong answers that produced. An
+  // untagged entry is invisible to that query, so it silently stops working as coverage grows.
+  const { entries } = await loadCatalog(BUNDLED_CATALOG_ROOT);
+  const untagged = entries
+    .filter((e) => (e.meta.capabilities ?? []).length === 0)
+    .map((e) => entryKey(e));
+  assertEquals(untagged, [], "these entries declare no capabilities");
+});
+
+Deno.test("bundled catalog - no entry claims the same capability twice", async () => {
+  const { entries } = await loadCatalog(BUNDLED_CATALOG_ROOT);
+  for (const entry of entries) {
+    const caps = entry.meta.capabilities ?? [];
+    assertEquals(
+      new Set(caps).size,
+      caps.length,
+      `${entryKey(entry)} repeats a capability: ${caps.join(", ")}`,
+    );
+  }
 });
 
 Deno.test({

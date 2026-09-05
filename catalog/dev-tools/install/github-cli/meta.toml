@@ -2,6 +2,8 @@ name = "GitHub CLI"
 description = "Official command line tool for managing GitHub pull requests, issues, repos, and Actions"
 website = "https://cli.github.com"
 
+capabilities = ["version-control", "terminal-tools"]
+
 [linux]
 installMethod = "apt"
 notes = "Registers GitHub's own apt repo first."

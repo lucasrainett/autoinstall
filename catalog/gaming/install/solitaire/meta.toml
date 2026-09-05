@@ -1,6 +1,8 @@
 name = "Solitaire Collection"
 description = "Microsoft's card games, which show advertising"
-website = "https://www.microsoft.com/"
+website = "https://apps.microsoft.com/detail/9wzdncrfhwd2"
+
+capabilities = ["games", "advertising"]
 
 [windows]
 installMethod = "script"

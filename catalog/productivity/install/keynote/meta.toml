@@ -1,6 +1,8 @@
 name = "Keynote"
-description = "Apple's presentation app, preinstalled on macOS"
-website = "https://www.apple.com/keynote/"
+description = "Apple's presentation app, bundled with new Macs and free from the App Store"
+website = "https://support.apple.com/keynote"
+
+capabilities = ["presentations"]
 
 [macos]
 installMethod = "script"

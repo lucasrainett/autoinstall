@@ -2,6 +2,8 @@ name = "Steam (Flatpak)"
 description = "Valve's game store and launcher, sandboxed from Flathub"
 website = "https://store.steampowered.com/"
 
+capabilities = ["game-store", "game-launcher", "messaging", "game-overlay", "screen-recording", "live-streaming", "game-streaming-host", "game-streaming-client", "windows-compatibility"]
+
 [linux]
 installMethod = "flatpak"
 notes = "The Flathub build, installed per-user. Sandboxed, which keeps its runtime separate from the system but makes reaching outside libraries harder. Listed separately from the deb because both can be installed at once."

@@ -2,6 +2,8 @@ name = "CMake"
 description = "Cross-platform build system generator"
 website = "https://cmake.org"
 
+capabilities = ["build-tools"]
+
 [linux]
 installMethod = "apt"
 requiresElevation = true

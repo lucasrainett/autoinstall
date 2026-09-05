@@ -1,6 +1,8 @@
 name = "Docker"
-description = "Container runtime for building and running applications"
+description = "Container engine for building and running apps; Docker Desktop on macOS and Windows"
 website = "https://www.docker.com"
+
+capabilities = ["containers", "container-gui"]
 
 [linux]
 installMethod = "apt"

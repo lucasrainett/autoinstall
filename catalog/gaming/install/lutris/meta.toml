@@ -2,6 +2,8 @@ name = "Lutris"
 description = "Game manager that handles Wine, emulators and native Linux games"
 website = "https://lutris.net/"
 
+capabilities = ["game-launcher", "windows-compatibility", "emulation"]
+
 [linux]
 installMethod = "flatpak"
 notes = "Linux-only by design: Lutris exists to run games on Linux."

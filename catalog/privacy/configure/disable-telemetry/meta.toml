@@ -1,5 +1,7 @@
 name = "Disable telemetry"
-description = "Turns off crash reporting, usage statistics, and telemetry collection, and blocks the domains that receive them"
+description = "Turns off crash reporting and usage data collection; blocks telemetry domains on Linux"
+
+capabilities = ["telemetry-collection", "tracker-blocking"]
 
 [linux]
 installMethod = "script"

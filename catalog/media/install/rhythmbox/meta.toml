@@ -1,6 +1,8 @@
 name = "Rhythmbox"
 description = "Music player that ships preinstalled on Ubuntu-family desktops"
-website = "https://wiki.gnome.org/Apps/Rhythmbox"
+website = "https://gitlab.gnome.org/GNOME/rhythmbox"
+
+capabilities = ["music-playback"]
 
 [linux]
 installMethod = "apt"

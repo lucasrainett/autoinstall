@@ -1,6 +1,8 @@
 name = "Developer system limits"
 description = "Raises inotify watchers and open-file limits, which large projects exhaust"
-website = "https://www.kernel.org/doc/Documentation/sysctl/fs.txt"
+website = "https://www.kernel.org/doc/html/latest/admin-guide/sysctl/fs.html"
+
+capabilities = ["system-limits"]
 
 [linux]
 installMethod = "script"

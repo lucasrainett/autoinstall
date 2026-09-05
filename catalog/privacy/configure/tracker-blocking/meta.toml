@@ -1,6 +1,8 @@
 name = "Block trackers system-wide"
 description = "Null-routes well-known analytics and ad-serving domains in the hosts file, for every application"
-website = "https://en.wikipedia.org/wiki/Hosts_(file)"
+website = "https://github.com/StevenBlack/hosts"
+
+capabilities = ["tracker-blocking"]
 
 [linux]
 installMethod = "script"

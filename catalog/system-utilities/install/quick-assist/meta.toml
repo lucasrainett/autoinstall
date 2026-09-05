@@ -1,6 +1,8 @@
 name = "Quick Assist"
 description = "Microsoft's remote-assistance tool"
-website = "https://www.microsoft.com/"
+website = "https://support.microsoft.com/en-us/windows/solve-pc-problems-over-a-remote-connection-b077e31a-16f4-2529-1a47-21f6a9040bf3"
+
+capabilities = ["remote-assistance", "remote-desktop"]
 
 [windows]
 installMethod = "script"

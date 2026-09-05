@@ -82,8 +82,8 @@ Stated because you should know before trusting the tool with a machine:
   With the variable off, signing is skipped and the release publishes unsigned. With it on but a
   secret missing, the build **fails deliberately** rather than publishing a binary presented as
   signed when it is not.
-- **The bootstrap scripts do verify checksums**, and refuse to run a download that has none: both
-  `scripts/bootstrap.sh` and `scripts/bootstrap.ps1` fetch `SHA256SUMS` from the release, and stop
+- **The installers do verify checksums**, and refuse to run a download that has none: both
+  `install` and `install.ps1` fetch `SHA256SUMS` from the release, and stop
   with an explanation if it is absent or does not match. That is not a substitute for signing —
   it proves the file matches what the release published, not who published it.
 - **An external `kill` can leave the terminal in raw mode.** Signal handlers do not fire while the

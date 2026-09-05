@@ -2,13 +2,11 @@ name = "Solaar"
 description = "Manager for Logitech Unifying receivers and devices"
 website = "https://pwr-solaar.github.io/Solaar/"
 
+capabilities = ["device-management", "input-configuration"]
+
 [linux]
 installMethod = "flatpak"
 notes = "Linux-only: Logitech ships Options+ on macOS and Windows instead."
-
-[macos]
-installMethod = "homebrew"
-notes = "Logi Options+ is Logitech's own macOS software; Solaar is the Linux equivalent and does not exist on macOS."
 
 [windows]
 installMethod = "winget"

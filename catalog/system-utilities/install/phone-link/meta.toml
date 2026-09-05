@@ -1,6 +1,8 @@
 name = "Phone Link"
 description = "Links an Android or iPhone to Windows for messages and calls"
-website = "https://www.microsoft.com/"
+website = "https://support.microsoft.com/en-us/windows/apps/phonelink/phone-link-requirements-and-setup"
+
+capabilities = ["phone-integration", "sms", "file-transfer"]
 
 [windows]
 installMethod = "script"

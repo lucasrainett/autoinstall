@@ -1,6 +1,8 @@
 name = "Sound Recorder"
 description = "The Windows voice recorder"
-website = "https://www.microsoft.com/"
+website = "https://support.microsoft.com/en-us/windows/apps/sound-recorder-app-for-windows-faq"
+
+capabilities = ["audio-recording"]
 
 [windows]
 installMethod = "script"

@@ -1,6 +1,8 @@
 name = "Disable update sharing"
-description = "Stops your machine uploading Windows updates to other people over the internet"
+description = "Stops your machine sharing downloaded Windows updates with other PCs"
 website = "https://learn.microsoft.com/windows/deployment/do/waas-delivery-optimization"
+
+capabilities = ["system-hardening"]
 
 [windows]
 installMethod = "script"

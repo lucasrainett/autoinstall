@@ -1,6 +1,8 @@
 name = "Reduce background services"
 description = "Disables background services a desktop machine does not normally need"
-website = "https://www.freedesktop.org/software/systemd/man/systemctl.html"
+website = "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html"
+
+capabilities = ["system-hardening"]
 
 [linux]
 installMethod = "script"

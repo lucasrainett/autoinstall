@@ -3,6 +3,7 @@
 // On-disk shape: catalog/[category]/[kind]/[id]/[platform]/[operation].sh
 // plus catalog/[category]/[kind]/[id]/meta.toml (name, description).
 
+import type { Capability } from "./capabilities.ts";
 export const KINDS = ["install", "configure", "cleanup"] as const;
 export type Kind = (typeof KINDS)[number];
 
@@ -47,6 +48,10 @@ export interface EntryMeta {
   name: string;
   description: string;
   website?: string;
+  /** What this entry lets you *do*, from the closed vocabulary in capabilities.ts. Independent of
+   * which program provides it, so the same capability can be compared across platforms — see that
+   * file's header for the errors this exists to prevent. */
+  capabilities?: readonly Capability[];
   /** Hard-to-reverse or high-impact (disk encryption, major removals, registry-level changes) —
    * flagged distinctly in the rendered plan per PROJECT_DEFINITION.md §14. Defaults to false. */
   destructive?: boolean;

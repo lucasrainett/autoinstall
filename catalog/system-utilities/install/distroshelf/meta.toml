@@ -2,6 +2,8 @@ name = "DistroShelf"
 description = "Manages Distrobox containers from a desktop interface"
 website = "https://github.com/ranfdev/DistroShelf"
 
+capabilities = ["containers", "container-gui"]
+
 [linux]
 installMethod = "flatpak"
 notes = "Linux-only by design: it manages Flatpak/AppImage/GNOME internals that exist only on Linux."

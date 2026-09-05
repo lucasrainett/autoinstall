@@ -30,13 +30,13 @@ Deno.test("updateRepo - an explicit setting wins, so a fork works unmodified", (
   assertEquals(updateRepo({ get: () => "someone/their-fork" }), "someone/their-fork");
 });
 
-Deno.test("the bootstrap scripts download from the same repository the tool updates from", async () => {
-  // Three files have to agree — src/version.ts, bootstrap.sh and bootstrap.ps1 — and a release
+Deno.test("the installers download from the same repository the tool updates from", async () => {
+  // Three files have to agree — src/version.ts, install and install.ps1 — and a release
   // where they disagree fails in a way nobody notices until a user cannot download an upgrade.
   // Checked by reading the scripts rather than by convention, because they are not TypeScript and
   // nothing else would ever catch the drift.
   const root = fromFileUrl(new URL("..", import.meta.url));
-  for (const script of ["scripts/bootstrap.sh", "scripts/bootstrap.ps1"]) {
+  for (const script of ["install", "install.ps1"]) {
     const source = await Deno.readTextFile(`${root}${script}`);
     assert(
       source.includes(DEFAULT_UPDATE_REPO),

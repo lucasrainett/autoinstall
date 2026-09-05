@@ -2,6 +2,8 @@ name = "Organic Maps"
 description = "Offline maps and navigation with no tracking or ads"
 website = "https://organicmaps.app/"
 
+capabilities = ["maps"]
+
 [linux]
 installMethod = "flatpak"
 notes = "Linux only here: the macOS and iOS builds ship through the App Store, which cannot be driven unattended."

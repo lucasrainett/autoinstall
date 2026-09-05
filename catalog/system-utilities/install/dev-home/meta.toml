@@ -1,6 +1,8 @@
 name = "Dev Home"
-description = "Microsoft's developer dashboard, preinstalled on Windows 11"
-website = "https://www.microsoft.com/"
+description = "Microsoft's developer dashboard and machine setup tool, discontinued in May 2025"
+website = "https://learn.microsoft.com/en-us/previous-versions/windows/dev-home/"
+
+capabilities = ["system-monitoring", "version-control", "package-management", "ssh"]
 
 [windows]
 installMethod = "script"

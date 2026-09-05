@@ -1,6 +1,8 @@
 name = "Zeitgeist activity log"
-description = "Records which files and applications you open, in a local database"
+description = "Logs the files, apps and contacts you use into a local database for desktop search"
 website = "https://launchpad.net/zeitgeist"
+
+capabilities = ["telemetry-collection"]
 
 [linux]
 installMethod = "apt"

@@ -2,6 +2,8 @@ name = "Volta"
 description = "JavaScript tool manager for pinning and switching Node/npm/pnpm versions per project"
 website = "https://volta.sh"
 
+capabilities = ["programming-language", "package-management"]
+
 [linux]
 installMethod = "script"
 

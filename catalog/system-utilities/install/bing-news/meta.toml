@@ -1,6 +1,8 @@
 name = "News"
 description = "Microsoft's news feed app, preinstalled on Windows"
-website = "https://www.microsoft.com/"
+website = "https://apps.microsoft.com/detail/9wzdncrfhvfw"
+
+capabilities = ["news"]
 
 [windows]
 installMethod = "script"

@@ -2,6 +2,8 @@ name = "Git"
 description = "Distributed version control system"
 website = "https://git-scm.com"
 
+capabilities = ["version-control", "terminal-tools"]
+
 [linux]
 installMethod = "apt"
 requiresElevation = true

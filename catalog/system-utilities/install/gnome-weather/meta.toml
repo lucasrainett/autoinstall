@@ -2,6 +2,8 @@ name = "GNOME Weather"
 description = "Weather application that ships preinstalled on Ubuntu-family desktops"
 website = "https://apps.gnome.org/Weather/"
 
+capabilities = ["weather"]
+
 [linux]
 installMethod = "apt"
 notes = "Preinstalled on most Ubuntu-family desktops, so it usually starts already selected. Unchecking it purges the package."

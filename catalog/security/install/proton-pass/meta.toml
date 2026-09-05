@@ -1,6 +1,8 @@
 name = "Proton Pass"
-description = "End-to-end encrypted password manager with secure password generation and autofill"
+description = "End-to-end encrypted password manager with passkeys, 2FA codes and email aliases"
 website = "https://proton.me/pass"
+
+capabilities = ["password-manager", "encryption"]
 
 [linux]
 installMethod = "deb"

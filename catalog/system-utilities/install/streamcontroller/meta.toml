@@ -1,0 +1,9 @@
+name = "StreamController"
+description = "Configures and drives an Elgato Stream Deck macro keypad"
+website = "https://github.com/StreamController/StreamController"
+
+capabilities = ["macro-keypad", "device-management"]
+
+[linux]
+installMethod = "flatpak"
+notes = "The maintained open-source Linux client — Elgato ships no Linux software at all. Talking to the device needs its udev rule; StreamController prompts for it on first run."

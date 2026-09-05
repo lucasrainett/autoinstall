@@ -1,6 +1,8 @@
 name = "SSH key"
 description = "Generates an ed25519 SSH key pair if you don't already have one, labelled with your configured identity"
 
+capabilities = ["ssh"]
+
 [linux]
 installMethod = "script"
 notes = "Never overwrites an existing key. Removal deliberately does not delete the key — a private key is irreplaceable and may be authorised on machines this tool knows nothing about."

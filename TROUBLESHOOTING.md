@@ -155,6 +155,14 @@ the search field first. The status line says which.
 
 ## macOS or Windows behaves differently from the docs
 
-Entries for those platforms are verified against package registries and vendor documentation, but
-**have not been executed** on a real machine. Treat them with more caution than Linux entries, and
-please report what happened — that is exactly the gap the cross-OS CI workflow exists to close.
+Be precise about which half is unverified, because they are not the same.
+
+The **engine** — the interface, the planner, script execution, config handling — runs its full test
+suite on real macOS and Windows in CI on every push. That is worth trusting. It was not always so:
+the first such run found the tool had never worked on macOS at all, because it shelled out to
+`setsid`, which does not exist there.
+
+The **catalog entries** for those platforms are verified against package registries and vendor
+documentation, but **have not been executed**. Treat those with more caution than Linux entries and
+please report what happened — that is exactly the gap the cross-OS lifecycle workflow exists to
+close.

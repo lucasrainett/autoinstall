@@ -1,6 +1,8 @@
 name = "Feedback Hub"
 description = "Microsoft's feedback and diagnostics reporting app"
-website = "https://www.microsoft.com/"
+website = "https://apps.microsoft.com/detail/9nblggh4r32n"
+
+capabilities = ["feedback-reporting", "telemetry-collection"]
 
 [windows]
 installMethod = "script"

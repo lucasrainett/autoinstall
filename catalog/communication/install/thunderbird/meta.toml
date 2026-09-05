@@ -1,6 +1,8 @@
 name = "Thunderbird"
-description = "Email, calendar and newsgroup client that ships preinstalled on Ubuntu-family desktops"
+description = "Email, calendar, contacts, RSS/newsgroup and chat client, preinstalled on Ubuntu desktops"
 website = "https://www.thunderbird.net/"
+
+capabilities = ["email", "calendar", "contacts", "news", "messaging"]
 
 [linux]
 installMethod = "script"

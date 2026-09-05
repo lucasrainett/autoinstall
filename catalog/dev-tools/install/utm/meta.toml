@@ -1,0 +1,8 @@
+name = "UTM"
+description = "Graphical virtual machine manager for macOS, built on QEMU"
+website = "https://mac.getutm.app/"
+
+capabilities = ["virtualization", "emulation"]
+
+[macos]
+installMethod = "homebrew"

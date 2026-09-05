@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+# One-line installer for autoinstall.
+#
+#   curl -fsSL https://raw.githubusercontent.com/lucasrainett/autoinstall/master/install | bash
+#
+# This *installs* the tool and stops. It used to download the binary to a temp directory, run it,
+# and delete it on exit — so there was never an `autoinstall` command afterwards and every single
+# run re-downloaded ~35 MB. That was the wrong shape for the job.
+#
+# Unlike most install-by-pipe scripts, this one verifies a checksum and refuses a download it
+# cannot verify. This tool installs software with the user's privileges; shipping it through an
+# unverified `curl | bash` would be the exact weakness it exists to help people avoid.
+set -euo pipefail
+
+REPO="${AUTOINSTALL_REPO:-lucasrainett/autoinstall}"
+VERSION="${VERSION:-latest}"
+INSTALL_DIR="${AUTOINSTALL_INSTALL_DIR:-$HOME/.autoinstall/bin}"
+MODIFY_PATH=1
+
+for arg in "$@"; do
+  case "$arg" in
+    --no-modify-path) MODIFY_PATH=0 ;;
+    -h|--help)
+      cat <<'HELP'
+Installs autoinstall: downloads the release binary for this machine, verifies its checksum,
+and puts it on your PATH. Installs only — it does not run the tool.
+
+  curl -fsSL https://raw.githubusercontent.com/lucasrainett/autoinstall/master/install | bash
+
+Options
+  --no-modify-path   Install, but leave shell profiles alone and print the PATH line instead.
+
+Environment
+  VERSION                  Release tag to install (default: latest).
+  AUTOINSTALL_INSTALL_DIR  Where to put the binary (default: ~/.autoinstall/bin).
+  AUTOINSTALL_REPO         Repository to download from, for forks (default: lucasrainett/autoinstall).
+HELP
+      exit 0 ;;
+    *) echo "Unknown option: $arg" >&2; exit 1 ;;
+  esac
+done
+
+say()  { printf '%s\n' "$*"; }
+die()  { printf '%s\n' "$*" >&2; exit 1; }
+
+# --- which build ------------------------------------------------------------------------------
+case "$(uname -s)" in
+  Darwin) os="apple-darwin" ;;
+  Linux)  os="unknown-linux-gnu" ;;
+  *) die "Unsupported operating system: $(uname -s). Windows users: see install.ps1." ;;
+esac
+case "$(uname -m)" in
+  x86_64|amd64)  arch="x86_64" ;;
+  arm64|aarch64) arch="aarch64" ;;
+  *) die "Unsupported architecture: $(uname -m)" ;;
+esac
+asset="autoinstall-${arch}-${os}"
+
+command -v curl >/dev/null 2>&1 || die "curl is required but not installed."
+
+# --- find the release -------------------------------------------------------------------------
+api="https://api.github.com/repos/${REPO}/releases/latest"
+[ "$VERSION" = "latest" ] || api="https://api.github.com/repos/${REPO}/releases/tags/${VERSION}"
+
+say "Resolving ${VERSION} release from ${REPO}..."
+if ! release=$(curl -fsSL "$api" 2>/dev/null); then
+  die "$(cat <<MSG
+Could not find a ${VERSION} release for ${REPO}.
+
+Either that repository has not published a release yet, or the name is wrong.
+See https://github.com/${REPO}/releases
+MSG
+)"
+fi
+
+pick_url() {
+  printf '%s' "$release" \
+    | grep -o "\"browser_download_url\": *\"[^\"]*${1}\"" \
+    | cut -d'"' -f4 | head -1
+}
+url=$(pick_url "$asset")
+sums_url=$(pick_url "SHA256SUMS")
+
+[ -n "$url" ] || die "This release has no ${asset} — it may not build for your platform yet."
+[ -n "$sums_url" ] || die "This release publishes no SHA256SUMS, so the download cannot be verified. Refusing to install it."
+
+# --- download and verify ----------------------------------------------------------------------
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+say "Downloading ${asset}..."
+curl -fsSL -o "$tmp/$asset" "$url"
+curl -fsSL -o "$tmp/SHA256SUMS" "$sums_url"
+
+expected=$(grep " ${asset}\$" "$tmp/SHA256SUMS" | awk '{print $1}' | head -1)
+[ -n "$expected" ] || die "SHA256SUMS has no entry for ${asset}. Refusing to install an unverified binary."
+
+if command -v sha256sum >/dev/null 2>&1; then
+  actual=$(sha256sum "$tmp/$asset" | awk '{print $1}')
+else
+  actual=$(shasum -a 256 "$tmp/$asset" | awk '{print $1}')   # macOS has no sha256sum
+fi
+
+[ "$actual" = "$expected" ] || die "$(cat <<MSG
+Checksum mismatch for ${asset}.
+  expected ${expected}
+  got      ${actual}
+The download was discarded and nothing was installed.
+MSG
+)"
+say "Checksum verified."
+
+# --- install ----------------------------------------------------------------------------------
+mkdir -p "$INSTALL_DIR"
+chmod +x "$tmp/$asset"
+# mv can fail across filesystems (TMPDIR on a different mount); cp then rm always works.
+cp "$tmp/$asset" "$INSTALL_DIR/autoinstall"
+chmod +x "$INSTALL_DIR/autoinstall"
+say "Installed to ${INSTALL_DIR}/autoinstall"
+
+# --- PATH -------------------------------------------------------------------------------------
+# Only ever appends, and only if the directory is not already on PATH, so re-running the installer
+# does not accumulate duplicate lines in a shell profile.
+add_path_line() {
+  file="$1"; line="$2"
+  [ -f "$file" ] || return 0
+  grep -qF "$INSTALL_DIR" "$file" 2>/dev/null && return 0
+  printf '\n# added by the autoinstall installer\n%s\n' "$line" >> "$file"
+  say "  PATH updated in ${file}"
+  return 0
+}
+
+on_path=0
+case ":${PATH}:" in *":${INSTALL_DIR}:"*) on_path=1 ;; esac
+
+if [ "$on_path" -eq 1 ]; then
+  : # already reachable, nothing to do
+elif [ "$MODIFY_PATH" -eq 0 ]; then
+  say ""
+  say "Not modifying your PATH (--no-modify-path). Add this yourself:"
+  say "  export PATH=\"${INSTALL_DIR}:\$PATH\""
+else
+  case "$(basename "${SHELL:-}")" in
+    fish)
+      conf="${XDG_CONFIG_HOME:-$HOME/.config}/fish/config.fish"
+      mkdir -p "$(dirname "$conf")"; touch "$conf"
+      add_path_line "$conf" "fish_add_path ${INSTALL_DIR}"
+      ;;
+    zsh)
+      add_path_line "${ZDOTDIR:-$HOME}/.zshrc" "export PATH=\"${INSTALL_DIR}:\$PATH\""
+      ;;
+    *)
+      # Covers bash and plain sh. .profile is included because a login shell may read only that.
+      add_path_line "$HOME/.bashrc" "export PATH=\"${INSTALL_DIR}:\$PATH\""
+      add_path_line "$HOME/.profile" "export PATH=\"${INSTALL_DIR}:\$PATH\""
+      ;;
+  esac
+fi
+
+say ""
+say "autoinstall is installed."
+say ""
+if [ "$on_path" -eq 0 ]; then
+  say "  Open a new terminal (or source your shell profile), then run:"
+else
+  say "  Run:"
+fi
+say "    autoinstall              # the interactive interface"
+say "    autoinstall --dry-run    # show what it would change, touching nothing"
+say ""
+say "  Nothing is applied until you review the plan and confirm it."

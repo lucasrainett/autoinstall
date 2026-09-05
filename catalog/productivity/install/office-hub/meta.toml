@@ -1,6 +1,8 @@
 name = "Office hub"
-description = "The 'Office' launcher that advertises a Microsoft 365 subscription"
-website = "https://www.microsoft.com/"
+description = "Microsoft 365 Copilot app: document hub, formerly 'Office', that upsells a subscription"
+website = "https://support.microsoft.com/en-us/office/the-microsoft-365-app-transition-to-the-microsoft-365-copilot-app-22eac811-08d6-4df3-92dd-77f193e354a5"
+
+capabilities = ["advertising", "ai-chat"]
 
 [windows]
 installMethod = "script"

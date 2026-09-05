@@ -1,0 +1,9 @@
+name = "System Informer"
+description = "Detailed process, CPU, memory, disk and network monitor"
+website = "https://systeminformer.io/"
+
+capabilities = ["system-monitoring"]
+
+[windows]
+installMethod = "winget"
+notes = "Formerly Process Hacker. Shows far more than the built-in Task Manager, which is why it earns an entry despite Windows shipping a monitor."

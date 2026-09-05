@@ -1,6 +1,8 @@
 name = "Xbox Game Bar"
 description = "Microsoft's in-game overlay for capture and performance, preinstalled on Windows"
-website = "https://www.xbox.com/"
+website = "https://www.xbox.com/en-US/apps/xbox-app-on-pc"
+
+capabilities = ["game-overlay", "screen-recording", "messaging"]
 
 [windows]
 installMethod = "script"

@@ -1,6 +1,8 @@
 name = "Media Player"
-description = "Microsoft's music player, formerly Groove Music"
-website = "https://www.microsoft.com/"
+description = "Microsoft's music and video player, formerly Groove Music"
+website = "https://apps.microsoft.com/detail/9wzdncrfj3pt"
+
+capabilities = ["music-playback", "video-playback"]
 
 [windows]
 installMethod = "script"

@@ -1,6 +1,8 @@
 name = "3D Viewer"
-description = "Microsoft's 3D model viewer, preinstalled on Windows"
-website = "https://apps.microsoft.com/"
+description = "Microsoft's 3D model viewer, retired and pulled from the Store in July 2026"
+website = "https://learn.microsoft.com/en-us/windows/whats-new/deprecated-features-resources#3d-viewer"
+
+capabilities = ["3d-viewing"]
 
 [windows]
 installMethod = "script"

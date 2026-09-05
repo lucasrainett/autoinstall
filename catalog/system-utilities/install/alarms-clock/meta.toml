@@ -1,6 +1,8 @@
 name = "Alarms & Clock"
-description = "Windows alarms, timers and world clock"
-website = "https://www.microsoft.com/"
+description = "Windows alarms, timers, stopwatch, world clock and focus sessions"
+website = "https://apps.microsoft.com/detail/9wzdncrfj3pr"
+
+capabilities = ["clock-timers", "task-management"]
 
 [windows]
 installMethod = "script"

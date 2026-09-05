@@ -1,6 +1,8 @@
 name = "Minecraft"
-description = "Official Minecraft launcher for Java and Bedrock editions"
+description = "Official Minecraft launcher; Java Edition everywhere, Bedrock only on Windows"
 website = "https://www.minecraft.net/"
+
+capabilities = ["games", "game-launcher"]
 
 [linux]
 installMethod = "flatpak"

@@ -1,6 +1,8 @@
 name = "Cryptomator"
-description = "Client-side encryption for cloud storage — creates encrypted vaults that work with any cloud provider"
+description = "Client-side encrypted vaults for files stored in any cloud service"
 website = "https://cryptomator.org"
+
+capabilities = ["encryption"]
 
 [linux]
 installMethod = "appimage"

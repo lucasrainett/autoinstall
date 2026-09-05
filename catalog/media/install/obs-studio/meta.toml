@@ -2,6 +2,8 @@ name = "OBS Studio"
 description = "Screen recording and live streaming studio"
 website = "https://obsproject.com/"
 
+capabilities = ["screen-recording", "live-streaming", "webcam"]
+
 [linux]
 installMethod = "flatpak"
 

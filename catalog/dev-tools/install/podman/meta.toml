@@ -2,6 +2,8 @@ name = "Podman"
 description = "Daemonless container engine, a drop-in alternative to Docker"
 website = "https://podman.io/"
 
+capabilities = ["containers"]
+
 [linux]
 installMethod = "apt"
 requiresElevation = true

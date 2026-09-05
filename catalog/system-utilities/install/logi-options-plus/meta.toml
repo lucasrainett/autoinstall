@@ -1,0 +1,13 @@
+name = "Logi Options+"
+description = "Logitech's own software for configuring their mice, keyboards and presenters"
+website = "https://www.logitech.com/software/logi-options-plus.html"
+
+capabilities = ["device-management", "input-configuration"]
+
+[macos]
+installMethod = "homebrew"
+notes = "Logitech's official client. Solaar covers the same devices on Linux, where Logitech ships nothing — they are different programs, so they are separate entries."
+
+[windows]
+installMethod = "winget"
+notes = "Logitech's official client, same program as the macOS side."

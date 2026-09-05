@@ -1,6 +1,8 @@
 name = "Cortana"
-description = "Microsoft's voice assistant, preinstalled on Windows"
-website = "https://www.microsoft.com/cortana"
+description = "Microsoft's retired voice assistant, still present on older Windows builds"
+website = "https://support.microsoft.com/en-us/cortana/end-of-support-for-cortana"
+
+capabilities = ["voice-assistant"]
 
 [windows]
 installMethod = "script"

@@ -1,6 +1,8 @@
 name = "Tips"
 description = "The Windows 'Tips' and getting-started app"
-website = "https://www.microsoft.com/"
+website = "https://www.microsoft.com/en-us/windows/tips"
+
+capabilities = ["help-support"]
 
 [windows]
 installMethod = "script"

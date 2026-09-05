@@ -72,7 +72,7 @@ jobs:
           failed=0
           while IFS= read -r f; do
             bash -n "$f" || { echo "syntax error: $f"; failed=1; }
-          done < <(find catalog -name '*.sh')
+          done < <(find catalog scripts -name '*.sh'; echo install)
           exit $failed
 
   windows-invocation:
@@ -89,6 +89,18 @@ jobs:
       - name: Probe the native-tool bridge
         shell: bash
         run: bash scripts/windows-invocation-check.sh
+
+      # install.ps1 cannot be syntax-checked on Linux, where the rest of CI runs, so a broken
+      # installer would otherwise reach users before anyone parsed it. Parsing is not execution:
+      # it never downloads or installs anything.
+      - name: Parse install.ps1
+        shell: pwsh
+        run: |
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            "install.ps1", [ref]$null, [ref]$errors) | Out-Null
+          if ($errors) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+          Write-Host "install.ps1 parses cleanly"
 
   compile:
     name: Compile for ${{ matrix.target }}

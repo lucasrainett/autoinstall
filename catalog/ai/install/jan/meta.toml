@@ -1,6 +1,8 @@
 name = "Jan"
-description = "Open-source local AI assistant that runs models on your own machine"
+description = "Open-source ChatGPT alternative that runs local models or connects to cloud providers"
 website = "https://jan.ai/"
+
+capabilities = ["local-llm", "ai-chat"]
 
 [linux]
 installMethod = "flatpak"

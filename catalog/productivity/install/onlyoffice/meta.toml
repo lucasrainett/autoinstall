@@ -1,6 +1,8 @@
 name = "ONLYOFFICE Desktop Editors"
-description = "Office suite with strong Microsoft Office format compatibility"
+description = "Office suite with documents, sheets, slides and a PDF editor, tuned for MS Office formats"
 website = "https://www.onlyoffice.com/"
+
+capabilities = ["word-processing", "spreadsheets", "presentations"]
 
 [linux]
 installMethod = "flatpak"

@@ -1,6 +1,8 @@
 name = "Helium"
-description = "Private, fast, and honest web browser based on Chromium"
+description = "Chromium browser that blocks ads, trackers, cookie banners and fingerprinting by default"
 website = "https://helium.computer"
+
+capabilities = ["web-browsing", "tracker-blocking"]
 
 [linux]
 installMethod = "appimage"

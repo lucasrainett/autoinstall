@@ -2,6 +2,8 @@ name = "FreeRDP"
 description = "Remote Desktop client for connecting to Windows machines"
 website = "https://www.freerdp.com/"
 
+capabilities = ["remote-desktop"]
+
 [linux]
 installMethod = "apt"
 requiresElevation = true

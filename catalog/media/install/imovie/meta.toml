@@ -1,6 +1,8 @@
 name = "iMovie"
 description = "Apple's video editor, preinstalled on macOS"
-website = "https://www.apple.com/imovie/"
+website = "https://support.apple.com/imovie"
+
+capabilities = ["video-editing"]
 
 [macos]
 installMethod = "script"

@@ -1,6 +1,8 @@
 name = "Auto-hide the dock"
 description = "Hides the dock or taskbar until you reach for it, reclaiming the screen space"
-website = "https://support.apple.com/guide/mac-help/change-dock-settings-mchlp1119/mac"
+website = "https://support.apple.com/guide/mac-help/change-desktop-dock-settings-mchlp1119/mac"
+
+capabilities = ["desktop-appearance"]
 
 [macos]
 installMethod = "script"

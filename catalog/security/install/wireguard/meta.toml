@@ -2,6 +2,8 @@ name = "WireGuard"
 description = "Fast, modern VPN tunnel"
 website = "https://www.wireguard.com/"
 
+capabilities = ["vpn", "mesh-vpn"]
+
 [linux]
 installMethod = "apt"
 requiresElevation = true

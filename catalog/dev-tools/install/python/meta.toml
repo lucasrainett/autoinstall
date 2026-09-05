@@ -2,6 +2,8 @@ name = "Python"
 description = "General-purpose programming language"
 website = "https://www.python.org"
 
+capabilities = ["programming-language"]
+
 [linux]
 installMethod = "apt"
 notes = "Ubuntu already ships a system Python 3; this adds pip, venv, and the dev headers."

@@ -1,6 +1,8 @@
 name = "Get Help"
 description = "Microsoft's built-in support app, preinstalled on Windows"
-website = "https://apps.microsoft.com/"
+website = "https://apps.microsoft.com/detail/9pkdzbmv1h3t"
+
+capabilities = ["help-support"]
 
 [windows]
 installMethod = "script"

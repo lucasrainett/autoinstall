@@ -2,6 +2,8 @@ name = "GarageBand"
 description = "Apple's music creation studio, preinstalled on macOS"
 website = "https://www.apple.com/mac/garageband/"
 
+capabilities = ["music-creation", "audio-recording"]
+
 [macos]
 installMethod = "script"
 notes = "Preinstalled on most Macs, so it usually starts already selected. Unchecking it deletes the bundle; it can be reinstalled from the App Store, which is what makes that reversible."
