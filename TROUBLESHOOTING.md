@@ -78,8 +78,8 @@ Because every operation is an ordinary script, you can run the failing one by ha
 everything it does:
 
 ```bash
-bash catalog/dev-tools/install/git/linux/install.sh
-bash catalog/dev-tools/install/git/linux/detect.sh; echo $?   # 0 installed · 1 missing · 2 update
+bash catalog/git/linux/install.sh
+bash catalog/git/linux/detect.sh; echo $?   # 0 installed · 1 missing · 2 update
 ```
 
 ## An entry says it succeeded but reports "declined — left installed"

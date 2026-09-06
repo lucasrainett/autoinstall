@@ -61,16 +61,20 @@ fi
 #    typical machine, so the contract says exit 1 (absent). Anything else — a crash, a syntax
 #    error, a mangled registry path — shows up here as a wrong exit code. This is the first time
 #    any Windows catalog script runs on real Windows.
-probe="catalog/browsers/install/helium/windows/detect.sh"
+# Picked at run time rather than hardcoded: naming one entry meant a catalog reorganisation broke
+# CI for a reason that had nothing to do with the thing under test. Any Windows detect script
+# exercises the same bridge.
+probe=$(find catalog -path '*/windows/detect.sh' | sort | head -1)
 if [ -f "$probe" ]; then
   bash "$probe"; rc=$?
   case "$rc" in
-    0) pass "a real detect script ran and reported Helium installed (exit 0)" ;;
-    1) pass "a real detect script ran and reported Helium absent (exit 1)" ;;
-    *) fail "a real detect script exited $rc, which is outside the 0/1/2 contract" ;;
+    0) pass "$probe ran and reported installed (exit 0)" ;;
+    1) pass "$probe ran and reported absent (exit 1)" ;;
+    2) pass "$probe ran and reported an update available (exit 2)" ;;
+    *) fail "$probe exited $rc, which is outside the 0/1/2 contract" ;;
   esac
 else
-  fail "expected probe script $probe is missing"
+  fail "found no Windows detect script to probe with"
 fi
 
 echo
