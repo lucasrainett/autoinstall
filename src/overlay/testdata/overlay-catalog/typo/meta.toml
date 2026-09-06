@@ -1,0 +1,4 @@
+name = "Typo Kind"
+description = "An overlay entry declaring an invalid kind, which the scan must reject"
+kind = "installer"
+website = "https://example.com"

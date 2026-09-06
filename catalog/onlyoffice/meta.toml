@@ -1,0 +1,15 @@
+name = "ONLYOFFICE Desktop Editors"
+description = "Office suite with documents, sheets, slides and a PDF editor, tuned for MS Office formats"
+kind = "install"
+website = "https://www.onlyoffice.com/"
+
+capabilities = ["word-processing", "spreadsheets", "presentations"]
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

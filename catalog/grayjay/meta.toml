@@ -1,0 +1,12 @@
+name = "Grayjay"
+description = "Plays videos from multiple platforms through one client, without their apps"
+kind = "install"
+website = "https://grayjay.app/"
+
+capabilities = ["video-playback", "media-download", "music-playback"]
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"

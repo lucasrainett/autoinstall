@@ -4,7 +4,7 @@ import type { PlanAction } from "../plan/compute.ts";
 import type { ScriptResult } from "./runner.ts";
 
 const ACTION: PlanAction = {
-  key: "communication/install/signal",
+  key: "signal",
   actionKind: "install",
   scriptPath: "/fake/install.sh",
   destructive: false,
@@ -75,7 +75,7 @@ Deno.test("runPlanAction - a non-elevated action stays session-isolated, keeping
 
 function action(overrides: Partial<PlanAction> = {}): PlanAction {
   return {
-    key: "communication/install/signal",
+    key: "signal",
     actionKind: "install",
     scriptPath: "/x/install.sh",
     detectScript: "/x/detect.sh",

@@ -1,13 +1,13 @@
 name = "Developer"
 description = "Core development toolchain: version control, shell utilities, containers, and an editor"
 entries = [
-  "dev-tools/install/git",
-  "dev-tools/install/curl",
-  "dev-tools/install/jq",
-  "dev-tools/install/btop",
-  "dev-tools/install/github-cli",
-  "dev-tools/install/docker",
-  "dev-tools/install/vscodium",
-  "dev-tools/install/volta",
-  "dev-tools/install/claude-code",
+  "git",
+  "curl",
+  "jq",
+  "btop",
+  "github-cli",
+  "docker",
+  "vscodium",
+  "volta",
+  "claude-code",
 ]

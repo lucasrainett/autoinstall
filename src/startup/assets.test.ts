@@ -31,7 +31,7 @@ Deno.test("materializeAssetDir - the returned root is always usable by a spawned
   // compiling one, where bash reported "No such file or directory" and every detect silently
   // failed, leaving an empty plan.
   const { root } = await materializeAssetDir(BUNDLED_CATALOG, "/tmp/unused-from-source");
-  const probe = `${root}/dev-tools/install/jq/linux/detect.sh`;
+  const probe = `${root}/jq/linux/detect.sh`;
 
   // The path goes in as an argv element, not interpolated into the -c string. That is what
   // exec/runner.ts does (`args: [scriptPath]`), and it is the only form that survives a Windows

@@ -1,0 +1,16 @@
+name = "Block trackers system-wide"
+description = "Null-routes well-known analytics and ad-serving domains in the hosts file, for every application"
+kind = "configure"
+website = "https://github.com/StevenBlack/hosts"
+
+capabilities = ["tracker-blocking"]
+
+[linux]
+installMethod = "script"
+notes = "Writes one marked block into /etc/hosts, so removal is an exact reversal rather than a guess at which lines were ours. The list is short and conservative by design — see hosts-blocklist.txt for what is deliberately left out and why."
+requiresElevation = true
+
+[macos]
+installMethod = "script"
+notes = "Same marked block in /etc/hosts. macOS caches DNS aggressively, so the entry flushes the resolver cache afterwards; without that the change appears not to have worked."
+requiresElevation = true

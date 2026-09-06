@@ -10,7 +10,7 @@ Deno.test("loadProfiles - loads a valid profile, id from filename", async () => 
   const dev = profiles.find((p) => p.id === "developer");
   assert(dev, "expected the developer profile to load");
   assertEquals(dev.name, "Developer");
-  assertEquals(dev.entryKeys, ["dev-tools/install/git", "communication/install/signal"]);
+  assertEquals(dev.entryKeys, ["git", "signal"]);
 });
 
 Deno.test("loadProfiles - a malformed profile is an error, doesn't abort loading the rest", async () => {
@@ -31,13 +31,12 @@ Deno.test("loadProfiles - a nonexistent profiles directory is a single clear err
 });
 
 Deno.test("loadProfileFromUrl - a valid response parses into the same shape as a named profile, tagged untrusted", async () => {
-  const raw =
-    `name = "Remote"\ndescription = "loaded from a url"\nentries = ["dev-tools/install/git"]\n`;
+  const raw = `name = "Remote"\ndescription = "loaded from a url"\nentries = ["git"]\n`;
   const fakeFetch = () => Promise.resolve(new Response(raw, { status: 200 }));
   const result = await loadProfileFromUrl("https://example.com/profile.toml", fakeFetch);
   assert(result.ok);
   assertEquals(result.profile.name, "Remote");
-  assertEquals(result.profile.entryKeys, ["dev-tools/install/git"]);
+  assertEquals(result.profile.entryKeys, ["git"]);
   assertEquals(result.profile.untrusted, true);
   assertEquals(result.profile.sourceUrl, "https://example.com/profile.toml");
   assertEquals(result.profile.rawContents, raw);

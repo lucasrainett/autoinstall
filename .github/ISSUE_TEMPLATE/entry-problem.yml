@@ -12,8 +12,8 @@ body:
     id: entry
     attributes:
       label: Entry key
-      description: Shown in the details pane, e.g. `browsers/install/librewolf`.
-      placeholder: category/kind/id
+      description: Shown in the details pane, e.g. `librewolf`.
+      placeholder: entry id
     validations: { required: true }
   - type: dropdown
     id: platform
@@ -35,7 +35,7 @@ body:
         Every operation is a standalone script, so you can run the check by hand. From a clone:
 
         ```
-        bash catalog/<entry key>/<platform>/detect.sh; echo "exit: $?"
+        bash catalog/<entry id>/<platform>/detect.sh; echo "exit: $?"
         ```
 
         0 means installed and current, 1 means absent, 2 means an update is available. Any other

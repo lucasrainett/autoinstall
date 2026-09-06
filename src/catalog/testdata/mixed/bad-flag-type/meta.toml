@@ -1,0 +1,5 @@
+name = "Bad Flag Type"
+description = "destructive is a string instead of a boolean, should be rejected"
+kind = "install"
+website = "https://example.com"
+destructive = "yes"

@@ -1,0 +1,15 @@
+name = "Zen Browser"
+description = "Firefox-based browser with workspaces, split view, compact mode and vertical tabs"
+kind = "install"
+website = "https://zen-browser.app"
+
+capabilities = ["web-browsing"]
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

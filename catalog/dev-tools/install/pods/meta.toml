@@ -1,9 +1,0 @@
-name = "Pods"
-description = "GNOME frontend for Podman and Docker: containers, pods, images, logs and builds"
-website = "https://github.com/marhkb/pods"
-
-capabilities = ["container-gui"]
-
-[linux]
-installMethod = "flatpak"
-notes = "A GTK4/libadwaita app, so Linux-only. Podman Desktop covers this capability on all three platforms and already has its own entry — this one exists because it is the lighter native option on a GNOME desktop."

@@ -1,0 +1,15 @@
+name = "GIMP"
+description = "Raster image editor for photo retouching and image composition"
+kind = "install"
+website = "https://www.gimp.org/"
+
+capabilities = ["raster-graphics"]
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

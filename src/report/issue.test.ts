@@ -5,7 +5,7 @@ import { type FailureReport, issueBody, issueTitle, issueUrl, MAX_URL_LENGTH } f
 const CTX = { homeDir: "/home/alice", username: "alice", hostname: "box" };
 
 const REPORT: FailureReport = {
-  key: "browsers/install/librewolf",
+  key: "librewolf",
   action: "install",
   platform: "linux",
   error: "E: Unable to locate package librewolf",
@@ -16,13 +16,13 @@ const REPORT: FailureReport = {
 Deno.test("issueTitle - names the entry, the operation and the platform", () => {
   assertEquals(
     issueTitle(REPORT),
-    "browsers/install/librewolf fails to install on Linux (Debian/Ubuntu)",
+    "librewolf fails to install on Linux (Debian/Ubuntu)",
   );
 });
 
 Deno.test("issueBody - carries what is needed to act on the report", () => {
   const body = issueBody(REPORT, CTX);
-  for (const needed of ["browsers/install/librewolf", "install", "0.2.0", "Unable to locate"]) {
+  for (const needed of ["librewolf", "install", "0.2.0", "Unable to locate"]) {
     assertStringIncludes(body, needed);
   }
 });

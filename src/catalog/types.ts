@@ -1,7 +1,10 @@
 // Catalog schema — see TASKS.md §1.1 and PROJECT_DEFINITION.md §2.
 //
-// On-disk shape: catalog/[category]/[kind]/[id]/[platform]/[operation].sh
-// plus catalog/[category]/[kind]/[id]/meta.toml (name, description).
+// On-disk shape: catalog/[id]/[platform]/[operation].sh, plus catalog/[id]/meta.toml.
+//
+// Flat, one directory per entry, because the id is the whole key. The old
+// catalog/[category]/[kind]/[id] layout encoded an entry's category into its key, so moving an
+// entry between categories orphaned every saved selection and profile that referred to it.
 
 import type { Capability } from "./capabilities.ts";
 export const KINDS = ["install", "configure", "cleanup"] as const;
@@ -18,7 +21,11 @@ export function isPlatform(value: string): value is Platform {
   return (PLATFORMS as readonly string[]).includes(value);
 }
 
-export const OPERATIONS = ["detect", "install", "remove", "update"] as const;
+// "run" is deliberately last and deliberately optional: it is the only operation that does not
+// change the machine. It exists because the tool already knows what it installed and where, which
+// makes it the shortest path from "I just installed this" to actually using it. An entry without a
+// run.sh simply cannot be started from here — the honest answer for a command-line utility.
+export const OPERATIONS = ["detect", "install", "remove", "update", "run"] as const;
 export type Operation = (typeof OPERATIONS)[number];
 
 export const INSTALL_METHODS = [
@@ -47,6 +54,7 @@ export function isInstallMethod(value: string): value is InstallMethod {
 export interface EntryMeta {
   name: string;
   description: string;
+  kind: Kind;
   website?: string;
   /** What this entry lets you *do*, from the closed vocabulary in capabilities.ts. Independent of
    * which program provides it, so the same capability can be compared across platforms — see that
@@ -82,13 +90,16 @@ export interface PlatformMeta {
 /** Which operation scripts exist for one platform folder of one entry. */
 export type PlatformOperations = Partial<Record<Operation, string>>; // operation -> absolute script path
 
-/** One fully-loaded catalog entry: category/kind/id plus its metadata and per-platform scripts. */
+/** One fully-loaded catalog entry: its id plus metadata and per-platform scripts. */
 export interface CatalogEntry {
-  category: string;
+  /** Every category this entry belongs to, derived from its capabilities — never declared. An
+   * entry doing several unrelated things (Steam: a store, a chat client and a screen recorder)
+   * belongs to each of their categories. */
+  categories: readonly string[];
   kind: Kind;
   id: string;
   meta: EntryMeta;
-  /** Absolute path to this entry's own directory (catalog/[category]/[kind]/[id]). */
+  /** Absolute path to this entry's own directory (catalog/[id]). */
   path: string;
   /** Present only for platforms that have a folder for this entry — an absent platform means "not applicable" (PROJECT_DEFINITION.md §4). */
   platforms: Partial<Record<Platform, PlatformOperations>>;
@@ -105,8 +116,8 @@ export interface CatalogLoadResult {
   errors: CatalogIssue[];
 }
 
-/** The canonical "category/kind/id" key shape used everywhere an entry needs to be looked up by
+/** The canonical key: an entry's id, used everywhere an entry needs to be looked up by
  * identity (diagnostic snapshots, plans, history, selections, overlay merge). */
 export function entryKey(entry: CatalogEntry): string {
-  return `${entry.category}/${entry.kind}/${entry.id}`;
+  return entry.id;
 }

@@ -6,11 +6,18 @@ import type { OverlayEntry } from "./scan.ts";
 import type { Profile } from "../profiles/types.ts";
 
 function coreEntry(
-  overrides: Partial<CatalogEntry> & Pick<CatalogEntry, "category" | "kind" | "id">,
+  overrides: Partial<CatalogEntry> & Pick<CatalogEntry, "id">,
 ): CatalogEntry {
-  const path = `/core/catalog/${overrides.category}/${overrides.kind}/${overrides.id}`;
+  const path = `/core/catalog/${overrides.id}`;
   return {
-    meta: { name: overrides.id, description: "core entry", website: "https://example.com" },
+    categories: ["test"],
+    kind: "install",
+    meta: {
+      kind: "install",
+      name: overrides.id,
+      description: "core entry",
+      website: "https://example.com",
+    },
     path,
     platforms: {
       linux: {
@@ -24,10 +31,8 @@ function coreEntry(
 }
 
 Deno.test("mergeCatalogs - an overlay providing a full platform override replaces the whole platform, not merged with core's", () => {
-  const core = [coreEntry({ category: "games", kind: "install", id: "steam" })];
+  const core = [coreEntry({ categories: ["games"], kind: "install", id: "steam" })];
   const overlay: OverlayEntry = {
-    category: "games",
-    kind: "install",
     id: "steam",
     platforms: {
       linux: {
@@ -49,10 +54,8 @@ Deno.test("mergeCatalogs - an overlay providing only one operation for a platfor
   // later changes how an entry works on a platform (e.g. Steam's Linux install moving from a .deb
   // to a flatpak), an overlay that only overrode install.sh must never end up silently paired with
   // the core's newer detect.sh/remove.sh built for a different install method entirely.
-  const core = [coreEntry({ category: "games", kind: "install", id: "steam" })];
+  const core = [coreEntry({ categories: ["games"], kind: "install", id: "steam" })];
   const overlay: OverlayEntry = {
-    category: "games",
-    kind: "install",
     id: "steam",
     platforms: { linux: { install: "/overlay/install.sh" } }, // no detect.sh, no remove.sh
   };
@@ -65,8 +68,6 @@ Deno.test("mergeCatalogs - an overlay providing only one operation for a platfor
 
 Deno.test("mergeCatalogs - a platform the overlay doesn't mention is fully inherited from the core entry, untouched", () => {
   const core = [coreEntry({
-    category: "games",
-    kind: "install",
     id: "steam",
     platforms: {
       linux: { detect: "/core/linux/detect.sh", install: "/core/linux/install.sh" },
@@ -74,8 +75,6 @@ Deno.test("mergeCatalogs - a platform the overlay doesn't mention is fully inher
     },
   })];
   const overlay: OverlayEntry = {
-    category: "games",
-    kind: "install",
     id: "steam",
     platforms: { linux: { detect: "/overlay/detect.sh", install: "/overlay/install.sh" } },
   };
@@ -86,12 +85,11 @@ Deno.test("mergeCatalogs - a platform the overlay doesn't mention is fully inher
 });
 
 Deno.test("mergeCatalogs - an overlay providing its own meta.toml replaces the core entry's meta wholesale", () => {
-  const core = [coreEntry({ category: "games", kind: "install", id: "steam" })];
+  const core = [coreEntry({ categories: ["games"], kind: "install", id: "steam" })];
   const overlay: OverlayEntry = {
-    category: "games",
-    kind: "install",
     id: "steam",
     meta: {
+      kind: "install",
       name: "Steam (custom)",
       description: "renamed by me",
       website: "https://store.steampowered.com",
@@ -106,12 +104,15 @@ Deno.test("mergeCatalogs - an overlay providing its own meta.toml replaces the c
 });
 
 Deno.test("mergeCatalogs - a new id with its own meta and platforms is purely additive", () => {
-  const core = [coreEntry({ category: "games", kind: "install", id: "steam" })];
+  const core = [coreEntry({ categories: ["games"], kind: "install", id: "steam" })];
   const overlay: OverlayEntry = {
-    category: "tools",
-    kind: "install",
     id: "my-tool",
-    meta: { name: "My Tool", description: "x", website: "https://example.com" },
+    meta: {
+      kind: "install",
+      name: "My Tool",
+      description: "x",
+      website: "https://example.com",
+    },
     platforms: { linux: { detect: "/overlay/detect.sh", install: "/overlay/install.sh" } },
   };
   const { entries, errors } = mergeCatalogs(core, [[overlay]]);
@@ -123,8 +124,6 @@ Deno.test("mergeCatalogs - a new id with its own meta and platforms is purely ad
 
 Deno.test("mergeCatalogs - a new id with no meta.toml is an error, not silently added", () => {
   const overlay: OverlayEntry = {
-    category: "tools",
-    kind: "install",
     id: "my-tool",
     platforms: { linux: { install: "/overlay/install.sh" } },
   };
@@ -136,10 +135,13 @@ Deno.test("mergeCatalogs - a new id with no meta.toml is an error, not silently 
 
 Deno.test("mergeCatalogs - a new id with meta but zero platform scripts is an error, not silently added", () => {
   const overlay: OverlayEntry = {
-    category: "tools",
-    kind: "install",
     id: "my-tool",
-    meta: { name: "My Tool", description: "x", website: "https://example.com" },
+    meta: {
+      kind: "install",
+      name: "My Tool",
+      description: "x",
+      website: "https://example.com",
+    },
     platforms: {},
   };
   const { entries, errors } = mergeCatalogs([], [[overlay]]);
@@ -149,16 +151,12 @@ Deno.test("mergeCatalogs - a new id with meta but zero platform scripts is an er
 });
 
 Deno.test("mergeCatalogs - multiple overlays apply in configured order, later wins over earlier", () => {
-  const core = [coreEntry({ category: "games", kind: "install", id: "steam" })];
+  const core = [coreEntry({ categories: ["games"], kind: "install", id: "steam" })];
   const firstOverlay: OverlayEntry = {
-    category: "games",
-    kind: "install",
     id: "steam",
     platforms: { linux: { install: "/first-overlay/install.sh" } },
   };
   const secondOverlay: OverlayEntry = {
-    category: "games",
-    kind: "install",
     id: "steam",
     platforms: { linux: { install: "/second-overlay/install.sh" } },
   };
@@ -186,17 +184,17 @@ Deno.test("mergeProfiles - an overlay profile sharing a built-in filename replac
     id: "developer",
     name: "Developer",
     description: "built-in",
-    entryKeys: ["dev-tools/install/git"],
+    entryKeys: ["git"],
   }];
   const overlay: Profile[] = [{
     id: "developer",
     name: "Developer (mine)",
     description: "customized",
-    entryKeys: ["dev-tools/install/rust"], // entirely different list, not merged with core's
+    entryKeys: ["rust"], // entirely different list, not merged with core's
   }];
   const merged = mergeProfiles(core, [overlay]);
   assertEquals(merged.length, 1);
-  assertEquals(merged[0].entryKeys, ["dev-tools/install/rust"]);
+  assertEquals(merged[0].entryKeys, ["rust"]);
 });
 
 Deno.test("mergeProfiles - multiple overlays apply in configured order, later wins", () => {
@@ -211,10 +209,8 @@ Deno.test("mergeCatalogs + validateCatalog - an incomplete platform override is 
   // running the merged result through the same validator every catalog goes through is enough,
   // because whole-platform-folder replacement means an incomplete override really does produce
   // an incomplete platform (see the test above), which validateCatalog already rejects.
-  const core = [coreEntry({ category: "games", kind: "install", id: "steam" })];
+  const core = [coreEntry({ categories: ["games"], kind: "install", id: "steam" })];
   const overlay: OverlayEntry = {
-    category: "games",
-    kind: "install",
     id: "steam",
     platforms: { linux: { install: "/overlay/install.sh" } }, // missing detect.sh
   };

@@ -1,0 +1,13 @@
+name = "Shell aliases"
+description = "Installs a set of shell aliases and sources them from your shell startup file"
+
+kind = "configure"
+capabilities = ["shell-configuration"]
+
+[linux]
+installMethod = "script"
+notes = "Writes its own file under ~/.config and adds one sourcing line to .bashrc/.zshrc. It never overwrites .bashrc, .bash_aliases or .gitconfig — those belong to you."
+
+[macos]
+installMethod = "script"
+notes = "Writes its own file under ~/.config and adds one sourcing line to .bashrc/.zshrc. It never overwrites .bashrc, .bash_aliases or .gitconfig — those belong to you."

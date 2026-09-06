@@ -30,6 +30,7 @@ import {
   itemIndicator,
   type ItemStatusIndicator,
   type ListItem,
+  rowKey,
   selectAllVisible,
   toggleAtRow,
   toggleCategory,
@@ -305,7 +306,7 @@ export function CheckboxList(
                     visible.some((it) => it.category === row.category && pendingKeys.has(it.key));
                   return (
                     <Text
-                      key={row.category}
+                      key={rowKey(row)}
                       bold
                       wrap="truncate"
                       color={hasPending ? "cyan" : "gray"}
@@ -318,7 +319,7 @@ export function CheckboxList(
                 const status = itemIndicator(row.item.key, snapshot, failedKeys);
                 return (
                   <Text
-                    key={row.item.key}
+                    key={rowKey(row)}
                     // Truncate rather than wrap: a row wider than the pane would otherwise grow
                     // the row box, pushing the scrollbar column — and with it the pane border —
                     // sideways as that row scrolled into view. Reported by the user as the border

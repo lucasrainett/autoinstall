@@ -1,0 +1,10 @@
+name = "Blanket"
+description = "Plays background ambient sounds to help you focus"
+kind = "install"
+website = "https://flathub.org/apps/com.rafaelmardojai.Blanket"
+
+capabilities = ["ambient-sound"]
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux-only: there is no vendor build for macOS or Windows."

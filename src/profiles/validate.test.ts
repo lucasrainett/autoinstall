@@ -2,14 +2,14 @@ import { assertEquals } from "@std/assert";
 import { validateProfileAgainstCatalog } from "./validate.ts";
 import type { Profile } from "./types.ts";
 
-const CATALOG_KEYS = new Set(["dev-tools/install/git", "communication/install/signal"]);
+const CATALOG_KEYS = new Set(["git", "signal"]);
 
 Deno.test("validateProfileAgainstCatalog - every referenced key exists: no issues", () => {
   const profile: Profile = {
     id: "developer",
     name: "Developer",
     description: "x",
-    entryKeys: ["dev-tools/install/git", "communication/install/signal"],
+    entryKeys: ["git", "signal"],
   };
   assertEquals(validateProfileAgainstCatalog(profile, CATALOG_KEYS), []);
 });
@@ -19,7 +19,7 @@ Deno.test("validateProfileAgainstCatalog - a nonexistent id is flagged, not sile
     id: "broken-refs",
     name: "Broken Refs",
     description: "x",
-    entryKeys: ["dev-tools/install/git", "tools/install/does-not-exist"],
+    entryKeys: ["git", "does-not-exist"],
   };
   const issues = validateProfileAgainstCatalog(profile, CATALOG_KEYS);
   assertEquals(issues.length, 1);

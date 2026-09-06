@@ -1,0 +1,17 @@
+name = "Git identity"
+description = "Sets your global git user name and email from the identity configured in this tool"
+
+kind = "configure"
+capabilities = ["version-control"]
+
+[linux]
+installMethod = "script"
+notes = "Reads the identity from your config rather than hardcoding it. Writes only user.name and user.email in the global git config, leaving every other git setting alone."
+
+[macos]
+installMethod = "script"
+notes = "Reads the identity from your config rather than hardcoding it. Writes only user.name and user.email in the global git config, leaving every other git setting alone."
+
+[windows]
+installMethod = "script"
+notes = "Reads the identity from your config rather than hardcoding it. Writes only user.name and user.email in the global git config, leaving every other git setting alone."

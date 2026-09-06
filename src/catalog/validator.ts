@@ -14,7 +14,7 @@ export function validateCatalog(entries: CatalogEntry[]): CatalogIssue[] {
 
   const seen = new Map<string, string>(); // "category/kind/id" -> first path seen
   for (const entry of entries) {
-    const key = `${entry.category}/${entry.kind}/${entry.id}`;
+    const key = entry.id;
     const existingPath = seen.get(key);
     if (existingPath !== undefined) {
       issues.push({

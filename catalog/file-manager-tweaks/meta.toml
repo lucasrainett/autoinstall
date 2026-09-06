@@ -1,0 +1,18 @@
+name = "File manager defaults"
+description = "Shows hidden files and file extensions, and uses a list view, in whichever file manager this platform ships"
+kind = "configure"
+website = "https://support.apple.com/guide/mac-help/change-finder-settings-mchlp2803/mac"
+
+capabilities = ["desktop-appearance", "file-management"]
+
+[macos]
+installMethod = "script"
+notes = "Carried over from the old repo's macOS system_tweaks. The firewall half of that script is a separate entry (security/configure/firewall) rather than being bundled here — turning on a firewall is not a Finder preference, and mixing them would mean unchecking one to revert the other."
+
+[linux]
+installMethod = "script"
+notes = "The same three behaviours in Nautilus, through gsettings. Per user, no elevation. Reverting resets the keys to GNOME's defaults."
+
+[windows]
+installMethod = "script"
+notes = "The same three behaviours in File Explorer, through its HKCU settings. Explorer is restarted so the change is visible immediately rather than at next sign-in."

@@ -11,7 +11,7 @@ Deno.test("README's catalog counts match the catalog on disk", async () => {
   const readme = await Deno.readTextFile(new URL("../../README.md", import.meta.url));
   const { entries } = await loadCatalog(fromFileUrl(new URL("../../catalog", import.meta.url)));
 
-  const categories = new Set(entries.map((e) => e.category)).size;
+  const categories = new Set(entries.flatMap((e) => e.categories)).size;
   assert(
     readme.includes(`**${entries.length} entries** across ${categories} categories`),
     `README does not state ${entries.length} entries across ${categories} categories`,

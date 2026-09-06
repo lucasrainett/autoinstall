@@ -1,0 +1,11 @@
+name = "Steam (deb)"
+description = "Valve's game store and launcher, from the distribution's package"
+kind = "install"
+website = "https://store.steampowered.com/"
+
+capabilities = ["game-store", "game-launcher", "messaging", "game-overlay", "screen-recording", "live-streaming", "game-streaming-host", "game-streaming-client", "windows-compatibility"]
+
+[linux]
+installMethod = "apt"
+notes = "What Zorin OS and Ubuntu install by default. Not sandboxed, so it reaches system graphics drivers and libraries directly — usually the better choice for gaming. Listed separately from the Flatpak because both can be installed at once."
+requiresElevation = true

@@ -1,0 +1,10 @@
+name = "Blankie"
+description = "Ambient sound mixer for creating custom soundscapes"
+kind = "install"
+website = "https://blankie.rest/"
+
+capabilities = ["ambient-sound"]
+
+[macos]
+installMethod = "homebrew"
+notes = "A separate macOS project inspired by Blanket, not a port of it. Verified live against formulae.brew.sh — cask `blankie`."

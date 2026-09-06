@@ -123,7 +123,7 @@ Deno.test("bootstrapCatalog - reports a profile that references an entry which d
   const dir = await Deno.makeTempDir();
   await Deno.writeTextFile(
     `${dir}/broken.toml`,
-    'name = "Broken"\ndescription = "references a missing entry"\nentries = ["nope/install/ghost"]\n',
+    'name = "Broken"\ndescription = "references a missing entry"\nentries = ["ghost"]\n',
   );
   const result = await bootstrapCatalog({
     catalogRoot: BUNDLED_CATALOG,
@@ -219,16 +219,16 @@ Deno.test("missingPackageManagerWarnings - says nothing when every needed manage
 
 Deno.test("catalogChangeNotices - reports added and removed entries", () => {
   const notices = catalogChangeNotices(
-    new Set(["a/install/one", "a/install/gone"]),
-    new Set(["a/install/one", "a/install/new"]),
+    new Set(["one", "gone"]),
+    new Set(["one", "new"]),
   );
   assertEquals(notices.length, 2);
-  assert(notices[0].includes("a/install/new"));
-  assert(notices[1].includes("a/install/gone"));
+  assert(notices[0].includes("new"));
+  assert(notices[1].includes("gone"));
 });
 
 Deno.test("catalogChangeNotices - a first run reports nothing, since everything would be 'new'", () => {
-  assertEquals(catalogChangeNotices(new Set(), new Set(["a/install/one"])), []);
+  assertEquals(catalogChangeNotices(new Set(), new Set(["one"])), []);
 });
 
 Deno.test("bootstrapCatalog - reports the catalog as complete when every source loaded", async () => {

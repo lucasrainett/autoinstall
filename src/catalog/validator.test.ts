@@ -3,11 +3,11 @@ import { validateCatalog } from "./validator.ts";
 import type { CatalogEntry } from "./types.ts";
 
 function entry(
-  overrides: Partial<CatalogEntry> & Pick<CatalogEntry, "category" | "kind" | "id">,
+  overrides: Partial<CatalogEntry> & Pick<CatalogEntry, "categories" | "kind" | "id">,
 ): CatalogEntry {
   return {
-    meta: { name: overrides.id, description: "test entry" },
-    path: `/catalog/${overrides.category}/${overrides.kind}/${overrides.id}`,
+    meta: { kind: "install", name: overrides.id, description: "test entry" },
+    path: `/catalog/${overrides.id}`,
     platforms: { linux: { detect: "detect.sh", install: "install.sh" } },
     ...overrides,
   };
@@ -15,21 +15,21 @@ function entry(
 
 Deno.test("validateCatalog - a well-formed catalog produces zero issues", () => {
   const issues = validateCatalog([
-    entry({ category: "communication", kind: "install", id: "signal" }),
-    entry({ category: "privacy", kind: "configure", id: "disable-telemetry" }),
+    entry({ categories: ["communication"], kind: "install", id: "signal" }),
+    entry({ categories: ["privacy"], kind: "configure", id: "disable-telemetry" }),
   ]);
   assertEquals(issues, []);
 });
 
 Deno.test("validateCatalog - flags a duplicate category/kind/id across two entries", () => {
   const first = entry({
-    category: "communication",
+    categories: ["communication"],
     kind: "install",
     id: "signal",
     path: "/core/signal",
   });
   const duplicate = entry({
-    category: "communication",
+    categories: ["communication"],
     kind: "install",
     id: "signal",
     path: "/overlay/signal",
@@ -44,7 +44,7 @@ Deno.test("validateCatalog - flags a duplicate category/kind/id across two entri
 
 Deno.test("validateCatalog - flags a platform folder missing detect.sh", () => {
   const withoutDetect = entry({
-    category: "communication",
+    categories: ["communication"],
     kind: "install",
     id: "signal",
     platforms: { linux: { install: "install.sh", remove: "remove.sh" } },
@@ -56,7 +56,7 @@ Deno.test("validateCatalog - flags a platform folder missing detect.sh", () => {
 
 Deno.test("validateCatalog - flags a platform folder that has only detect.sh and nothing else", () => {
   const detectOnly = entry({
-    category: "communication",
+    categories: ["communication"],
     kind: "install",
     id: "signal",
     platforms: { linux: { detect: "detect.sh" } },
@@ -69,7 +69,7 @@ Deno.test("validateCatalog - flags a platform folder that has only detect.sh and
 Deno.test("validateCatalog - a good known-good fixture passes with zero findings", () => {
   const issues = validateCatalog([
     entry({
-      category: "communication",
+      categories: ["communication"],
       kind: "install",
       id: "signal",
       platforms: {

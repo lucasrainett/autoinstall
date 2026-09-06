@@ -1,0 +1,10 @@
+name = "Copilot"
+description = "Microsoft's AI assistant, preinstalled on recent Windows builds"
+kind = "install"
+website = "https://copilot.microsoft.com/"
+
+capabilities = ["ai-chat", "voice-assistant"]
+
+[windows]
+installMethod = "script"
+notes = "Preinstalled, so it usually starts already selected. Unchecking it removes the package for the current user only; it can be reinstalled from the Microsoft Store. The package name has changed across Windows builds (Microsoft.Copilot, previously Microsoft.Windows.Ai.Copilot.Provider); detect reports it absent on builds that use a different name, which is correct — there is then nothing here to remove."

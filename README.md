@@ -133,6 +133,7 @@ deno task compile          # or build a binary → dist/autoinstall
 | `p` | profiles — apply a bundle of entries |
 | `h` | history of previous runs |
 | `n` | notices: startup checks, warnings and conflicts |
+| `o` | open the installed app under the cursor — it keeps running after you quit |
 | `u` | mark the entry under the cursor for update (only if it shows ↑) |
 | `U` | mark every selected entry that has an update |
 | `e` / `i` | export / import your selection as a manifest |
@@ -160,8 +161,8 @@ it never silently unchecks something you chose.
 Every entry is a directory of plain shell scripts, one per operation:
 
 ```
-catalog/dev-tools/install/git/
-├── meta.toml            name, description, per-platform install method and notes
+catalog/git/
+├── meta.toml            name, description, capabilities, per-platform install method and notes
 ├── linux/{detect,install,remove}.sh
 ├── macos/{detect,install,remove}.sh
 └── windows/{detect,install,remove}.sh
@@ -175,7 +176,7 @@ Scripts are deliberately ordinary files with no framework around them, so any si
 be read, and run, by hand:
 
 ```bash
-bash catalog/dev-tools/install/git/linux/detect.sh; echo $?
+bash catalog/git/linux/detect.sh; echo $?
 ```
 
 ## Safety

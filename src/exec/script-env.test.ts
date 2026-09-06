@@ -35,7 +35,7 @@ Deno.test("runPlanAction - hands the identity environment to the script it runs"
   // so identity has to arrive as environment or entries like git-identity are impossible without
   // hardcoding someone's details in the catalog.
   const action: PlanAction = {
-    key: "quality-of-life/configure/git-identity",
+    key: "git-identity",
     actionKind: "configure",
     scriptPath: "/fake/install.sh",
     destructive: false,
@@ -52,7 +52,7 @@ Deno.test("runPlanAction - hands the identity environment to the script it runs"
 
 Deno.test("runPlanAction - passes no env key at all when none is supplied", async () => {
   const action: PlanAction = {
-    key: "a/install/b",
+    key: "b",
     actionKind: "install",
     scriptPath: "/fake/install.sh",
     destructive: false,

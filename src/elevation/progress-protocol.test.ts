@@ -7,14 +7,14 @@ import {
 } from "./progress-protocol.ts";
 
 Deno.test("serializeProgressMessage / parseProgressMessage - round-trips exactly", () => {
-  const msg: ProgressMessage = { entryId: "communication/install/signal", status: "success" };
+  const msg: ProgressMessage = { entryId: "signal", status: "success" };
   const parsed = parseProgressMessage(serializeProgressMessage(msg).trim());
   assertEquals(parsed, msg);
 });
 
 Deno.test("serializeProgressMessage / parseProgressMessage - round-trips with a message field", () => {
   const msg: ProgressMessage = {
-    entryId: "communication/install/signal",
+    entryId: "signal",
     status: "failed",
     message: "winget exited with code 1",
   };

@@ -1,0 +1,14 @@
+name = "Elgato Stream Deck"
+description = "Elgato's own software for configuring and driving a Stream Deck macro keypad"
+kind = "install"
+website = "https://www.elgato.com/stream-deck"
+
+capabilities = ["macro-keypad", "device-management", "desktop-automation"]
+
+[macos]
+installMethod = "homebrew"
+notes = "Elgato's own client, the only supported one on macOS."
+
+[windows]
+installMethod = "winget"
+notes = "Elgato's own client, the only supported one on Windows. Same program as the macOS side, which is why both live in this one entry."

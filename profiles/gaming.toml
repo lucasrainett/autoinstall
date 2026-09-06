@@ -1,9 +1,9 @@
 name = "Gaming"
 description = "Game launchers and the compatibility tooling needed to run Windows games on Linux"
 entries = [
-  "gaming/install/steam",
-  "gaming/install/heroic",
-  "gaming/install/lutris",
-  "gaming/install/bottles",
-  "gaming/install/moonlight",
+  "steam",
+  "heroic",
+  "lutris",
+  "bottles",
+  "moonlight",
 ]

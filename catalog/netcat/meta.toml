@@ -1,0 +1,11 @@
+name = "netcat"
+description = "The TCP/IP swiss army knife, for testing sockets by hand"
+kind = "install"
+website = "https://packages.debian.org/netcat-openbsd"
+
+capabilities = ["file-transfer", "terminal-tools", "network-scanning"]
+
+[linux]
+installMethod = "apt"
+notes = "Linux only in this catalog: macOS ships `nc` already, and Windows has no equivalent worth packaging."
+requiresElevation = true

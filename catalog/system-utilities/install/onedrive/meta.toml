@@ -1,9 +1,0 @@
-name = "OneDrive"
-description = "Microsoft's file sync client, auto-installed with Windows"
-website = "https://www.microsoft.com/microsoft-365/onedrive/online-cloud-storage"
-
-capabilities = ["cloud-file-sync"]
-
-[windows]
-installMethod = "winget"
-notes = "Not a Store package: Windows installs OneDrive per user under %LocalAppData%, so removal runs its own uninstaller rather than Remove-AppxPackage. Files already synced to your machine stay where they are; only the sync client goes."

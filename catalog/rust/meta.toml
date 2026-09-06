@@ -1,0 +1,15 @@
+name = "Rust"
+description = "Systems programming language focused on safety and performance, installed via rustup"
+kind = "install"
+website = "https://www.rust-lang.org"
+
+capabilities = ["programming-language", "build-tools"]
+
+[linux]
+installMethod = "script"
+
+[macos]
+installMethod = "script"
+
+[windows]
+installMethod = "winget"

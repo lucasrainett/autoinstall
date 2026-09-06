@@ -1,0 +1,10 @@
+name = "Quick Assist"
+description = "Microsoft's remote-assistance tool"
+kind = "install"
+website = "https://support.microsoft.com/en-us/windows/solve-pc-problems-over-a-remote-connection-b077e31a-16f4-2529-1a47-21f6a9040bf3"
+
+capabilities = ["remote-assistance", "remote-desktop"]
+
+[windows]
+installMethod = "script"
+notes = "Preinstalled, so it usually starts already selected. Unchecking it removes the package for the current user; it can be reinstalled from the Microsoft Store. Commonly abused in tech-support scams, which is a reason some people remove it."

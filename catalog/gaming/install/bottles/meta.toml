@@ -1,9 +1,0 @@
-name = "Bottles"
-description = "Runs Windows software on Linux in managed Wine environments"
-website = "https://usebottles.com/"
-
-capabilities = ["windows-compatibility"]
-
-[linux]
-installMethod = "flatpak"
-notes = "Linux-only by design: it exists to run Windows software on Linux."

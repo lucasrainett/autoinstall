@@ -1,0 +1,10 @@
+name = "Skype"
+description = "Retired Microsoft chat and calling app, shut down in May 2025 in favour of Teams Free"
+kind = "install"
+website = "https://support.microsoft.com/en-us/skype/skype-is-retiring-in-may-2025-what-you-need-to-know"
+
+capabilities = ["messaging", "video-calls"]
+
+[windows]
+installMethod = "script"
+notes = "Preinstalled, so it usually starts already selected. Unchecking it removes the package for the current user; it can be reinstalled from the Microsoft Store."

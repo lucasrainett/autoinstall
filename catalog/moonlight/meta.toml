@@ -1,0 +1,15 @@
+name = "Moonlight"
+description = "Streams games — or the whole desktop — from a host PC to this machine"
+kind = "install"
+website = "https://moonlight-stream.org/"
+
+capabilities = ["game-streaming-client", "remote-desktop"]
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

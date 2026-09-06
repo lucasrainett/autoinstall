@@ -1,0 +1,13 @@
+name = "Disk Encryption Check"
+description = "A destructive, elevation-requiring configure entry, for testing both optional flags"
+kind = "configure"
+destructive = true
+
+[linux]
+requiresElevation = true
+
+[macos]
+requiresElevation = true
+
+[windows]
+requiresElevation = true

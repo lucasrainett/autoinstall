@@ -9,7 +9,9 @@ Deno.test("loadCatalog - loads the valid entry correctly and infers category/kin
 
   const signal = entries.find((e) => e.id === "signal");
   assert(signal, "expected the signal entry to load");
-  assertEquals(signal.category, "communication");
+  // Derived from its capabilities rather than declared: messaging and video-calls both belong to
+  // communication, so the entry does too.
+  assertEquals(signal.categories, ["communication"]);
   assertEquals(signal.kind, "install");
   assertEquals(signal.meta.name, "Signal");
   assertEquals(
@@ -101,13 +103,15 @@ Deno.test("loadCatalog - rejects a meta.toml containing an unrecognized field", 
   assertStringIncludes(err.message, "homepage");
 });
 
-Deno.test("loadCatalog - rejects a kind directory name outside the closed set", async () => {
+Deno.test("loadCatalog - rejects a kind value outside the closed set", async () => {
+  // Kind used to be a directory name; it is a declared field now, so a typo is a schema rejection
+  // reported against the entry's meta.toml rather than against a stray directory.
   const { entries, errors } = await loadCatalog(FIXTURE_ROOT);
 
   assert(!entries.some((e) => e.id === "typo-kind"));
-  const err = errors.find((e) => e.path.endsWith("tools/installer"));
-  assert(err, "expected an error for the invalid 'installer' kind directory");
-  assertStringIncludes(err.message, "installer");
+  const err = errors.find((e) => e.path.includes("typo-kind"));
+  assert(err, "expected an error for the invalid 'installer' kind");
+  assertStringIncludes(err.message, "kind");
 });
 
 Deno.test("loadCatalog - rejects an entry with zero platform folders", async () => {
@@ -128,18 +132,18 @@ Deno.test("loadCatalog - a nonexistent catalog root produces a single clear erro
 
 Deno.test("parseEntryMeta - platforms is optional and absent when no [linux]/[macos]/[windows] table is given", () => {
   const meta = parseEntryMeta(
-    `name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n`,
+    `kind = "install"
+name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n`,
     "meta.toml",
-    "install",
   );
   assertEquals(meta.platforms, undefined);
 });
 
 Deno.test("parseEntryMeta - parses installMethod, notes, and requiresElevation together, one table per platform actually given", () => {
   const meta = parseEntryMeta(
-    `name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\ninstallMethod = "deb"\nnotes = "linux note"\nrequiresElevation = true\n\n[macos]\ninstallMethod = "homebrew"\n`,
+    `kind = "install"
+name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\ninstallMethod = "deb"\nnotes = "linux note"\nrequiresElevation = true\n\n[macos]\ninstallMethod = "homebrew"\n`,
     "meta.toml",
-    "install",
   );
   assertEquals(meta.platforms, {
     linux: { installMethod: "deb", notes: "linux note", requiresElevation: true },
@@ -151,9 +155,9 @@ Deno.test("parseEntryMeta - rejects an installMethod outside the closed set", ()
   assertThrows(
     () =>
       parseEntryMeta(
-        `name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\ninstallMethod = "pip"\n`,
+        `kind = "install"
+name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\ninstallMethod = "pip"\n`,
         "meta.toml",
-        "install",
       ),
     Error,
     "linux.installMethod",
@@ -162,9 +166,9 @@ Deno.test("parseEntryMeta - rejects an installMethod outside the closed set", ()
 
 Deno.test("parseEntryMeta - a platform table with neither notes nor requiresElevation is fine (empty object)", () => {
   const meta = parseEntryMeta(
-    `name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\n`,
+    `kind = "install"
+name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\n`,
     "meta.toml",
-    "install",
   );
   assertEquals(meta.platforms, { linux: {} });
 });
@@ -173,9 +177,9 @@ Deno.test("parseEntryMeta - rejects an unrecognized field inside a platform tabl
   assertThrows(
     () =>
       parseEntryMeta(
-        `name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\nhomepage = "n"\n`,
+        `kind = "install"
+name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\nhomepage = "n"\n`,
         "meta.toml",
-        "install",
       ),
     Error,
     "homepage",
@@ -186,9 +190,9 @@ Deno.test("parseEntryMeta - rejects a non-string notes value", () => {
   assertThrows(
     () =>
       parseEntryMeta(
-        `name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\nnotes = 5\n`,
+        `kind = "install"
+name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\nnotes = 5\n`,
         "meta.toml",
-        "install",
       ),
     Error,
     "linux.notes",
@@ -199,9 +203,9 @@ Deno.test("parseEntryMeta - rejects a non-boolean requiresElevation value", () =
   assertThrows(
     () =>
       parseEntryMeta(
-        `name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\nrequiresElevation = "yes"\n`,
+        `kind = "install"
+name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[linux]\nrequiresElevation = "yes"\n`,
         "meta.toml",
-        "install",
       ),
     Error,
     "linux.requiresElevation",
@@ -212,9 +216,9 @@ Deno.test("parseEntryMeta - rejects a platform table that isn't a table", () => 
   assertThrows(
     () =>
       parseEntryMeta(
-        `name = "X"\ndescription = "d"\nwebsite = "https://x.com"\nlinux = "not a table"\n`,
+        `kind = "install"
+name = "X"\ndescription = "d"\nwebsite = "https://x.com"\nlinux = "not a table"\n`,
         "meta.toml",
-        "install",
       ),
     Error,
     "must be a table",
@@ -225,9 +229,9 @@ Deno.test("parseEntryMeta - rejects a top-level platform key outside the closed 
   assertThrows(
     () =>
       parseEntryMeta(
-        `name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[freebsd]\nnotes = "n"\n`,
+        `kind = "install"
+name = "X"\ndescription = "d"\nwebsite = "https://x.com"\n\n[freebsd]\nnotes = "n"\n`,
         "meta.toml",
-        "install",
       ),
     Error,
     "freebsd",

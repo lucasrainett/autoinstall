@@ -23,12 +23,13 @@
 // Multiple configured overlay repos are applied in the user's configured order — later overlays
 // win over earlier ones, which themselves win over the core.
 
-import type { CatalogEntry, CatalogIssue, Kind } from "../catalog/types.ts";
+import { categoriesFor } from "../catalog/capabilities.ts";
+import type { CatalogEntry, CatalogIssue } from "../catalog/types.ts";
 import type { OverlayEntry } from "./scan.ts";
 import type { Profile } from "../profiles/types.ts";
 
-function key(e: { category: string; kind: Kind; id: string }): string {
-  return `${e.category}/${e.kind}/${e.id}`;
+function key(e: { id: string }): string {
+  return e.id;
 }
 
 export interface MergeCatalogResult {
@@ -67,8 +68,9 @@ export function mergeCatalogs(
           continue;
         }
         byKey.set(k, {
-          category: overlayEntry.category,
-          kind: overlayEntry.kind,
+          // Derived from the overlay entry's own capabilities, exactly as core entries are.
+          categories: categoriesFor(overlayEntry.meta.capabilities ?? []),
+          kind: overlayEntry.meta.kind,
           id: overlayEntry.id,
           meta: overlayEntry.meta,
           path: k,

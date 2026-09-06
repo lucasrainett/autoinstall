@@ -1,0 +1,17 @@
+name = "Podman"
+description = "Daemonless container engine, a drop-in alternative to Docker"
+kind = "install"
+website = "https://podman.io/"
+
+capabilities = ["containers"]
+
+[linux]
+installMethod = "apt"
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"
+notes = "The CLI, separate from Podman Desktop: they are installed independently and wanted independently."

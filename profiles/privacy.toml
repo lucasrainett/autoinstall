@@ -1,10 +1,10 @@
 name = "Privacy-focused"
 description = "Privacy-respecting browser, encrypted mail and password manager, VPN, and encrypted cloud storage"
 entries = [
-  "browsers/install/librewolf",
-  "communication/install/proton-mail",
-  "communication/install/signal",
-  "security/install/proton-pass",
-  "security/install/proton-vpn",
-  "security/install/cryptomator",
+  "librewolf",
+  "proton-mail",
+  "signal",
+  "proton-pass",
+  "proton-vpn",
+  "cryptomator",
 ]

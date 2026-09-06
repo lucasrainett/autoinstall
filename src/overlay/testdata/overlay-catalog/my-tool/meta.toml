@@ -1,0 +1,4 @@
+name = "My Tool"
+description = "A brand-new overlay-only entry"
+kind = "install"
+website = "https://example.com"

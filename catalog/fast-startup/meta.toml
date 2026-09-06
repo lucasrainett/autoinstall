@@ -1,0 +1,11 @@
+name = "Disable Fast Startup"
+description = "Makes shutdown a real shutdown instead of a partial hibernate"
+kind = "configure"
+website = "https://learn.microsoft.com/windows-hardware/design/device-experiences/powercfg-command-line-options"
+
+capabilities = ["boot-behavior"]
+
+[windows]
+installMethod = "script"
+notes = "Fast Startup leaves the filesystem in a hibernated state on shutdown. Any partition shared with another operating system is then locked or, worse, silently corrupted when that system writes to it — the reason this is the first thing to turn off on a dual-boot machine. It also makes some firmware settings unreachable, since the machine never truly powers off."
+requiresElevation = true

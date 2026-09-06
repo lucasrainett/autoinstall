@@ -5,7 +5,7 @@ import type { UserConfig } from "./types.ts";
 Deno.test("serializeUserConfig / parseUserConfig - round-trips a full config exactly", () => {
   const config: UserConfig = {
     identity: { name: "Jane Doe", email: "jane@example.com" },
-    selectedKeys: ["communication/install/signal", "privacy/configure/disable-telemetry"],
+    selectedKeys: ["signal", "disable-telemetry"],
     overlayRepos: [
       { url: "git@github.com:jane/my-config.git", ref: "main" },
       { url: "https://example.com/other.git" },
@@ -23,7 +23,7 @@ Deno.test("readUserConfig / writeUserConfig - round-trips through a real file", 
   const path = await Deno.makeTempFile();
   const config: UserConfig = {
     identity: { name: "Jane Doe" },
-    selectedKeys: ["communication/install/signal"],
+    selectedKeys: ["signal"],
     overlayRepos: [],
   };
   await writeUserConfig(path, config);
@@ -41,7 +41,7 @@ Deno.test("readUserConfig - a missing config file initializes documented default
 Deno.test("writeUserConfig - creates a missing parent directory rather than throwing (a real first-run crash this project hit)", async () => {
   const dir = await Deno.makeTempDir();
   const path = `${dir}/nested/does/not/exist/config.toml`;
-  const config: UserConfig = { selectedKeys: ["communication/install/signal"], overlayRepos: [] };
+  const config: UserConfig = { selectedKeys: ["signal"], overlayRepos: [] };
   await writeUserConfig(path, config); // must not throw NotFound
   assertEquals(await readUserConfig(path), config);
   await Deno.remove(dir, { recursive: true });
@@ -104,7 +104,7 @@ Deno.test({
     // the app's persist-on-change would then overwrite the user's real selections with nothing.
     const dir = await Deno.makeTempDir();
     const path = `${dir}/config.toml`;
-    await Deno.writeTextFile(path, 'selectedKeys = ["a/install/b"]\noverlayRepos = []\n');
+    await Deno.writeTextFile(path, 'selectedKeys = ["b"]\noverlayRepos = []\n');
     await Deno.chmod(path, 0o000);
 
     let threw = false;

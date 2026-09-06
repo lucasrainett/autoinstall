@@ -1,0 +1,24 @@
+name = "KDE Connect"
+description = "Links a phone to the desktop for notifications, messages, files and remote control"
+kind = "install"
+website = "https://kdeconnect.kde.org/"
+
+capabilities = ["phone-integration", "file-transfer", "sms"]
+
+[linux]
+installMethod = "apt"
+notes = "Distro package (kdeconnect 23.08.5 on Ubuntu). Zorin Connect, preinstalled on Zorin OS, is a fork of this project."
+
+[macos]
+installMethod = "homebrew"
+notes = "Verified live against formulae.brew.sh — cask `kde-connect`, \"Communicate with your handheld devices\"."
+
+[windows]
+installMethod = "winget"
+notes = """
+Verified live in microsoft/winget-pkgs at manifests/k/KDE/KDEConnect (25.12.1, 26.04.2).
+
+This is the cross-platform counterpart to Windows' preinstalled Phone Link, which has its own \
+entry for removal. Both exist deliberately: Phone Link is bloat you may want gone, KDE Connect is \
+software you may want installed, and on Windows you might reasonably do both.
+"""

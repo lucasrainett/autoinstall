@@ -20,10 +20,10 @@ Deno.test("scanOverlayCatalog - a new (additive) entry with its own meta.toml ha
   assertEquals(Object.keys(tool.platforms.linux!).sort(), ["detect", "install"]);
 });
 
-Deno.test("scanOverlayCatalog - an invalid kind directory name is an error, doesn't abort the scan", async () => {
+Deno.test("scanOverlayCatalog - an invalid kind value is an error, doesn't abort the scan", async () => {
   const { entries, errors } = await scanOverlayCatalog(FIXTURE_ROOT);
   assert(!entries.some((e) => e.id === "typo"));
-  assert(errors.some((e) => e.path.endsWith("tools/installer")));
+  assert(errors.some((e) => e.path.includes("typo")));
   assert(entries.some((e) => e.id === "steam"), "a sibling error must not abort the whole scan");
 });
 

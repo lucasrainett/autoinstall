@@ -4,10 +4,10 @@ import type { CatalogEntry } from "../catalog/types.ts";
 
 function entry(id: string, scripts: Record<string, string>): CatalogEntry {
   return {
-    category: "quality-of-life",
+    categories: ["quality-of-life"],
     kind: "configure",
     id,
-    meta: { name: id, description: "d" },
+    meta: { kind: "install", name: id, description: "d" },
     path: `/catalog/quality-of-life/configure/${id}`,
     platforms: { linux: scripts },
   } as CatalogEntry;
@@ -41,15 +41,15 @@ Deno.test("entriesNeedingIdentity - finds entries whose scripts read the identit
       "/b/install.sh": "gsettings set org.gnome.desktop.interface color-scheme prefer-dark",
     }),
   );
-  assertEquals(needing, ["quality-of-life/configure/git-identity"]);
+  assertEquals(needing, ["git-identity"]);
 });
 
 Deno.test("entriesNeedingIdentity - ignores entries that do not apply to this platform", async () => {
   const macOnly = {
-    category: "quality-of-life",
+    categories: ["quality-of-life"],
     kind: "configure",
     id: "mac-thing",
-    meta: { name: "m", description: "d" },
+    meta: { kind: "install", name: "m", description: "d" },
     path: "/p",
     platforms: { macos: { detect: "/m/detect.sh" } },
   } as unknown as CatalogEntry;
@@ -70,8 +70,8 @@ Deno.test("entriesNeedingIdentity - an unreadable script is not a crash", async 
 
 Deno.test("identityNotice - names the entries and the file to edit", () => {
   const msg = identityNotice("/home/u/.config/autoinstall/config.toml", [
-    "quality-of-life/configure/git-identity",
-    "security/configure/ssh-key",
+    "git-identity",
+    "ssh-key",
   ]);
   assert(msg?.includes("git-identity"));
   assert(msg?.includes("ssh-key"));

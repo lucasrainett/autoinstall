@@ -38,6 +38,8 @@ import { writeManifest } from "../manifest/store.ts";
 import { readManifest } from "../manifest/store.ts";
 import { importManifest } from "../manifest/apply.ts";
 import { checkForUpdate } from "../update/version.ts";
+import { chipLines } from "./capability-chips.ts";
+import { appRunScript, launchApp } from "../exec/launcher.ts";
 import { isDevelopmentBuild, TOOL_VERSION, updateRepo } from "../version.ts";
 import { issueUrl } from "../report/issue.ts";
 import { currentRedactionContext } from "../report/redact.ts";
@@ -631,6 +633,42 @@ export function AppShell() {
       return;
     }
 
+    // Starts the app under the cursor. The tool already knows what it installed and where, which
+    // makes this the shortest path from "I just installed this" to actually using it.
+    if (input === "o") {
+      const key = cursorKey;
+      const entry = key === undefined ? undefined : applicable.find((e) => entryKey(e) === key);
+      if (entry === undefined) return;
+
+      const script = appRunScript(entry.platforms, platform);
+      if (script === undefined) {
+        setStatus(
+          `${entry.meta.name} has nothing to run — o starts apps, and this entry has no run.sh.`,
+        );
+        return;
+      }
+      // Refusing on anything but a confirmed install: launching something absent produces a
+      // failure from deep inside the launcher, where the real answer is simply "it is not here".
+      const state = snapshot.find((sn) => sn.key === key)?.result;
+      if (state === undefined || !state.ok || state.state === "unsatisfied") {
+        setStatus(`${entry.meta.name} is not installed — install it first, then press o.`);
+        return;
+      }
+
+      // Not awaited in the key handler: launchApp watches the app for a moment to catch an
+      // immediate failure, and blocking the interface for that would make every launch feel like
+      // a stall. The status updates when it knows.
+      setStatus(`Starting ${entry.meta.name}…`);
+      launchApp(script).then((result) =>
+        setStatus(
+          result.ok
+            ? `Started ${entry.meta.name}. It keeps running if you quit.`
+            : `Could not start ${entry.meta.name} — ${result.error}`,
+        )
+      );
+      return;
+    }
+
     // Marks the entry under the cursor for update. Only meaningful for something that actually has
     // an update — saying so is better than silently doing nothing to a key the user just pressed.
     if (input === "u") {
@@ -733,7 +771,17 @@ export function AppShell() {
           // exposes no way to scope them, so disable all four here and restore them after.
           setMouseTracking(false);
           try {
+            // Said out loud, on the real terminal, because Ink has just torn its interface down:
+            // the screen is blank apart from whatever sudo prints, and sudo's own prompt is a bare
+            // "[sudo] password for name:" that gives no clue which program is asking or why. With
+            // nothing here it reads as a frozen application — reported as being stuck on
+            // "requesting sudo".
+            console.log(
+              "\nautoinstall needs administrator access for this plan.\n" +
+                "Enter your password below, or press Ctrl-C to cancel and run nothing.\n",
+            );
             granted = await requestSudoAccess(realSudoRunner());
+            if (!granted) console.log("\nContinuing without elevated access.\n");
           } finally {
             setMouseTracking(true);
           }
@@ -744,7 +792,8 @@ export function AppShell() {
       }
       if (!granted) {
         setStatus(
-          "Elevated access was not granted — this plan needs sudo for at least one action. Nothing was run.",
+          "Elevated access was not granted (declined, or the password prompt went unanswered) — " +
+            "this plan needs sudo for at least one action. Nothing was run.",
         );
         return;
       }
@@ -854,12 +903,24 @@ export function AppShell() {
     ? formatScanProgress(scanProgress.done, scanProgress.total)
     : status;
 
-  const items: ListItem[] = applicable.map((entry) => ({
-    key: entryKey(entry),
-    category: entry.category,
-    name: entry.meta.name,
-    description: entry.meta.description,
-  }));
+  // One row per (entry, category) pair: an entry's categories are derived from its capabilities,
+  // and software doing several things belongs under each of them. Brave is a browser, but it also
+  // has AI chat, a news reader, video calls and tracker blocking — so it appears under browsers,
+  // ai, media, communication and privacy, and someone browsing any of those finds it.
+  //
+  // The row key is the entry id, so this is one shared selection state, not five: checking Brave
+  // under `ai` shows it checked under `browsers` too, and the plan lists it once. Categories are
+  // deduplicated per entry, so an entry can never appear twice under the same heading.
+  const items: ListItem[] = applicable.flatMap((entry) =>
+    entry.categories.map((category) => ({
+      key: entryKey(entry),
+      category,
+      categories: entry.categories,
+      capabilities: entry.meta.capabilities ?? [],
+      name: entry.meta.name,
+      description: entry.meta.description,
+    }))
+  );
 
   const cursorEntry = applicable.find((e) => entryKey(e) === cursorKey);
   const names = new Map(entries.map((e) => [entryKey(e), e.meta.name]));
@@ -993,6 +1054,29 @@ export function AppShell() {
                       <Text bold>{cursorEntry.meta.name}</Text>
                       <Text>{cursorEntry.meta.description}</Text>
                       {cursorEntry.meta.website && <Text dimColor>{cursorEntry.meta.website}</Text>}
+                      {
+                        /* What this entry actually lets you do. Shown as the real capability keys
+                          rather than prettified labels: they are the vocabulary the catalog and
+                          `deno task capabilities` both speak, so the reader can carry one to find
+                          the other programs providing it — which on another platform is a
+                          different program entirely (Junction here, BrowserSelect on Windows).
+                          Width comes from the measured pane, not a guess, because this is the
+                          narrowest column and an over-wide row wraps the whole layout. */
+                      }
+                      {(cursorEntry.meta.capabilities ?? []).length > 0 &&
+                        layout.detail.height - 8 >= 1 && (
+                        <Box marginTop={1} flexDirection="column">
+                          {chipLines(
+                            cursorEntry.meta.capabilities ?? [],
+                            Math.max(8, layout.detail.width - 4),
+                            // Budget, not a guess: the pane also draws a title, name, description,
+                            // website, status, install method and notes. Without a cap, an entry
+                            // with many capabilities made the box taller than the layout allowed
+                            // and pushed the panes below it off screen at 80x24.
+                            layout.detail.height - 8,
+                          ).map((line) => <Text key={line} color="cyan">{line}</Text>)}
+                        </Box>
+                      )}
                       <Box marginTop={1} flexDirection="column">
                         {
                           /* The diagnosed state spelled out. The list carries only a one-character
@@ -1038,7 +1122,9 @@ export function AppShell() {
                     </>
                   )}
                   {screen === "browse" && !cursorEntry && cursorCategory !== undefined && (() => {
-                    const inCategory = applicable.filter((e) => e.category === cursorCategory);
+                    const inCategory = applicable.filter((e) =>
+                      e.categories.includes(cursorCategory)
+                    );
                     const selectedHere = inCategory.filter((e) =>
                       selection.has(entryKey(e))
                     ).length;
@@ -1268,6 +1354,7 @@ function HelpScreen() {
     ["n", "notices — startup checks, warnings, and conflicts"],
     ["e", "export your selection to a shareable manifest"],
     ["i", "import a selection from a manifest"],
+    ["o", "open the installed app under the cursor"],
     ["r", "on the summary after a run: report a failure on GitHub"],
     ["?", "this help"],
     ["Enter", "review the plan, then apply it"],

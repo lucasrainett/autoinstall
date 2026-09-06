@@ -1,0 +1,4 @@
+name = "No Platforms"
+description = "Valid metadata but zero platform folders underneath"
+kind = "install"
+website = "https://example.com"

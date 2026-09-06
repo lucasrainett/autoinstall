@@ -4,11 +4,11 @@ import type { CatalogEntry } from "../catalog/types.ts";
 import type { ScriptResult } from "../exec/runner.ts";
 
 function entry(
-  overrides: Partial<CatalogEntry> & Pick<CatalogEntry, "category" | "kind" | "id">,
+  overrides: Partial<CatalogEntry> & Pick<CatalogEntry, "categories" | "kind" | "id">,
 ): CatalogEntry {
-  const path = `/catalog/${overrides.category}/${overrides.kind}/${overrides.id}`;
+  const path = `/catalog/${overrides.id}`;
   return {
-    meta: { name: overrides.id, description: "test entry" },
+    meta: { kind: "install", name: overrides.id, description: "test entry" },
     path,
     // A realistic, per-entry detect path — not a shared literal — so tests that route mock
     // behavior by inspecting the path (e.g. "does this path belong to the broken entry")
@@ -26,33 +26,33 @@ function okResult(exitCode: number): ScriptResult {
 
 Deno.test("runDiagnosticScan - one snapshot record per applicable entry", async () => {
   const entries = [
-    entry({ category: "communication", kind: "install", id: "signal" }),
-    entry({ category: "privacy", kind: "configure", id: "disable-telemetry" }),
+    entry({ categories: ["communication"], kind: "install", id: "signal" }),
+    entry({ categories: ["privacy"], kind: "configure", id: "disable-telemetry" }),
   ];
   const snapshot = await runDiagnosticScan(entries, "linux", () => Promise.resolve(okResult(0)));
 
   assertEquals(snapshot.length, 2);
   assertEquals(snapshot[0], {
-    key: "communication/install/signal",
+    key: "signal",
     result: { ok: true, state: "satisfied" },
   });
   assertEquals(snapshot[1], {
-    key: "privacy/configure/disable-telemetry",
+    key: "disable-telemetry",
     result: { ok: true, state: "satisfied" },
   });
 });
 
 Deno.test("runDiagnosticScan - excludes entries not applicable to the current platform, without an error", async () => {
-  const entries = [entry({ category: "communication", kind: "install", id: "signal" })]; // linux only
+  const entries = [entry({ categories: ["communication"], kind: "install", id: "signal" })]; // linux only
   const snapshot = await runDiagnosticScan(entries, "windows", () => Promise.resolve(okResult(0)));
   assertEquals(snapshot, []);
 });
 
 Deno.test("runDiagnosticScan - a detect script throwing is caught as that entry's own error, not aborting the scan", async () => {
   const entries = [
-    entry({ category: "communication", kind: "install", id: "signal" }),
-    entry({ category: "dev-tools", kind: "install", id: "broken" }),
-    entry({ category: "productivity", kind: "install", id: "onlyoffice" }),
+    entry({ categories: ["communication"], kind: "install", id: "signal" }),
+    entry({ categories: ["dev-tools"], kind: "install", id: "broken" }),
+    entry({ categories: ["productivity"], kind: "install", id: "onlyoffice" }),
   ];
 
   const snapshot = await runDiagnosticScan(entries, "linux", (path) => {
@@ -70,7 +70,7 @@ Deno.test("runDiagnosticScan - a detect script throwing is caught as that entry'
 });
 
 Deno.test("runDiagnosticScan - a detect script's own exit-code-based error surfaces as that entry's state error", async () => {
-  const entries = [entry({ category: "communication", kind: "install", id: "signal" })];
+  const entries = [entry({ categories: ["communication"], kind: "install", id: "signal" })];
   const snapshot = await runDiagnosticScan(entries, "linux", () => Promise.resolve(okResult(127)));
   assertEquals(snapshot[0].result.ok, false);
 });

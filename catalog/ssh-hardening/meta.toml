@@ -1,0 +1,15 @@
+name = "SSH hardening"
+description = "Disables root login and password authentication for incoming SSH, requiring key-based access"
+
+kind = "configure"
+capabilities = ["ssh", "system-hardening"]
+
+[linux]
+installMethod = "script"
+notes = "Adds a drop-in under /etc/ssh/sshd_config.d/ rather than editing the main config. Refuses to run if no authorized SSH key exists, since disabling password auth without one would lock you out."
+requiresElevation = true
+
+[macos]
+installMethod = "script"
+notes = "Same drop-in approach for macOS's built-in sshd. Only affects incoming Remote Login; it is inert if Remote Login is off."
+requiresElevation = true

@@ -6,12 +6,17 @@ is deliberately the easiest thing to add: it is a directory of shell scripts, no
 ## Adding a catalog entry
 
 ```
-catalog/<category>/install/<id>/
+catalog/<id>/
 ├── meta.toml
 ├── linux/{detect,install,remove}.sh
 ├── macos/{detect,install,remove}.sh
 └── windows/{detect,install,remove}.sh
 ```
+
+The catalog is flat: one directory per entry, named by its id, and that id is the entry's whole
+key. It used to be `catalog/<category>/<kind>/<id>/`, which encoded an entry's category into its
+key — so recategorising an entry silently orphaned every saved selection and profile referring to
+it. That happened in practice.
 
 Create a folder only for the platforms where the software genuinely exists. **A missing platform
 folder is how "not applicable here" is expressed** — do not add one that prints "unsupported".
@@ -21,7 +26,15 @@ folder is how "not applicable here" is expressed** — do not add one that print
 ```toml
 name = "Example"
 description = "One sentence on what it is, not what it is not"
+kind = "install"
 website = "https://example.com/"
+
+# What this software lets you do, from the closed vocabulary in src/catalog/capabilities.ts.
+# List everything it genuinely provides, not just its headline feature — a media player that also
+# transcodes should say so. Categories are NOT declared: each capability belongs to a category, so
+# an entry lands in every category its capabilities imply. Software doing several unrelated things
+# appears under each of them.
+capabilities = ["example-capability"]
 
 [linux]
 installMethod = "flatpak"
@@ -90,7 +103,7 @@ The re-run and the removal are where bugs actually live.
 
 ## Adding a profile
 
-A profile is one TOML file in `profiles/`, listing entries by `category/kind/id`:
+A profile is one TOML file in `profiles/`, listing entries by id:
 
 ```toml
 name = "Example"

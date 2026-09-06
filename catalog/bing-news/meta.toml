@@ -1,0 +1,10 @@
+name = "News"
+description = "Microsoft's news feed app, preinstalled on Windows"
+kind = "install"
+website = "https://apps.microsoft.com/detail/9wzdncrfhvfw"
+
+capabilities = ["news"]
+
+[windows]
+installMethod = "script"
+notes = "Preinstalled, so it usually starts already selected. Unchecking it removes the package for the current user; it can be reinstalled from the Microsoft Store."

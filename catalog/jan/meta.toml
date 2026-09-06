@@ -1,0 +1,15 @@
+name = "Jan"
+description = "Open-source ChatGPT alternative that runs local models or connects to cloud providers"
+kind = "install"
+website = "https://jan.ai/"
+
+capabilities = ["local-llm", "ai-chat"]
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

@@ -1,9 +1,0 @@
-name = "Mission Center"
-description = "System monitor showing CPU, memory, disk, network and GPU usage"
-website = "https://missioncenter.io/"
-
-capabilities = ["system-monitoring"]
-
-[linux]
-installMethod = "flatpak"
-notes = "GTK4/libadwaita, so Linux-only. Stats (macOS) and System Informer (Windows) are separate programs for the same capability and have their own entries."

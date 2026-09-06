@@ -17,18 +17,52 @@ export type SudoRunner = (args: readonly string[]) => Promise<boolean>;
  * captured. Only call this while nothing else is also reading the same terminal (e.g. an Ink app
  * still in raw mode) — see App.tsx's use of Ink's own `suspendTerminal` for how the TUI avoids
  * that race. */
-export function realSudoRunner(): SudoRunner {
+/**
+ * How long an interactive `sudo` prompt may sit unanswered before this gives up.
+ *
+ * There was previously no bound at all: if the prompt was never answered — the user stepped away,
+ * or never saw it because the interface had just handed the terminal over — the application waited
+ * on it forever with no way out but killing the process. Reported as the app getting stuck on
+ * "requesting sudo".
+ *
+ * Two minutes is longer than typing a password takes and shorter than sudo's own five-minute
+ * `passwd_timeout`, so this is what gives up first and can therefore say something useful.
+ */
+export const SUDO_PROMPT_TIMEOUT_MS = 2 * 60 * 1000;
+
+export function realSudoRunner(timeoutMs: number = SUDO_PROMPT_TIMEOUT_MS): SudoRunner {
   return async (args) => {
+    let child: Deno.ChildProcess;
     try {
-      const { code } = await new Deno.Command("sudo", {
+      child = new Deno.Command("sudo", {
         args: [...args],
         stdin: "inherit",
         stdout: "inherit",
         stderr: "inherit",
-      }).output();
-      return code === 0;
+      }).spawn();
     } catch {
       return false;
+    }
+
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      // Kills only the prompt we started. sudo leaves the terminal usable on SIGTERM, and Ink
+      // restores its own state when the suspend block returns either way.
+      try {
+        child.kill("SIGTERM");
+      } catch {
+        // Already exited between the timer firing and this call — nothing to do.
+      }
+    }, timeoutMs);
+
+    try {
+      const { code } = await child.status;
+      return !timedOut && code === 0;
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timer);
     }
   };
 }

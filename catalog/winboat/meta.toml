@@ -1,0 +1,11 @@
+name = "WinBoat"
+description = "Runs Windows apps on Linux in a containerized Windows VM with desktop integration"
+kind = "install"
+website = "https://github.com/TibixDev/winboat"
+
+capabilities = ["windows-compatibility", "virtualization", "containers"]
+
+[linux]
+installMethod = "appimage"
+requiresElevation = true
+notes = "Recognised whether it came from WinBoat's .deb or its AppImage; new installs use the AppImage through Gear Lever, and removal takes out whichever is present. Carried over from the old repo. Needs Docker or Podman and hardware virtualisation; WinBoat runs a real Windows VM behind the scenes rather than emulating the applications. Managed through Gear Lever like every other AppImage here."

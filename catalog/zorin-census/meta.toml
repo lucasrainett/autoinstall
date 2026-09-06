@@ -1,0 +1,11 @@
+name = "Zorin OS census"
+description = "Zorin's usage reporting, which pings their servers hourly"
+kind = "install"
+website = "https://zorin.com/legal/privacy/"
+
+capabilities = ["telemetry-collection"]
+
+[linux]
+installMethod = "apt"
+notes = "Preinstalled on Zorin OS, so it starts checked. It reports hourly: a unique installation ID, the OS version, how many user accounts exist, and the city and country it is in. Unchecking removes the package and the stored identifier. Sourced from privacy.sexy, which cites Zorin's own privacy policy and package source."
+requiresElevation = true

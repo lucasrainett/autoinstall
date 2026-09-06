@@ -1,0 +1,11 @@
+name = "Compressed swap (zram)"
+description = "Puts swap in compressed RAM instead of on disk, which is far faster"
+kind = "configure"
+website = "https://wiki.debian.org/ZRam"
+
+capabilities = ["memory-management"]
+
+[linux]
+installMethod = "apt"
+notes = "Worth most on a machine with modest RAM and an SSD you would rather not wear out. Removal takes the package and leaves the kernel's own defaults."
+requiresElevation = true

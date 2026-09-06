@@ -4,11 +4,11 @@ import type { CatalogEntry } from "../catalog/types.ts";
 import type { Plan } from "./compute.ts";
 
 function entry(
-  overrides: Partial<CatalogEntry> & Pick<CatalogEntry, "category" | "kind" | "id">,
+  overrides: Partial<CatalogEntry> & Pick<CatalogEntry, "categories" | "kind" | "id">,
 ): CatalogEntry {
-  const path = `/catalog/${overrides.category}/${overrides.kind}/${overrides.id}`;
+  const path = `/catalog/${overrides.id}`;
   return {
-    meta: { name: overrides.id, description: "test entry" },
+    meta: { kind: "install", name: overrides.id, description: "test entry" },
     path,
     platforms: {
       linux: { detect: `${path}/linux/detect.sh`, install: `${path}/linux/install.sh` },
@@ -26,14 +26,19 @@ Deno.test("renderPlan - an empty plan says there's nothing to do", () => {
 
 Deno.test("renderPlan - a routine (non-destructive) plan renders with no destructive marker at all", () => {
   const signal = entry({
-    category: "communication",
+    categories: ["communication"],
     kind: "install",
     id: "signal",
-    meta: { name: "Signal", description: "x", website: "https://signal.org" },
+    meta: {
+      kind: "install",
+      name: "Signal",
+      description: "x",
+      website: "https://signal.org",
+    },
   });
   const plan: Plan = {
     actions: [{
-      key: "communication/install/signal",
+      key: "signal",
       actionKind: "install",
       scriptPath: "/x/install.sh",
       destructive: false,
@@ -48,14 +53,14 @@ Deno.test("renderPlan - a routine (non-destructive) plan renders with no destruc
 
 Deno.test("renderPlan - a destructive action renders with a distinct marker", () => {
   const diskCheck = entry({
-    category: "security",
+    categories: ["security"],
     kind: "configure",
     id: "enable-disk-check",
-    meta: { name: "Disk Encryption Check", description: "x" },
+    meta: { kind: "install", name: "Disk Encryption Check", description: "x" },
   });
   const plan: Plan = {
     actions: [{
-      key: "security/configure/enable-disk-check",
+      key: "enable-disk-check",
       actionKind: "configure",
       scriptPath: "/x/install.sh",
       destructive: true,
@@ -71,14 +76,19 @@ Deno.test("renderPlan - a destructive action renders with a distinct marker", ()
 
 Deno.test("renderPlan - entries needing no action are not listed at all", () => {
   const signal = entry({
-    category: "communication",
+    categories: ["communication"],
     kind: "install",
     id: "signal",
-    meta: { name: "Signal", description: "x", website: "https://signal.org" },
+    meta: {
+      kind: "install",
+      name: "Signal",
+      description: "x",
+      website: "https://signal.org",
+    },
   });
   const plan: Plan = {
     actions: [],
-    skipped: [{ key: "communication/install/signal", reason: "already-satisfied" }],
+    skipped: [{ key: "signal", reason: "already-satisfied" }],
   };
   // The plan answers one question: what is about to change. Listing entries that need no action
   // buried the lines that mattered — reported by the user as "too much noise".
@@ -91,7 +101,7 @@ Deno.test("renderPlan - entries needing no action are not listed at all", () => 
 Deno.test("renderPlan - falls back to the raw key if the entry isn't found in the given catalog", () => {
   const plan: Plan = {
     actions: [{
-      key: "communication/install/unknown-entry",
+      key: "unknown-entry",
       actionKind: "install",
       scriptPath: "/x/install.sh",
       destructive: false,
@@ -99,47 +109,62 @@ Deno.test("renderPlan - falls back to the raw key if the entry isn't found in th
     }],
     skipped: [],
   };
-  assertStringIncludes(renderPlan(plan, []), "communication/install/unknown-entry");
+  assertStringIncludes(renderPlan(plan, []), "unknown-entry");
 });
 
 Deno.test("renderPlan - a mixed plan renders its actions distinctly and omits the skipped ones", () => {
   const signal = entry({
-    category: "communication",
+    categories: ["communication"],
     kind: "install",
     id: "signal",
-    meta: { name: "Signal", description: "x", website: "https://signal.org" },
+    meta: {
+      kind: "install",
+      name: "Signal",
+      description: "x",
+      website: "https://signal.org",
+    },
   });
   const diskCheck = entry({
-    category: "security",
+    categories: ["security"],
     kind: "configure",
     id: "enable-disk-check",
-    meta: { name: "Disk Encryption Check", description: "x", destructive: true },
+    meta: {
+      kind: "install",
+      name: "Disk Encryption Check",
+      description: "x",
+      destructive: true,
+    },
   });
   const other = entry({
-    category: "browsers",
+    categories: ["browsers"],
     kind: "install",
     id: "zen-browser",
-    meta: { name: "Zen Browser", description: "x", website: "https://zen-browser.app" },
+    meta: {
+      kind: "install",
+      name: "Zen Browser",
+      description: "x",
+      website: "https://zen-browser.app",
+    },
   });
 
   const plan: Plan = {
     actions: [
       {
-        key: "communication/install/signal",
+        key: "signal",
         actionKind: "install",
         scriptPath: "/x",
         destructive: false,
         requiresElevation: false,
       },
       {
-        key: "security/configure/enable-disk-check",
+        key: "enable-disk-check",
         actionKind: "configure",
         scriptPath: "/x",
         destructive: true,
         requiresElevation: false,
       },
     ],
-    skipped: [{ key: "browsers/install/zen-browser", reason: "already-satisfied" }],
+    skipped: [{ key: "zen-browser", reason: "already-satisfied" }],
   };
 
   const rendered = renderPlan(plan, [signal, diskCheck, other]);
@@ -155,14 +180,19 @@ Deno.test("renderPlan - a mixed plan renders its actions distinctly and omits th
 
 Deno.test("renderPlan - with no untrusted sources, no untrusted marker or content block appears at all", () => {
   const signal = entry({
-    category: "communication",
+    categories: ["communication"],
     kind: "install",
     id: "signal",
-    meta: { name: "Signal", description: "x", website: "https://signal.org" },
+    meta: {
+      kind: "install",
+      name: "Signal",
+      description: "x",
+      website: "https://signal.org",
+    },
   });
   const plan: Plan = {
     actions: [{
-      key: "communication/install/signal",
+      key: "signal",
       actionKind: "install",
       scriptPath: "/x",
       destructive: false,
@@ -176,21 +206,25 @@ Deno.test("renderPlan - with no untrusted sources, no untrusted marker or conten
 
 Deno.test("renderPlan - an untrusted source's origin and full raw contents are shown before anything else, verbatim", () => {
   const signal = entry({
-    category: "communication",
+    categories: ["communication"],
     kind: "install",
     id: "signal",
-    meta: { name: "Signal", description: "x", website: "https://signal.org" },
+    meta: {
+      kind: "install",
+      name: "Signal",
+      description: "x",
+      website: "https://signal.org",
+    },
   });
-  const rawContents =
-    'name = "Remote"\ndescription = "x"\nentries = ["communication/install/signal"]\n';
+  const rawContents = 'name = "Remote"\ndescription = "x"\nentries = ["signal"]\n';
   const source: UntrustedSource = {
     origin: "https://example.com/profile.toml",
     rawContents,
-    keys: ["communication/install/signal"],
+    keys: ["signal"],
   };
   const plan: Plan = {
     actions: [{
-      key: "communication/install/signal",
+      key: "signal",
       actionKind: "install",
       scriptPath: "/x",
       destructive: false,
@@ -214,33 +248,43 @@ Deno.test("renderPlan - an untrusted source's origin and full raw contents are s
 
 Deno.test("renderPlan - an entry contributed by an untrusted source is marked, one not from it is not", () => {
   const signal = entry({
-    category: "communication",
+    categories: ["communication"],
     kind: "install",
     id: "signal",
-    meta: { name: "Signal", description: "x", website: "https://signal.org" },
+    meta: {
+      kind: "install",
+      name: "Signal",
+      description: "x",
+      website: "https://signal.org",
+    },
   });
   const zen = entry({
-    category: "browsers",
+    categories: ["browsers"],
     kind: "install",
     id: "zen-browser",
-    meta: { name: "Zen Browser", description: "x", website: "https://zen-browser.app" },
+    meta: {
+      kind: "install",
+      name: "Zen Browser",
+      description: "x",
+      website: "https://zen-browser.app",
+    },
   });
   const source: UntrustedSource = {
     origin: "https://example.com/profile.toml",
     rawContents: "irrelevant here",
-    keys: ["communication/install/signal"],
+    keys: ["signal"],
   };
   const plan: Plan = {
     actions: [
       {
-        key: "communication/install/signal",
+        key: "signal",
         actionKind: "install",
         scriptPath: "/x",
         destructive: false,
         requiresElevation: false,
       },
       {
-        key: "browsers/install/zen-browser",
+        key: "zen-browser",
         actionKind: "install",
         scriptPath: "/x",
         destructive: false,
@@ -263,15 +307,15 @@ Deno.test("renderPlan - an available update that was not marked is not mentioned
   // anything outdated. Repeating it in the plan is the same noise the user asked to remove.
   const catalog = [
     entry({
-      category: "communication",
+      categories: ["communication"],
       kind: "install",
       id: "signal",
-      meta: { name: "Signal", description: "d" },
+      meta: { kind: "install", name: "Signal", description: "d" },
     }),
   ];
   const out = renderPlan({
     actions: [],
-    skipped: [{ key: "communication/install/signal", reason: "update-available" }],
+    skipped: [{ key: "signal", reason: "update-available" }],
   }, catalog);
   assertEquals(out.includes("Signal"), false);
   assertEquals(out.includes("update"), false);

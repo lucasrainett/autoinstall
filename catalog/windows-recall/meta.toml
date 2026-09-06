@@ -1,0 +1,11 @@
+name = "Disable Windows Recall"
+description = "Stops Recall taking continuous screenshots of everything you do"
+kind = "configure"
+website = "https://learn.microsoft.com/windows/client-management/manage-recall"
+
+capabilities = ["screen-recall"]
+
+[windows]
+installMethod = "script"
+notes = "Recall snapshots the screen every few seconds and indexes it locally. Even stored locally that is a searchable record of everything on screen, including passwords and messages in view. Set as policy in both the machine and user hives, because Windows honours whichever it finds."
+requiresElevation = true

@@ -1,0 +1,12 @@
+name = "Signal"
+description = "End-to-end encrypted messaging app for private communication"
+kind = "install"
+website = "https://signal.org"
+
+capabilities = ["messaging", "video-calls", "encryption"]
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

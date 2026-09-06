@@ -1,0 +1,11 @@
+name = "Howdy face authentication"
+description = "Signs in and authorises sudo with the infrared camera, like Windows Hello"
+kind = "configure"
+website = "https://github.com/boltgolt/howdy"
+
+capabilities = ["biometric-auth", "webcam"]
+
+[linux]
+installMethod = "apt"
+notes = "From the maintainer's PPA, which is where this machine's copy came from. Needs an infrared camera; a normal webcam is not enough and Howdy will not authenticate. Removal takes the PPA with it."
+requiresElevation = true

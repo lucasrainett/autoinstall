@@ -1,9 +1,0 @@
-name = "Teams (personal)"
-description = "Microsoft Teams (free), the consumer chat and calling client pinned by Windows 11"
-website = "https://www.microsoft.com/en-us/microsoft-teams/free"
-
-capabilities = ["messaging", "video-calls"]
-
-[windows]
-installMethod = "script"
-notes = "Preinstalled, so it usually starts already selected. Unchecking it removes these packages for the current user; it can be reinstalled from the Microsoft Store. Both package names are checked: Windows renamed it between builds."

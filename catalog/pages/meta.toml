@@ -1,0 +1,11 @@
+name = "Pages"
+description = "Apple's word processor, bundled with new Macs and free from the App Store"
+kind = "install"
+website = "https://support.apple.com/pages"
+
+capabilities = ["word-processing"]
+
+[macos]
+installMethod = "script"
+notes = "Preinstalled on most Macs, so it usually starts already selected. Unchecking it deletes the bundle; it can be reinstalled from the App Store, which is what makes that reversible."
+requiresElevation = true

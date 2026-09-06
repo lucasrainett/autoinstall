@@ -1,0 +1,15 @@
+name = "Minecraft"
+description = "Official Minecraft launcher; Java Edition everywhere, Bedrock only on Windows"
+kind = "install"
+website = "https://www.minecraft.net/"
+
+capabilities = ["games", "game-launcher"]
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

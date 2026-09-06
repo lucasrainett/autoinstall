@@ -1,0 +1,11 @@
+name = "Terminal advertising"
+description = "Turns off Ubuntu's message-of-the-day adverts and Pro upsell in apt output"
+kind = "configure"
+website = "https://documentation.ubuntu.com/pro-client/en/latest/howtoguides/disable_enable_apt_news/"
+
+capabilities = ["advertising"]
+
+[linux]
+installMethod = "script"
+notes = "Ubuntu prints promotional messages when you open a shell over SSH and marketing lines in apt output. Zorin OS already ships without either, so on this machine the entry reports satisfied and does nothing — which is the honest answer, since the goal 'no adverts in my terminal' already holds."
+requiresElevation = true

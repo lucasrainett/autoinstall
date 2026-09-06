@@ -4,22 +4,22 @@ import type { UserConfig } from "../config/types.ts";
 import type { HistoryRecord } from "../history/types.ts";
 
 Deno.test("refreshCatalog - identifies newly added bundled entries", () => {
-  const previous = new Set(["communication/install/signal"]);
-  const current = new Set(["communication/install/signal", "browsers/install/zen-browser"]);
+  const previous = new Set(["signal"]);
+  const current = new Set(["signal", "zen-browser"]);
   const result = refreshCatalog(previous, current);
-  assertEquals(result.newEntryKeys, ["browsers/install/zen-browser"]);
+  assertEquals(result.newEntryKeys, ["zen-browser"]);
   assertEquals(result.removedEntryKeys, []);
 });
 
 Deno.test("refreshCatalog - identifies entries removed from the bundled catalog", () => {
-  const previous = new Set(["communication/install/signal", "tools/install/discontinued"]);
-  const current = new Set(["communication/install/signal"]);
+  const previous = new Set(["signal", "discontinued"]);
+  const current = new Set(["signal"]);
   const result = refreshCatalog(previous, current);
-  assertEquals(result.removedEntryKeys, ["tools/install/discontinued"]);
+  assertEquals(result.removedEntryKeys, ["discontinued"]);
 });
 
 Deno.test("refreshCatalog - no changes produces an empty result", () => {
-  const same = new Set(["communication/install/signal"]);
+  const same = new Set(["signal"]);
   assertEquals(refreshCatalog(same, same), { newEntryKeys: [], removedEntryKeys: [] });
 });
 
@@ -29,14 +29,14 @@ Deno.test("refreshCatalog - cannot disturb user selections or history: it doesn'
   // here by passing real config/history objects through untouched around the refresh call.
   const config: UserConfig = {
     identity: { name: "Jane" },
-    selectedKeys: ["communication/install/signal"],
+    selectedKeys: ["signal"],
     overlayRepos: [],
   };
   const history: HistoryRecord[] = [
     {
       runId: "run-1",
       timestamp: "2026-01-01T00:00:00.000Z",
-      key: "communication/install/signal",
+      key: "signal",
       kind: "install",
       action: "install",
       result: "success",
@@ -44,11 +44,11 @@ Deno.test("refreshCatalog - cannot disturb user selections or history: it doesn'
   ];
 
   refreshCatalog(
-    new Set(["communication/install/signal"]),
-    new Set(["communication/install/signal", "browsers/install/zen-browser"]),
+    new Set(["signal"]),
+    new Set(["signal", "zen-browser"]),
   );
 
-  assertStrictEquals(config.selectedKeys[0], "communication/install/signal");
+  assertStrictEquals(config.selectedKeys[0], "signal");
   assertEquals(config.selectedKeys.length, 1);
   assertEquals(history.length, 1);
 });

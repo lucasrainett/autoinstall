@@ -8,20 +8,41 @@ import {
 import type { ListItem } from "./checkbox-list.ts";
 
 const items: ListItem[] = [
-  { key: "browsers/install/brave", category: "browsers", name: "Brave", description: "" },
-  { key: "browsers/install/zen", category: "browsers", name: "Zen", description: "" },
-  { key: "dev-tools/install/git", category: "dev-tools", name: "Git", description: "" },
+  {
+    key: "brave",
+    category: "browsers",
+    categories: ["browsers"],
+    capabilities: [],
+    name: "Brave",
+    description: "",
+  },
+  {
+    key: "zen",
+    category: "browsers",
+    categories: ["browsers"],
+    capabilities: [],
+    name: "Zen",
+    description: "",
+  },
+  {
+    key: "git",
+    category: "dev-tools",
+    categories: ["dev-tools"],
+    capabilities: [],
+    name: "Git",
+    description: "",
+  },
 ];
 
 Deno.test("categorySelectionState - reports all, some, and none distinctly", () => {
   assertEquals(categorySelectionState(new Set(), items, "browsers"), "none");
   assertEquals(
-    categorySelectionState(new Set(["browsers/install/brave"]), items, "browsers"),
+    categorySelectionState(new Set(["brave"]), items, "browsers"),
     "some",
   );
   assertEquals(
     categorySelectionState(
-      new Set(["browsers/install/brave", "browsers/install/zen"]),
+      new Set(["brave", "zen"]),
       items,
       "browsers",
     ),
@@ -38,31 +59,31 @@ Deno.test("categorySelectionState - an unknown or empty category is 'none', not 
 Deno.test("toggleCategory - checking a category selects everything in it", () => {
   // The reported request: check "browsers" to install all of them.
   const result = toggleCategory(new Set(), items, "browsers");
-  assertEquals([...result].sort(), ["browsers/install/brave", "browsers/install/zen"]);
+  assertEquals([...result].sort(), ["brave", "zen"]);
 });
 
 Deno.test("toggleCategory - never touches other categories", () => {
-  const result = toggleCategory(new Set(["dev-tools/install/git"]), items, "browsers");
-  assertEquals(result.has("dev-tools/install/git"), true);
+  const result = toggleCategory(new Set(["git"]), items, "browsers");
+  assertEquals(result.has("git"), true);
 });
 
 Deno.test("toggleCategory - a fully selected category clears", () => {
-  const all = new Set(["browsers/install/brave", "browsers/install/zen"]);
+  const all = new Set(["brave", "zen"]);
   assertEquals([...toggleCategory(all, items, "browsers")], []);
 });
 
 Deno.test("toggleCategory - a partly selected category fills up rather than clearing", () => {
   // Clearing here would silently discard a choice the user had already made; completing the set is
   // additive and trivially undone.
-  const partial = new Set(["browsers/install/brave"]);
+  const partial = new Set(["brave"]);
   const result = toggleCategory(partial, items, "browsers");
-  assertEquals([...result].sort(), ["browsers/install/brave", "browsers/install/zen"]);
+  assertEquals([...result].sort(), ["brave", "zen"]);
 });
 
 Deno.test("toggleCategory - respects an active filter by only seeing the items it is given", () => {
   const filtered = items.filter((i) => i.name === "Brave");
   const result = toggleCategory(new Set(), filtered, "browsers");
-  assertEquals([...result], ["browsers/install/brave"]);
+  assertEquals([...result], ["brave"]);
 });
 
 Deno.test("rowToCategory - identifies header rows and rejects item rows", () => {

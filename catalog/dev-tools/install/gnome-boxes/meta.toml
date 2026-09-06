@@ -1,9 +1,0 @@
-name = "GNOME Boxes"
-description = "Graphical virtual machine manager for GNOME"
-website = "https://apps.gnome.org/Boxes/"
-
-capabilities = ["virtualization"]
-
-[linux]
-installMethod = "apt"
-requiresElevation = true

@@ -17,131 +17,206 @@
 
 export const CAPABILITIES = {
   // Web and communication
-  "web-browsing": "Browse the web",
-  "email": "Read and send email",
-  "messaging": "Instant messaging and chat",
-  "video-calls": "Video and voice calls",
-  "contacts": "Keep an address book",
-  "calendar": "Keep a calendar and appointments",
-  "sms": "Send and receive phone text messages",
+  "web-browsing": { description: "Browse the web", category: "browsers" },
+  "email": { description: "Read and send email", category: "communication" },
+  "messaging": { description: "Instant messaging and chat", category: "communication" },
+  "video-calls": { description: "Video and voice calls", category: "communication" },
+  "contacts": { description: "Keep an address book", category: "communication" },
+  "calendar": { description: "Keep a calendar and appointments", category: "productivity" },
+  "sms": { description: "Send and receive phone text messages", category: "communication" },
 
   // Files and sync
-  "cloud-file-sync": "Sync files with a cloud provider",
-  "file-transfer": "Move data over the network by hand",
-  "file-management": "Browse and organise files",
-  "filesystem-support": "Read and write another platform's filesystems",
-  "disk-snapshots": "Take restorable snapshots of the system",
+  "cloud-file-sync": { description: "Sync files with a cloud provider", category: "productivity" },
+  "file-transfer": { description: "Move data over the network by hand", category: "dev-tools" },
+  "file-management": { description: "Browse and organise files", category: "system-utilities" },
+  "filesystem-support": {
+    description: "Read and write another platform's filesystems",
+    category: "system-utilities",
+  },
+  "disk-snapshots": {
+    description: "Take restorable snapshots of the system",
+    category: "system-utilities",
+  },
 
   // Media playback
-  "video-playback": "Play video files",
-  "music-playback": "Play music",
-  "photo-management": "Organise and view a photo library",
-  "maps": "View maps and navigate",
-  "weather": "Check the weather",
-  "news": "Read a news feed",
+  "video-playback": { description: "Play video files", category: "media" },
+  "music-playback": { description: "Play music", category: "media" },
+  "photo-management": { description: "Organise and view a photo library", category: "media" },
+  "maps": { description: "View maps and navigate", category: "media" },
+  "weather": { description: "Check the weather", category: "system-utilities" },
+  "news": { description: "Read a news feed", category: "media" },
 
   // Media creation
-  "video-editing": "Edit video",
-  "video-transcoding": "Convert video between formats",
-  "media-download": "Download video and audio from the web",
-  "audio-recording": "Record audio",
-  "music-creation": "Compose and produce music",
-  "screen-recording": "Record the screen",
-  "live-streaming": "Broadcast live video",
-  "webcam": "Use a webcam",
+  "video-editing": { description: "Edit video", category: "creative" },
+  "video-transcoding": { description: "Convert video between formats", category: "media" },
+  "media-download": { description: "Download video and audio from the web", category: "media" },
+  "audio-recording": { description: "Record audio", category: "creative" },
+  "music-creation": { description: "Compose and produce music", category: "creative" },
+  "screen-recording": { description: "Record the screen", category: "media" },
+  "live-streaming": { description: "Broadcast live video", category: "media" },
+  "webcam": { description: "Use a webcam", category: "media" },
 
   // Graphics and 3D
-  "raster-graphics": "Edit photos and bitmap images",
-  "vector-graphics": "Draw scalable vector artwork",
-  "3d-modeling": "Create and edit 3D models",
-  "3d-viewing": "View 3D models",
-  "3d-slicing": "Prepare 3D models for printing",
+  "raster-graphics": { description: "Edit photos and bitmap images", category: "creative" },
+  "vector-graphics": { description: "Draw scalable vector artwork", category: "creative" },
+  "3d-modeling": { description: "Create and edit 3D models", category: "creative" },
+  "3d-viewing": { description: "View 3D models", category: "3d-printing" },
+  "3d-slicing": { description: "Prepare 3D models for printing", category: "3d-printing" },
 
   // Documents
-  "word-processing": "Write documents",
-  "spreadsheets": "Work with spreadsheets",
-  "presentations": "Build slide decks",
-  "note-taking": "Keep notes",
-  "markdown-editing": "Write Markdown",
-  "mind-mapping": "Draw mind maps and knowledge graphs",
-  "task-management": "Track tasks and to-do lists",
+  "word-processing": { description: "Write documents", category: "productivity" },
+  "spreadsheets": { description: "Work with spreadsheets", category: "productivity" },
+  "presentations": { description: "Build slide decks", category: "productivity" },
+  "note-taking": { description: "Keep notes", category: "productivity" },
+  "markdown-editing": { description: "Write Markdown", category: "productivity" },
+  "mind-mapping": { description: "Draw mind maps and knowledge graphs", category: "creative" },
+  "task-management": { description: "Track tasks and to-do lists", category: "productivity" },
 
   // Development
-  "version-control": "Track source history",
-  "code-editing": "Edit code",
-  "ide-management": "Install and update IDEs",
-  "terminal-tools": "Core command-line utilities",
-  "programming-language": "A language toolchain",
-  "build-tools": "Build and compile projects",
-  "json-processing": "Process JSON on the command line",
-  "containers": "Run application containers",
-  "container-gui": "Manage containers from a desktop interface",
-  "virtualization": "Run virtual machines",
-  "emulation": "Emulate other machines and architectures",
-  "infrastructure-as-code": "Define infrastructure declaratively",
-  "cloud-cli": "Drive a cloud provider from the command line",
-  "ai-coding-assistant": "AI help while writing code",
-  "system-limits": "Tune kernel resource limits for development",
+  "version-control": { description: "Track source history", category: "dev-tools" },
+  "code-editing": { description: "Edit code", category: "dev-tools" },
+  "ide-management": { description: "Install and update IDEs", category: "dev-tools" },
+  "terminal-tools": { description: "Core command-line utilities", category: "dev-tools" },
+  "programming-language": { description: "A language toolchain", category: "dev-tools" },
+  "build-tools": { description: "Build and compile projects", category: "dev-tools" },
+  "json-processing": { description: "Process JSON on the command line", category: "dev-tools" },
+  "containers": { description: "Run application containers", category: "dev-tools" },
+  "container-gui": {
+    description: "Manage containers from a desktop interface",
+    category: "dev-tools",
+  },
+  "virtualization": { description: "Run virtual machines", category: "dev-tools" },
+  "emulation": { description: "Emulate other machines and architectures", category: "dev-tools" },
+  "infrastructure-as-code": {
+    description: "Define infrastructure declaratively",
+    category: "dev-tools",
+  },
+  "cloud-cli": {
+    description: "Drive a cloud provider from the command line",
+    category: "dev-tools",
+  },
+  "ai-coding-assistant": { description: "AI help while writing code", category: "ai" },
+  "system-limits": {
+    description: "Tune kernel resource limits for development",
+    category: "dev-tools",
+  },
 
   // AI
-  "local-llm": "Run language models on this machine",
-  "ai-chat": "Chat with an AI assistant",
-  "speech-to-text": "Dictate text by voice",
-  "voice-assistant": "A system voice assistant",
+  "local-llm": { description: "Run language models on this machine", category: "ai" },
+  "ai-chat": { description: "Chat with an AI assistant", category: "ai" },
+  "speech-to-text": { description: "Dictate text by voice", category: "ai" },
+  "voice-assistant": { description: "A system voice assistant", category: "ai" },
 
   // Gaming
-  "game-store": "Buy and install games",
-  "game-launcher": "Launch and organise a game library",
-  "games": "A game itself",
-  "game-streaming-client": "Play games streamed from another machine",
-  "game-streaming-host": "Stream games to another machine",
-  "windows-compatibility": "Run Windows software on another OS",
-  "game-overlay": "In-game capture and performance overlay",
+  "game-store": { description: "Buy and install games", category: "gaming" },
+  "game-launcher": { description: "Launch and organise a game library", category: "gaming" },
+  "games": { description: "A game itself", category: "gaming" },
+  "game-streaming-client": {
+    description: "Play games streamed from another machine",
+    category: "gaming",
+  },
+  "game-streaming-host": { description: "Stream games to another machine", category: "gaming" },
+  "windows-compatibility": {
+    description: "Run Windows software on another OS",
+    category: "gaming",
+  },
+  "game-overlay": { description: "In-game capture and performance overlay", category: "gaming" },
 
   // Security and privacy
-  "password-manager": "Store and fill passwords",
-  "vpn": "Route traffic through a VPN",
-  "mesh-vpn": "Connect your own machines privately",
-  "encryption": "Encrypt files or volumes",
-  "firewall": "Block unsolicited incoming connections",
-  "system-hardening": "Reduce the attack surface of the system",
-  "ssh": "Connect to machines over SSH",
-  "biometric-auth": "Sign in with a fingerprint or face",
-  "automatic-updates": "Apply security updates unattended",
-  "telemetry-collection": "Report usage or hardware data to a vendor",
-  "tracker-blocking": "Block analytics and ad domains",
-  "dns-privacy": "Encrypt DNS queries",
-  "location-services": "Share the machine's location with apps",
-  "screen-recall": "Continuously record what is on screen",
-  "advertising": "Show ads or upsells in the product",
-  "feedback-reporting": "Send feedback and diagnostics to a vendor",
+  "password-manager": { description: "Store and fill passwords", category: "security" },
+  "vpn": { description: "Route traffic through a VPN", category: "security" },
+  "mesh-vpn": { description: "Connect your own machines privately", category: "security" },
+  "encryption": { description: "Encrypt files or volumes", category: "security" },
+  "firewall": { description: "Block unsolicited incoming connections", category: "security" },
+  "system-hardening": {
+    description: "Reduce the attack surface of the system",
+    category: "security",
+  },
+  "ssh": { description: "Connect to machines over SSH", category: "security" },
+  "biometric-auth": { description: "Sign in with a fingerprint or face", category: "security" },
+  "automatic-updates": { description: "Apply security updates unattended", category: "security" },
+  "telemetry-collection": {
+    description: "Report usage or hardware data to a vendor",
+    category: "privacy",
+  },
+  "tracker-blocking": { description: "Block analytics and ad domains", category: "privacy" },
+  "dns-privacy": { description: "Encrypt DNS queries", category: "privacy" },
+  "location-services": {
+    description: "Share the machine's location with apps",
+    category: "privacy",
+  },
+  "screen-recall": { description: "Continuously record what is on screen", category: "privacy" },
+  "advertising": { description: "Show ads or upsells in the product", category: "privacy" },
+  "feedback-reporting": {
+    description: "Send feedback and diagnostics to a vendor",
+    category: "privacy",
+  },
 
   // System
-  "system-monitoring": "Watch CPU, memory, disk and network use",
-  "gpu-tuning": "Set GPU fan curves, clocks and power limits",
-  "package-management": "Install software from a package system",
-  "app-storefront": "Browse and install apps from a store",
-  "sandbox-permissions": "Review and edit app sandbox permissions",
-  "desktop-extensions": "Extend the desktop shell",
-  "remote-desktop": "Control another machine's desktop",
-  "remote-assistance": "Let someone else help on this machine",
-  "phone-integration": "Link a phone to the desktop",
-  "network-scanning": "Scan a network for hosts and ports",
-  "document-scanning": "Scan paper documents",
-  "device-management": "Configure peripherals",
-  "macro-keypad": "Drive a macro keypad",
-  "link-routing": "Choose which app opens a link",
-  "desktop-appearance": "Change how the desktop looks",
-  "input-configuration": "Configure keyboard, mouse and trackpad",
-  "power-management": "Control power and performance profiles",
-  "memory-management": "Tune swap and memory behaviour",
-  "boot-behavior": "Control shutdown and startup behaviour",
-  "shell-configuration": "Configure the command-line shell",
-  "desktop-automation": "Automate desktop tasks",
-  "mixed-reality": "Use a VR or mixed-reality headset",
-  "help-support": "Built-in help and support",
-  "clock-timers": "Alarms, timers and world clocks",
-  "ambient-sound": "Play background ambience for focus",
+  "system-monitoring": {
+    description: "Watch CPU, memory, disk and network use",
+    category: "system-utilities",
+  },
+  "gpu-tuning": {
+    description: "Set GPU fan curves, clocks and power limits",
+    category: "system-utilities",
+  },
+  "package-management": {
+    description: "Install software from a package system",
+    category: "system-utilities",
+  },
+  "app-storefront": {
+    description: "Browse and install apps from a store",
+    category: "system-utilities",
+  },
+  "sandbox-permissions": {
+    description: "Review and edit app sandbox permissions",
+    category: "security",
+  },
+  "desktop-extensions": { description: "Extend the desktop shell", category: "quality-of-life" },
+  "remote-desktop": {
+    description: "Control another machine's desktop",
+    category: "system-utilities",
+  },
+  "remote-assistance": {
+    description: "Let someone else help on this machine",
+    category: "system-utilities",
+  },
+  "phone-integration": { description: "Link a phone to the desktop", category: "system-utilities" },
+  "network-scanning": { description: "Scan a network for hosts and ports", category: "dev-tools" },
+  "document-scanning": { description: "Scan paper documents", category: "system-utilities" },
+  "device-management": { description: "Configure peripherals", category: "system-utilities" },
+  "macro-keypad": { description: "Drive a macro keypad", category: "system-utilities" },
+  "link-routing": { description: "Choose which app opens a link", category: "quality-of-life" },
+  "desktop-appearance": {
+    description: "Change how the desktop looks",
+    category: "quality-of-life",
+  },
+  "input-configuration": {
+    description: "Configure keyboard, mouse and trackpad",
+    category: "quality-of-life",
+  },
+  "power-management": {
+    description: "Control power and performance profiles",
+    category: "system-utilities",
+  },
+  "memory-management": {
+    description: "Tune swap and memory behaviour",
+    category: "system-utilities",
+  },
+  "boot-behavior": {
+    description: "Control shutdown and startup behaviour",
+    category: "system-utilities",
+  },
+  "shell-configuration": {
+    description: "Configure the command-line shell",
+    category: "quality-of-life",
+  },
+  "desktop-automation": { description: "Automate desktop tasks", category: "productivity" },
+  "mixed-reality": { description: "Use a VR or mixed-reality headset", category: "media" },
+  "help-support": { description: "Built-in help and support", category: "system-utilities" },
+  "clock-timers": { description: "Alarms, timers and world clocks", category: "productivity" },
+  "ambient-sound": { description: "Play background ambience for focus", category: "productivity" },
 } as const;
 
 export type Capability = keyof typeof CAPABILITIES;
@@ -151,3 +226,35 @@ export const CAPABILITY_NAMES = Object.keys(CAPABILITIES) as Capability[];
 export function isCapability(value: string): value is Capability {
   return Object.hasOwn(CAPABILITIES, value);
 }
+
+/**
+ * The category a capability belongs to.
+ *
+ * Categories describe *capabilities*, not software — which is what they were always really
+ * describing. An entry lands in a category because of what it does, so "which category does Steam
+ * go in?" stops being an argument and starts being derived: it provides game-store and
+ * game-launcher, both gaming, so it is gaming. Software that does several unrelated things
+ * legitimately appears under each.
+ */
+export function capabilityCategory(capability: Capability): string {
+  return CAPABILITIES[capability].category;
+}
+
+/**
+ * Every category implied by a set of capabilities, deduplicated, **in declaration order**.
+ *
+ * Not sorted, and that matters: the first entry is the category the interface files the entry
+ * under, and an alphabetical sort makes that choice meaningless. Brave declares
+ * `["web-browsing", "tracker-blocking", "ai-chat", ...]` — it is a browser that also has AI chat,
+ * not an AI tool that also browses — but sorting filed it under `ai`, where nobody looking for a
+ * browser would find it. The first capability an author lists is their statement of what the
+ * software *is*, so it decides.
+ */
+export function categoriesFor(capabilities: readonly Capability[]): string[] {
+  return [...new Set(capabilities.map(capabilityCategory))];
+}
+
+/** Every category any capability belongs to. */
+export const CATEGORIES: string[] = [
+  ...new Set(Object.values(CAPABILITIES).map((c) => c.category)),
+].sort();

@@ -1,9 +1,0 @@
-name = "BrowserSelect"
-description = "Chooses which browser opens a link each time you click one"
-website = "https://github.com/zumoshi/BrowserSelect"
-
-capabilities = ["link-routing"]
-
-[windows]
-installMethod = "winget"
-notes = "Verified live in microsoft/winget-pkgs at manifests/z/zumoshi/BrowserSelect (v1.4.1). Not actively developed; it was the best-maintained real option found. Browser Tamer appears in winget's search index but has no manifest in the repository, so it was rejected."

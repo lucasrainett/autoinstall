@@ -1,0 +1,15 @@
+name = "Podman Desktop"
+description = "Desktop app for managing containers, pods, images and Kubernetes clusters"
+kind = "install"
+website = "https://podman-desktop.io"
+
+capabilities = ["container-gui", "containers"]
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

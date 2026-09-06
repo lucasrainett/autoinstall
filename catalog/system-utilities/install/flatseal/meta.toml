@@ -1,9 +1,0 @@
-name = "Flatseal"
-description = "Reviews and edits the permissions Flatpak applications hold"
-website = "https://github.com/tchx84/Flatseal"
-
-capabilities = ["sandbox-permissions"]
-
-[linux]
-installMethod = "flatpak"
-notes = "Linux-only by design: it manages Flatpak/AppImage/GNOME internals that exist only on Linux."

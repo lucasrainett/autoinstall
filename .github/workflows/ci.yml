@@ -93,6 +93,28 @@ jobs:
       # install.ps1 cannot be syntax-checked on Linux, where the rest of CI runs, so a broken
       # installer would otherwise reach users before anyone parsed it. Parsing is not execution:
       # it never downloads or installs anything.
+      # The PowerShell inside every windows/run.sh reaches the shell through bash, where a
+      # mis-escaped backslash or dollar sign silently changes the command. That class of bug has
+      # shipped here before, and none of these 37 scripts has ever been executed on Windows.
+      # Parsing is not execution: it starts no application.
+      - name: Parse the PowerShell inside every windows/run.sh
+        shell: bash
+        run: |
+          failed=0
+          for f in catalog/*/windows/run.sh; do
+            [ -e "$f" ] || continue
+            # Expand through bash exactly as the runner would, capturing the -Command argument.
+            script=$(sed 's|^powershell.exe|printf "%s\\n" |' "$f" | bash | tail -n +3)
+            printf '%s' "$script" > /tmp/ps-fragment.ps1
+            pwsh -NoProfile -Command '
+              $errors = $null
+              [System.Management.Automation.Language.Parser]::ParseFile(
+                "/tmp/ps-fragment.ps1", [ref]$null, [ref]$errors) | Out-Null
+              if ($errors) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+            ' || { echo "PowerShell parse error in $f"; failed=1; }
+          done
+          exit $failed
+
       - name: Parse install.ps1
         shell: pwsh
         run: |

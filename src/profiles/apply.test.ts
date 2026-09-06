@@ -6,26 +6,26 @@ const DEVELOPER: Profile = {
   id: "developer",
   name: "Developer",
   description: "x",
-  entryKeys: ["dev-tools/install/git", "communication/install/signal"],
+  entryKeys: ["git", "signal"],
 };
 
 const GAMING: Profile = {
   id: "gaming",
   name: "Gaming",
   description: "x",
-  entryKeys: ["communication/install/signal", "gaming/install/steam"], // overlaps on signal
+  entryKeys: ["signal", "steam"], // overlaps on signal
 };
 
 Deno.test("applyProfile - adds every entry from the profile to the selection", () => {
   const result = applyProfile(new Set(), DEVELOPER);
-  assertEquals(result, new Set(["dev-tools/install/git", "communication/install/signal"]));
+  assertEquals(result, new Set(["git", "signal"]));
 });
 
 Deno.test("applyProfile - never removes an entry selected from a different source", () => {
-  const preexisting = new Set(["privacy/configure/disable-telemetry"]);
+  const preexisting = new Set(["disable-telemetry"]);
   const result = applyProfile(preexisting, DEVELOPER);
-  assertEquals(result.has("privacy/configure/disable-telemetry"), true);
-  assertEquals(result.has("dev-tools/install/git"), true);
+  assertEquals(result.has("disable-telemetry"), true);
+  assertEquals(result.has("git"), true);
 });
 
 Deno.test("applyProfile - applying two overlapping profiles doesn't duplicate entries or throw", () => {
@@ -34,7 +34,7 @@ Deno.test("applyProfile - applying two overlapping profiles doesn't duplicate en
   selection = applyProfile(selection, GAMING);
   assertEquals(
     selection,
-    new Set(["dev-tools/install/git", "communication/install/signal", "gaming/install/steam"]),
+    new Set(["git", "signal", "steam"]),
   );
   assertEquals(selection.size, 3); // signal counted once, not twice
 });

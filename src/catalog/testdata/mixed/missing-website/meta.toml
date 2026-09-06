@@ -1,0 +1,3 @@
+name = "Missing Website"
+description = "An install-kind entry that forgot to set website"
+kind = "install"

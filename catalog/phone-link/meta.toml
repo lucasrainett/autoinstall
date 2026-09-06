@@ -1,0 +1,10 @@
+name = "Phone Link"
+description = "Links an Android or iPhone to Windows for messages and calls"
+kind = "install"
+website = "https://support.microsoft.com/en-us/windows/apps/phonelink/phone-link-requirements-and-setup"
+
+capabilities = ["phone-integration", "sms", "file-transfer"]
+
+[windows]
+installMethod = "script"
+notes = "Preinstalled, so it usually starts already selected. Unchecking it removes the package for the current user; it can be reinstalled from the Microsoft Store."

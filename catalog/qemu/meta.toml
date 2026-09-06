@@ -1,0 +1,13 @@
+name = "QEMU"
+description = "Machine emulator and virtualiser"
+kind = "install"
+website = "https://www.qemu.org/"
+
+capabilities = ["emulation", "virtualization"]
+
+[linux]
+installMethod = "apt"
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"

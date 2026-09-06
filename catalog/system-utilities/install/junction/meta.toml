@@ -1,9 +1,0 @@
-name = "Junction"
-description = "Pops up an app chooser each time you open a link or file"
-website = "https://github.com/sonnyp/Junction"
-
-capabilities = ["link-routing"]
-
-[linux]
-installMethod = "flatpak"
-notes = "Junction works through the XDG desktop portal, so it exists only on Linux. The same capability on the other platforms is provided by different programs, which have their own entries — see the `link-routing` capability."

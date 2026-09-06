@@ -1,0 +1,10 @@
+name = "Warehouse"
+description = "Inspects and manages installed Flatpaks and their user data"
+kind = "install"
+website = "https://github.com/flattool/warehouse"
+
+capabilities = ["package-management"]
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux-only by design: it manages Flatpak/AppImage/GNOME internals that exist only on Linux."

@@ -1,0 +1,4 @@
+name = "Unknown Field"
+description = "Has a field the schema doesn't allow"
+kind = "install"
+homepage = "https://example.com"

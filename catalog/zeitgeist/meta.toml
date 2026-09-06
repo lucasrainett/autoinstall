@@ -1,0 +1,11 @@
+name = "Zeitgeist activity log"
+description = "Logs the files, apps and contacts you use into a local database for desktop search"
+kind = "install"
+website = "https://launchpad.net/zeitgeist"
+
+capabilities = ["telemetry-collection"]
+
+[linux]
+installMethod = "apt"
+notes = "Local only — nothing is transmitted — but it is a detailed, searchable history of what you opened and when, readable by anything running as you. Some desktop features (recently-used lists, activity journals) depend on it and will lose their history."
+requiresElevation = true

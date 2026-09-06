@@ -1,0 +1,12 @@
+name = "VSCodium"
+description = "Freely-licensed build of VS Code with Microsoft's telemetry and branding removed"
+kind = "install"
+website = "https://vscodium.com"
+
+capabilities = ["code-editing", "version-control"]
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

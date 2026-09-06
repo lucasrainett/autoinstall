@@ -1,0 +1,15 @@
+name = "Claude Code"
+description = "Terminal-based AI coding assistant by Anthropic that can edit files, run commands, and search code"
+kind = "install"
+website = "https://claude.com/claude-code"
+
+capabilities = ["ai-coding-assistant", "ai-chat", "terminal-tools", "code-editing"]
+
+[linux]
+installMethod = "script"
+
+[macos]
+installMethod = "script"
+
+[windows]
+installMethod = "winget"

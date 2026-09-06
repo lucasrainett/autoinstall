@@ -1,9 +1,0 @@
-name = "Stats"
-description = "Menu-bar system monitor for CPU, memory, disk, network and GPU"
-website = "https://github.com/exelban/stats"
-
-capabilities = ["system-monitoring", "clock-timers"]
-
-[macos]
-installMethod = "homebrew"
-notes = "Activity Monitor ships with macOS but shows far less, and lives in a window rather than the menu bar."

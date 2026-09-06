@@ -1,0 +1,11 @@
+name = "Popularity contest (popcon)"
+description = "Weekly opt-in report of which packages are installed, submitted to Debian/Ubuntu"
+kind = "install"
+website = "https://popcon.ubuntu.com/"
+
+capabilities = ["telemetry-collection"]
+
+[linux]
+installMethod = "apt"
+notes = "Anonymous by design and genuinely useful to distribution maintainers, which is why it is opt-in on install rather than simply bloat. Listed so the choice is visible and reversible rather than made once at install time and forgotten."
+requiresElevation = true

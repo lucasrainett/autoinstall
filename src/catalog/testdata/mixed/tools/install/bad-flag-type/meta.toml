@@ -1,4 +1,0 @@
-name = "Bad Flag Type"
-description = "destructive is a string instead of a boolean, should be rejected"
-website = "https://example.com"
-destructive = "yes"

@@ -1,3 +1,3 @@
 name = "Developer"
 description = "Dev tools, git identity, dotfiles, basic security"
-entries = ["dev-tools/install/git", "communication/install/signal"]
+entries = ["git", "signal"]

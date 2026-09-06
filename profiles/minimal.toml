@@ -1,9 +1,9 @@
 name = "Minimal"
 description = "Just the essentials: a browser, secure messaging, and basic command-line tools"
 entries = [
-  "browsers/install/zen-browser",
-  "communication/install/signal",
-  "dev-tools/install/git",
-  "dev-tools/install/curl",
-  "dev-tools/install/jq",
+  "zen-browser",
+  "signal",
+  "git",
+  "curl",
+  "jq",
 ]

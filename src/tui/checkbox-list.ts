@@ -6,9 +6,16 @@ import { CHECKBOX_WIDTH } from "./glyphs.ts";
 import type { DiagnosticSnapshotEntry } from "../diagnostics/scan.ts";
 
 export interface ListItem {
-  /** "category/kind/id" — matches every other module's key shape. */
+  /** The entry's id. Not unique across rows: an entry belonging to several categories contributes
+   * one row to each, and they all share this key so they share one selection state. */
   key: string;
+  /** The category this particular row sits under. */
   category: string;
+  /** Every category the entry belongs to. Not used for grouping, only for searching, so an entry
+   * is still findable under a category it is not filed under. */
+  categories: readonly string[];
+  /** Capability keys, so searching for what you want to *do* finds the software that does it. */
+  capabilities: readonly string[];
   name: string;
   description: string;
 }
@@ -19,7 +26,11 @@ export function filterItems(items: readonly ListItem[], searchTerm: string): Lis
   return items.filter((item) =>
     item.name.toLowerCase().includes(term) ||
     item.description.toLowerCase().includes(term) ||
-    item.category.toLowerCase().includes(term)
+    item.categories.some((c) => c.toLowerCase().includes(term)) ||
+    // Capabilities are searchable because they are the question people actually arrive with:
+    // typing "browser chooser" or "link-routing" should find Junction here and BrowserSelect on
+    // Windows, which are different programs for the same need.
+    item.capabilities.some((c) => c.toLowerCase().includes(term))
   );
 }
 
@@ -296,4 +307,20 @@ export function clampRowIndex(index: number, rowCount: number): number {
 export function firstItemRow(rows: readonly ContentRow[]): number {
   const index = rows.findIndex((r) => r.kind === "item");
   return index === -1 ? 0 : index;
+}
+
+/**
+ * A React key for one rendered row, unique among its siblings.
+ *
+ * Not the entry key: an entry belonging to several categories contributes a row to each, and those
+ * rows are siblings inside one scroll window. React reuses an element when two siblings share a
+ * key, which renders the wrong row's content — visible as artifacts while scrolling, worst when
+ * scrolling fast because that is when re-renders come thickest. Measured on the real catalog: a
+ * single 20-row window contained four colliding keys.
+ *
+ * Category plus entry id is unique by construction, since `categoriesFor` deduplicates so no entry
+ * appears twice under one heading.
+ */
+export function rowKey(row: ContentRow): string {
+  return row.kind === "header" ? `header:${row.category}` : `${row.item.category}/${row.item.key}`;
 }

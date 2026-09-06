@@ -11,20 +11,20 @@ function record(
 const FIXTURE: HistoryRecord[] = [
   record({
     runId: "run-1",
-    key: "communication/install/signal",
+    key: "signal",
     timestamp: "2026-01-01T10:00:00Z",
     result: "success",
   }),
   record({
     runId: "run-1",
-    key: "privacy/configure/disable-telemetry",
+    key: "disable-telemetry",
     timestamp: "2026-01-01T10:00:05Z",
     result: "failed",
     message: "boom",
   }),
   record({
     runId: "run-2",
-    key: "communication/install/signal",
+    key: "signal",
     timestamp: "2026-01-02T10:00:00Z",
     result: "skipped",
   }),

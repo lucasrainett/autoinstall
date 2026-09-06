@@ -1,0 +1,18 @@
+name = "Keyboard and trackpad behaviour"
+description = "Tap-to-click, two-finger scrolling, and a faster key repeat"
+kind = "configure"
+website = "https://help.gnome.org/gnome-help/mouse-touchpad-click.html"
+
+capabilities = ["input-configuration"]
+
+[linux]
+installMethod = "script"
+notes = "GNOME settings, per user, no elevation. Reverting resets the keys to the schema defaults rather than to whatever they happened to be, which is the only reversal a settings store can honestly offer."
+
+[macos]
+installMethod = "script"
+notes = "Written with `defaults`. Key-repeat changes need a logout to take effect; trackpad ones apply immediately."
+
+[windows]
+installMethod = "script"
+notes = "Per-user keyboard repeat values under HKCU. Windows has no equivalent tap-to-click switch exposed to the registry across all precision-trackpad drivers, so only the keyboard part applies here."

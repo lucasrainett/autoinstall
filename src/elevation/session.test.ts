@@ -1,6 +1,7 @@
-import { assertEquals } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import { FakeTime } from "@std/testing/time";
 import {
+  realSudoRunner,
   releaseSudoAccess,
   requestSudoAccess,
   startSudoKeepAlive,
@@ -81,4 +82,48 @@ Deno.test("releaseSudoAccess - a rejected call doesn't throw, and still attempte
   }
   assertEquals(threw, false, "a failed release must be swallowed, not propagated");
   assertEquals(attempted, ["-k"], "it must still have attempted the real release");
+});
+
+Deno.test("realSudoRunner - gives up on a prompt that is never answered", async () => {
+  // There was no bound at all: an unanswered prompt hung the application forever with no way out
+  // but killing the process. Uses `sleep`, which stands in for a sudo prompt nobody answers.
+  const runner = realSudoRunner(120);
+  const started = Date.now();
+  const original = Deno.Command;
+  // deno-lint-ignore no-explicit-any
+  (Deno as any).Command = class {
+    #inner: Deno.Command;
+    constructor(_cmd: string, _opts: unknown) {
+      this.#inner = new original("sleep", { args: ["10"] });
+    }
+    spawn() {
+      return this.#inner.spawn();
+    }
+  };
+  try {
+    const granted = await runner(["-v"]);
+    assertEquals(granted, false, "an unanswered prompt must not count as granted");
+    assert(Date.now() - started < 5000, "it must give up promptly, not wait out the whole prompt");
+  } finally {
+    // deno-lint-ignore no-explicit-any
+    (Deno as any).Command = original;
+  }
+});
+
+Deno.test("realSudoRunner - a spawn that fails outright is 'not granted', never a throw", async () => {
+  // This runs from the confirm screen; a throw there would crash the app while asking for a
+  // password rather than reporting that elevation was unavailable.
+  const original = Deno.Command;
+  // deno-lint-ignore no-explicit-any
+  (Deno as any).Command = class {
+    constructor() {
+      throw new Deno.errors.NotFound("no sudo here");
+    }
+  };
+  try {
+    assertEquals(await realSudoRunner()(["-v"]), false);
+  } finally {
+    // deno-lint-ignore no-explicit-any
+    (Deno as any).Command = original;
+  }
 });

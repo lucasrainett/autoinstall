@@ -9,9 +9,30 @@ import {
 import type { ListItem } from "./checkbox-list.ts";
 
 const items: ListItem[] = [
-  { key: "browsers/install/brave", category: "browsers", name: "Brave", description: "" },
-  { key: "browsers/install/zen", category: "browsers", name: "Zen", description: "" },
-  { key: "dev-tools/install/git", category: "dev-tools", name: "Git", description: "" },
+  {
+    key: "brave",
+    category: "browsers",
+    categories: ["browsers"],
+    capabilities: [],
+    name: "Brave",
+    description: "",
+  },
+  {
+    key: "zen",
+    category: "browsers",
+    categories: ["browsers"],
+    capabilities: [],
+    name: "Zen",
+    description: "",
+  },
+  {
+    key: "git",
+    category: "dev-tools",
+    categories: ["dev-tools"],
+    capabilities: [],
+    name: "Git",
+    description: "",
+  },
 ];
 const rows = buildContentRows(groupByCategory(items));
 // rows: 0 header(browsers), 1 Brave, 2 Zen, 3 header(dev-tools), 4 Git
@@ -19,30 +40,30 @@ const rows = buildContentRows(groupByCategory(items));
 Deno.test("toggleAtRow - space on a category header selects the whole category", () => {
   // The reported request: navigate to the section name, press space, install all of it.
   const result = toggleAtRow(new Set(), rows, 0, items);
-  assertEquals([...result].sort(), ["browsers/install/brave", "browsers/install/zen"]);
+  assertEquals([...result].sort(), ["brave", "zen"]);
 });
 
 Deno.test("toggleAtRow - space on a header of a fully selected category clears it", () => {
-  const all = new Set(["browsers/install/brave", "browsers/install/zen"]);
+  const all = new Set(["brave", "zen"]);
   assertEquals([...toggleAtRow(all, rows, 0, items)], []);
 });
 
 Deno.test("toggleAtRow - space on an item toggles only that item", () => {
   const result = toggleAtRow(new Set(), rows, 1, items);
-  assertEquals([...result], ["browsers/install/brave"]);
+  assertEquals([...result], ["brave"]);
   assertEquals([...toggleAtRow(result, rows, 1, items)], []);
 });
 
 Deno.test("toggleAtRow - a header only ever affects its own category", () => {
-  const result = toggleAtRow(new Set(["dev-tools/install/git"]), rows, 0, items);
-  assertEquals(result.has("dev-tools/install/git"), true);
+  const result = toggleAtRow(new Set(["git"]), rows, 0, items);
+  assertEquals(result.has("git"), true);
   assertEquals(result.size, 3);
 });
 
 Deno.test("toggleAtRow - an out-of-range row changes nothing", () => {
-  const before = new Set(["dev-tools/install/git"]);
-  assertEquals([...toggleAtRow(before, rows, 99, items)], ["dev-tools/install/git"]);
-  assertEquals([...toggleAtRow(before, rows, -1, items)], ["dev-tools/install/git"]);
+  const before = new Set(["git"]);
+  assertEquals([...toggleAtRow(before, rows, 99, items)], ["git"]);
+  assertEquals([...toggleAtRow(before, rows, -1, items)], ["git"]);
 });
 
 Deno.test("clampRowIndex - keeps the cursor inside the list", () => {

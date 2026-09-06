@@ -1,0 +1,11 @@
+name = "Cheese"
+description = "GNOME webcam app for photos and video clips; upstream is archived and unmaintained"
+kind = "install"
+website = "https://gitlab.gnome.org/Archive/cheese"
+
+capabilities = ["webcam"]
+
+[linux]
+installMethod = "apt"
+notes = "Preinstalled on most Ubuntu-family desktops, so it usually starts already selected. Unchecking it purges the package."
+requiresElevation = true

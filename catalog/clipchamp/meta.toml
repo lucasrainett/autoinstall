@@ -1,0 +1,10 @@
+name = "Clipchamp"
+description = "Microsoft's video editor, preinstalled on Windows 11"
+kind = "install"
+website = "https://clipchamp.com/"
+
+capabilities = ["video-editing", "screen-recording", "webcam"]
+
+[windows]
+installMethod = "script"
+notes = "Preinstalled, so it usually starts already selected. Unchecking it removes the package for the current user; it can be reinstalled from the Microsoft Store."

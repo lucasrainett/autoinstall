@@ -1,0 +1,10 @@
+name = "gitg"
+description = "GNOME git GUI for browsing history, cloning repos and committing changes"
+kind = "install"
+website = "https://gitlab.gnome.org/GNOME/gitg"
+
+capabilities = ["version-control"]
+
+[linux]
+installMethod = "flatpak"
+notes = "Linux only: a GTK application with no macOS or Windows build."

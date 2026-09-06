@@ -1,4 +1,4 @@
-import { assertEquals } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import {
   buildContentRows,
   type CategoryGroup,
@@ -8,6 +8,7 @@ import {
   isCheckboxClick,
   itemIndexToRow,
   type ListItem,
+  rowKey,
   rowToItemIndex,
   selectAllVisible,
   statusIndicatorFor,
@@ -16,20 +17,26 @@ import type { DiagnosticSnapshotEntry } from "../diagnostics/scan.ts";
 
 const ITEMS: ListItem[] = [
   {
-    key: "communication/install/signal",
+    key: "signal",
     category: "communication",
+    categories: ["communication"],
+    capabilities: [],
     name: "Signal",
     description: "encrypted messaging",
   },
   {
-    key: "browsers/install/zen-browser",
+    key: "zen-browser",
     category: "browsers",
+    categories: ["browsers"],
+    capabilities: [],
     name: "Zen Browser",
     description: "privacy-first browser",
   },
   {
-    key: "privacy/configure/disable-telemetry",
+    key: "disable-telemetry",
     category: "privacy",
+    categories: ["privacy"],
+    capabilities: [],
     name: "Disable Telemetry",
     description: "turn off diagnostics",
   },
@@ -65,8 +72,10 @@ Deno.test("groupByCategory - groups items under their category, preserving first
 
 Deno.test("groupByCategory - multiple items in the same category are grouped together", () => {
   const extra: ListItem = {
-    key: "communication/install/beeper",
+    key: "beeper",
     category: "communication",
+    categories: ["communication"],
+    capabilities: [],
     name: "Beeper",
     description: "x",
   };
@@ -77,18 +86,18 @@ Deno.test("groupByCategory - multiple items in the same category are grouped tog
 
 Deno.test("selectAllVisible - adds every visible item, leaves other selections untouched", () => {
   const visible = filterItems(ITEMS, "signal"); // just Signal
-  const result = selectAllVisible(new Set(["privacy/configure/disable-telemetry"]), visible);
+  const result = selectAllVisible(new Set(["disable-telemetry"]), visible);
   assertEquals(
     result,
-    new Set(["privacy/configure/disable-telemetry", "communication/install/signal"]),
+    new Set(["disable-telemetry", "signal"]),
   );
 });
 
 Deno.test("statusIndicatorFor - maps a satisfied snapshot entry", () => {
   const snapshot: DiagnosticSnapshotEntry[] = [
-    { key: "communication/install/signal", result: { ok: true, state: "satisfied" } },
+    { key: "signal", result: { ok: true, state: "satisfied" } },
   ];
-  assertEquals(statusIndicatorFor("communication/install/signal", snapshot), "satisfied");
+  assertEquals(statusIndicatorFor("signal", snapshot), "satisfied");
 });
 
 Deno.test("statusIndicatorFor - maps unsatisfied and needs-update the same way", () => {
@@ -101,28 +110,47 @@ Deno.test("statusIndicatorFor - maps unsatisfied and needs-update the same way",
 });
 
 Deno.test("statusIndicatorFor - an item missing from the snapshot entirely is unknown, not guessed", () => {
-  assertEquals(statusIndicatorFor("communication/install/signal", []), "unknown");
+  assertEquals(statusIndicatorFor("signal", []), "unknown");
 });
 
 Deno.test("statusIndicatorFor - an errored diagnostic result is unknown, not silently treated as a real state", () => {
   const snapshot: DiagnosticSnapshotEntry[] = [
-    { key: "communication/install/signal", result: { ok: false, error: "detect script threw" } },
+    { key: "signal", result: { ok: false, error: "detect script threw" } },
   ];
-  assertEquals(statusIndicatorFor("communication/install/signal", snapshot), "unknown");
+  assertEquals(statusIndicatorFor("signal", snapshot), "unknown");
 });
 
 // Rendered rows for these groups: 0="A" header, 1=a1, 2=a2, 3="B" header, 4=b1.
 const GROUPS: CategoryGroup[] = [
   {
     category: "A",
-    items: [{ key: "a1", category: "A", name: "a1", description: "" }, {
+    items: [{
+      key: "a1",
+      category: "A",
+      categories: ["A"],
+      capabilities: [],
+      name: "a1",
+      description: "",
+    }, {
       key: "a2",
       category: "A",
+      categories: ["A"],
+      capabilities: [],
       name: "a2",
       description: "",
     }],
   },
-  { category: "B", items: [{ key: "b1", category: "B", name: "b1", description: "" }] },
+  {
+    category: "B",
+    items: [{
+      key: "b1",
+      category: "B",
+      categories: ["B"],
+      capabilities: [],
+      name: "b1",
+      description: "",
+    }],
+  },
 ];
 
 Deno.test("rowToItemIndex - a category header row maps to undefined, not an item", () => {
@@ -233,4 +261,78 @@ Deno.test("isCheckboxClick - an indented row's checkbox sits ITEM_INDENT columns
 Deno.test("isCheckboxClick - an un-indented row (a category header) is unchanged", () => {
   assertEquals(isCheckboxClick(10, 10), true);
   assertEquals(isCheckboxClick(10, 10, 0), true);
+});
+
+Deno.test("groupByCategory - an entry in several categories appears under each of them", () => {
+  // Brave is a browser that also has AI chat, a news reader and video calls, so someone browsing
+  // any of those categories should find it. The rows share one key, so they share one selection.
+  const brave = {
+    key: "brave",
+    categories: ["browsers", "ai", "media"],
+    capabilities: ["web-browsing", "ai-chat", "news"],
+    name: "Brave",
+    description: "",
+  };
+  const items = brave.categories.map((category) => ({ ...brave, category }));
+  const groups = groupByCategory(items);
+  assertEquals(groups.map((g) => g.category), ["browsers", "ai", "media"]);
+  for (const group of groups) {
+    assertEquals(group.items.map((i) => i.key), ["brave"], `wrong under ${group.category}`);
+  }
+});
+
+Deno.test("rowKey - two rows for the same entry in different categories do not collide", () => {
+  // React reuses an element when two siblings share a key, rendering the wrong row's content.
+  // That is what the artifacts while scrolling were: Brave appears in five categories, and a
+  // single scroll window held four colliding keys.
+  const brave = {
+    key: "brave",
+    categories: ["browsers", "ai"],
+    capabilities: [],
+    name: "Brave",
+    description: "",
+  };
+  const a = rowKey({ kind: "item", itemIndex: 0, item: { ...brave, category: "browsers" } });
+  const b = rowKey({ kind: "item", itemIndex: 1, item: { ...brave, category: "ai" } });
+  assert(a !== b, `both rows got the key ${a}`);
+});
+
+Deno.test("rowKey - a header never collides with an entry of the same name", () => {
+  // "ai" is both a category and a plausible entry id.
+  const header = rowKey({ kind: "header", category: "ai" });
+  const item = rowKey({
+    kind: "item",
+    itemIndex: 0,
+    item: {
+      key: "ai",
+      category: "ai",
+      categories: ["ai"],
+      capabilities: [],
+      name: "ai",
+      description: "",
+    },
+  });
+  assert(header !== item, `header and item both got ${header}`);
+});
+
+Deno.test("rowKey - every row of the whole list is unique", () => {
+  // The property that actually matters, asserted over a list shaped like the real one.
+  const entries = [
+    { key: "brave", categories: ["browsers", "ai", "privacy"] },
+    { key: "helium", categories: ["browsers", "privacy"] },
+    { key: "jq", categories: ["dev-tools"] },
+  ];
+  const items = entries.flatMap((e) =>
+    e.categories.map((category) => ({
+      key: e.key,
+      category,
+      categories: e.categories,
+      capabilities: [],
+      name: e.key,
+      description: "",
+    }))
+  );
+  const rows = buildContentRows(groupByCategory(items));
+  const keys = rows.map(rowKey);
+  assertEquals(new Set(keys).size, keys.length, "duplicate row keys");
 });

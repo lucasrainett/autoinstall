@@ -1,0 +1,10 @@
+name = "VSCodium (Flatpak)"
+description = "Community build of VS Code without Microsoft telemetry, sandboxed from Flathub"
+kind = "install"
+website = "https://vscodium.com/"
+
+capabilities = ["code-editing", "version-control"]
+
+[linux]
+installMethod = "flatpak"
+notes = "The Flathub build, installed per-user. Sandboxed, so access to files and tooling outside the sandbox needs Flatseal. Listed separately from the deb because both can be installed at once."

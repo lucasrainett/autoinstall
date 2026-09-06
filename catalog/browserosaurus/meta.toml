@@ -1,0 +1,10 @@
+name = "Browserosaurus"
+description = "Chooses which browser opens a link each time you click one"
+kind = "install"
+website = "https://github.com/will-stone/browserosaurus"
+
+capabilities = ["link-routing"]
+
+[macos]
+installMethod = "homebrew"
+notes = "Verified live against formulae.brew.sh — cask `browserosaurus`, \"Open-source browser prompter\". The Linux entry for this capability is Junction; they are separate programs, so they are separate entries."

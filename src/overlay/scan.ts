@@ -16,19 +16,16 @@ import {
 import {
   type CatalogIssue,
   type EntryMeta,
-  isKind,
   isPlatform,
-  type Kind,
-  KINDS,
   type Platform,
   type PlatformOperations,
   PLATFORMS,
 } from "../catalog/types.ts";
 
 export interface OverlayEntry {
-  category: string;
-  kind: Kind;
   id: string;
+  /** Only known when the overlay ships its own meta.toml; otherwise inherited from the core
+   * entry at merge time, along with category and kind. */
   /** Present only if this overlay provides its own meta.toml for this entry. */
   meta?: EntryMeta;
   platforms: Partial<Record<Platform, PlatformOperations>>;
@@ -49,57 +46,40 @@ export async function scanOverlayCatalog(catalogRoot: string): Promise<OverlaySc
     return { entries, errors };
   }
 
-  for (const category of await listDirNames(catalogRoot)) {
-    const categoryPath = `${catalogRoot}/${category}`;
+  for (const id of await listDirNames(catalogRoot)) {
+    const entryPath = `${catalogRoot}/${id}`;
+    const metaPath = `${entryPath}/${META_FILENAME}`;
 
-    for (const kindName of await listDirNames(categoryPath)) {
-      const kindPath = `${categoryPath}/${kindName}`;
+    // entryPath is always a directory here — it came from listDirNames, which only returns
+    // directory entries.
+    let meta: EntryMeta | undefined;
+    try {
+      const raw = await Deno.readTextFile(metaPath);
+      meta = parseEntryMeta(raw, metaPath);
+    } catch (err) {
+      if (err instanceof Deno.errors.NotFound) {
+        meta = undefined; // no meta.toml override — inherit the core entry's, if any
+      } else {
+        errors.push({ path: metaPath, message: (err as Error).message });
+        continue;
+      }
+    }
 
-      if (!isKind(kindName)) {
+    const platforms: OverlayEntry["platforms"] = {};
+    for (const platformName of await listDirNames(entryPath)) {
+      if (!isPlatform(platformName)) {
         errors.push({
-          path: kindPath,
-          message: `"${kindName}" is not a valid kind (expected one of: ${KINDS.join(", ")})`,
+          path: `${entryPath}/${platformName}`,
+          message: `"${platformName}" is not a valid platform (expected one of: ${
+            PLATFORMS.join(", ")
+          })`,
         });
         continue;
       }
-      const kind = kindName;
-
-      for (const id of await listDirNames(kindPath)) {
-        const entryPath = `${kindPath}/${id}`;
-        const metaPath = `${entryPath}/${META_FILENAME}`;
-
-        // entryPath is always a directory here — it came from listDirNames(kindPath), which only
-        // returns directory entries.
-        let meta: EntryMeta | undefined;
-        try {
-          const raw = await Deno.readTextFile(metaPath);
-          meta = parseEntryMeta(raw, metaPath, kind);
-        } catch (err) {
-          if (err instanceof Deno.errors.NotFound) {
-            meta = undefined; // no meta.toml override — inherit the core entry's, if any
-          } else {
-            errors.push({ path: metaPath, message: (err as Error).message });
-            continue;
-          }
-        }
-
-        const platforms: OverlayEntry["platforms"] = {};
-        for (const platformName of await listDirNames(entryPath)) {
-          if (!isPlatform(platformName)) {
-            errors.push({
-              path: `${entryPath}/${platformName}`,
-              message: `"${platformName}" is not a valid platform (expected one of: ${
-                PLATFORMS.join(", ")
-              })`,
-            });
-            continue;
-          }
-          platforms[platformName] = await loadPlatformOperations(`${entryPath}/${platformName}`);
-        }
-
-        entries.push({ category, kind, id, ...(meta !== undefined ? { meta } : {}), platforms });
-      }
+      platforms[platformName] = await loadPlatformOperations(`${entryPath}/${platformName}`);
     }
+
+    entries.push({ id, ...(meta !== undefined ? { meta } : {}), platforms });
   }
 
   return { entries, errors };

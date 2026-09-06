@@ -1,0 +1,18 @@
+name = "Python"
+description = "General-purpose programming language"
+kind = "install"
+website = "https://www.python.org"
+
+capabilities = ["programming-language"]
+
+[linux]
+installMethod = "apt"
+notes = "Ubuntu already ships a system Python 3; this adds pip, venv, and the dev headers."
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+notes = "Homebrew no longer keeps an unversioned 'python' formula — installs python@3.13, which will need bumping to a newer version over time as Homebrew rotates supported releases."
+
+[windows]
+installMethod = "winget"

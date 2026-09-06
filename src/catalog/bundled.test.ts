@@ -25,6 +25,15 @@ async function linuxAppImageScripts(): Promise<{ path: string; source: string }[
   return scripts;
 }
 
+/** Every entry directory. The catalog is flat — one directory per entry, named by its id. */
+async function entryDirs(): Promise<string[]> {
+  const dirs: string[] = [];
+  for await (const e of Deno.readDir(BUNDLED_CATALOG_ROOT)) {
+    if (e.isDirectory) dirs.push(`${BUNDLED_CATALOG_ROOT}/${e.name}`);
+  }
+  return dirs.sort();
+}
+
 Deno.test("bundled catalog - loads with zero load errors", async () => {
   const { errors } = await loadCatalog(BUNDLED_CATALOG_ROOT);
   assertEquals(errors, []);
@@ -158,12 +167,10 @@ Deno.test("bundled catalog - the duplicated apt collateral guard has not drifted
   // What duplication genuinely costs is silent drift: a fix applied to one copy and not the rest.
   // This test buys back exactly that, without giving up any of the properties above.
   const removeScripts: { path: string; guard: string }[] = [];
-  for await (const entry of Deno.readDir(BUNDLED_CATALOG_ROOT)) {
-    if (!entry.isDirectory) continue;
-    for await (const kind of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${entry.name}`)) {
-      for await (const id of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${entry.name}/${kind.name}`)) {
-        const path =
-          `${BUNDLED_CATALOG_ROOT}/${entry.name}/${kind.name}/${id.name}/linux/remove.sh`;
+  for (const entryDir of await entryDirs()) {
+    {
+      {
+        const path = `${entryDir}/linux/remove.sh`;
         let source: string;
         try {
           source = await Deno.readTextFile(path);
@@ -211,14 +218,22 @@ Deno.test("bundled catalog - the real Signal entry loads with the expected shape
   const signal = entries.find((e) => e.id === "signal");
 
   assert(signal, "expected a real signal entry in the bundled catalog");
-  assertEquals(signal.category, "communication");
+  // Categories are derived from capabilities now, so this asserts the derivation rather than a
+  // declared field: Signal provides messaging and video calls, both of which are communication.
+  // Two categories, both derived: messaging and video-calls are communication, and end-to-end
+  // encryption — which is the reason most people choose Signal — is security.
+  assertEquals(signal.categories, ["communication", "security"]);
   assertEquals(signal.kind, "install");
   assertEquals(signal.meta.website, "https://signal.org");
   // Linux lives in the packaging-specific siblings, so the base entry covers only the platforms
   // where there is exactly one way to install it.
   assertEquals(Object.keys(signal.platforms).sort(), ["macos", "windows"]);
   for (const platform of ["macos", "windows"] as const) {
-    assertEquals(Object.keys(signal.platforms[platform]!).sort(), ["detect", "install", "remove"]);
+    // run.sh is present too: Signal is a GUI app, so it can be started from the tool.
+    assertEquals(
+      Object.keys(signal.platforms[platform]!).sort(),
+      ["detect", "install", "remove", "run"],
+    );
   }
 });
 
@@ -258,14 +273,10 @@ Deno.test("bundled catalog - every collateral guard declines with exit 3, not a 
   // while deliberately leaving the package installed would make that check report a correct,
   // protective decision as a failure — so "declined" needs its own exit code, uniformly.
   let checked = 0;
-  for await (const category of Deno.readDir(BUNDLED_CATALOG_ROOT)) {
-    if (!category.isDirectory) continue;
-    for await (const kind of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}`)) {
-      for await (
-        const id of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}`)
-      ) {
-        const path =
-          `${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}/${id.name}/linux/remove.sh`;
+  for (const entryDir of await entryDirs()) {
+    {
+      {
+        const path = `${entryDir}/linux/remove.sh`;
         let source: string;
         try {
           source = await Deno.readTextFile(path);
@@ -300,19 +311,15 @@ Deno.test("bundled catalog - every platform folder ships a remove.sh", async () 
   // and an installed entry would look identical to an absent one. The validator only requires one
   // of install/remove/update, so this pins the stronger rule for the bundled catalog.
   const missing: string[] = [];
-  for await (const category of Deno.readDir(BUNDLED_CATALOG_ROOT)) {
-    if (!category.isDirectory) continue;
-    for await (const kind of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}`)) {
-      for await (
-        const id of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}`)
-      ) {
-        const entryDir = `${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}/${id.name}`;
+  for (const entryDir of await entryDirs()) {
+    {
+      {
         for await (const platform of Deno.readDir(entryDir)) {
           if (!platform.isDirectory) continue;
           try {
             await Deno.stat(`${entryDir}/${platform.name}/remove.sh`);
           } catch {
-            missing.push(`${category.name}/${kind.name}/${id.name}/${platform.name}`);
+            missing.push(`${entryDir}/${platform.name}`);
           }
         }
       }
@@ -327,13 +334,14 @@ Deno.test("bundled catalog - every flatpak command names its installation", asyn
   // "No remote chosen to resolve matches for <app>" under --noninteractive. On a real machine that
   // one omission caused 18 of 22 recorded failures: every flatpak entry in the catalog.
   const offenders: string[] = [];
-  for await (const category of Deno.readDir(BUNDLED_CATALOG_ROOT)) {
-    if (!category.isDirectory) continue;
-    for await (const kind of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}`)) {
-      for await (
-        const id of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}`)
-      ) {
-        const dir = `${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}/${id.name}/linux`;
+  for (const entryDir of await entryDirs()) {
+    {
+      {
+        const dir = `${BUNDLED_CATALOG_ROOT}/${entryDir}/linux`;
+        // run.sh is deliberately excluded. Naming an installation is right for install and
+        // remove, where putting software in the wrong one is a real mistake — but `flatpak run`
+        // should find the app wherever it lives. Scoping it to --user broke launching for every
+        // system-installed app: 83 of the 95 flatpaks on the machine where this was found.
         for (const op of ["detect", "install", "remove"]) {
           let source: string;
           try {
@@ -347,7 +355,7 @@ Deno.test("bundled catalog - every flatpak command names its installation", asyn
             // The subcommands that resolve against a remote or an installation.
             if (!/^flatpak (install|uninstall|remote-info|update)\b/.test(text)) continue;
             if (!/--user|--system|"\$scope"/.test(text)) {
-              offenders.push(`${category.name}/${kind.name}/${id.name}/${op}.sh: ${text}`);
+              offenders.push(`${entryDir}/${op}.sh: ${text}`);
             }
           }
         }
@@ -364,13 +372,10 @@ Deno.test("bundled catalog - entries that edit a shared file write a delimited, 
   // *outside* the block is the specific mistake this guards — it survives removal and the file
   // grows by a line on every cycle.
   const editors: string[] = [];
-  for await (const category of Deno.readDir(BUNDLED_CATALOG_ROOT)) {
-    if (!category.isDirectory) continue;
-    for await (const kind of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}`)) {
-      for await (
-        const id of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}`)
-      ) {
-        const dir = `${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}/${id.name}`;
+  for (const entryDir of await entryDirs()) {
+    {
+      {
+        const dir = entryDir;
         for (const platform of ["linux", "macos"]) {
           let install: string, remove: string;
           try {
@@ -380,7 +385,7 @@ Deno.test("bundled catalog - entries that edit a shared file write a delimited, 
             continue;
           }
           if (!install.includes("/etc/hosts")) continue;
-          const where = `${category.name}/${kind.name}/${id.name}/${platform}`;
+          const where = `${entryDir}/${platform}`;
           editors.push(where);
 
           assert(
@@ -439,13 +444,9 @@ Deno.test({
     // denied" is a pointless obstacle at exactly that moment. Mixed modes also make every checkout
     // show spurious diffs.
     const notExecutable: string[] = [];
-    for await (const category of Deno.readDir(BUNDLED_CATALOG_ROOT)) {
-      if (!category.isDirectory) continue;
-      for await (const kind of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}`)) {
-        for await (
-          const id of Deno.readDir(`${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}`)
-        ) {
-          const entryDir = `${BUNDLED_CATALOG_ROOT}/${category.name}/${kind.name}/${id.name}`;
+    for (const entryDir of await entryDirs()) {
+      {
+        {
           for await (const platform of Deno.readDir(entryDir)) {
             if (!platform.isDirectory) continue;
             for await (const file of Deno.readDir(`${entryDir}/${platform.name}`)) {
@@ -463,4 +464,61 @@ Deno.test({
     }
     assertEquals(notExecutable, [], "these catalog scripts are not executable");
   },
+});
+
+Deno.test("bundled catalog - no run.sh scopes flatpak to one installation", async () => {
+  // The opposite rule to install/remove, and it matters: `flatpak run --user` fails outright for a
+  // system-installed app. Reported by the user as the app simply not opening.
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    for (const platform of ["linux", "macos", "windows"]) {
+      let source: string;
+      try {
+        source = await Deno.readTextFile(`${entryDir}/${platform}/run.sh`);
+      } catch {
+        continue;
+      }
+      if (/flatpak run[^\n]*--(user|system)\b/.test(source)) {
+        offenders.push(`${entryDir}/${platform}/run.sh`);
+      }
+    }
+  }
+  assertEquals(
+    offenders,
+    [],
+    "a scoped `flatpak run` cannot find an app in the other installation",
+  );
+});
+
+Deno.test("bundled catalog - no meta.toml declares the same key twice", async () => {
+  // @std/toml accepts a duplicate key and silently keeps the last one, so an edit that adds a
+  // second `notes =` to a table discards the original with no error anywhere. Hit while editing
+  // the Docker entry by hand; nothing in the load, the schema or the tests noticed.
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    const source = await Deno.readTextFile(`${entryDir}/meta.toml`);
+    let table = "";
+    const seen = new Set<string>();
+    let inMultiline = false;
+    for (const raw of source.split("\n")) {
+      const line = raw.trim();
+      // Skip over """ blocks, whose contents can look like anything.
+      const fences = (line.match(/"""/g) ?? []).length;
+      if (inMultiline) {
+        if (fences % 2 === 1) inMultiline = false;
+        continue;
+      }
+      if (line.startsWith("[")) {
+        table = line;
+        seen.clear();
+        continue;
+      }
+      const key = /^([A-Za-z_][A-Za-z0-9_-]*)\s*=/.exec(line)?.[1];
+      if (key === undefined) continue;
+      if (fences % 2 === 1) inMultiline = true;
+      if (seen.has(key)) offenders.push(`${entryDir}: ${table || "(top level)"} ${key}`);
+      seen.add(key);
+    }
+  }
+  assertEquals(offenders, [], "duplicate keys silently discard the earlier value");
 });

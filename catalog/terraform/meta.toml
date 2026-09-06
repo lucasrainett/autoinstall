@@ -1,0 +1,18 @@
+name = "Terraform"
+description = "Infrastructure-as-code tool by HashiCorp for defining and provisioning cloud infrastructure"
+kind = "install"
+website = "https://developer.hashicorp.com/terraform"
+
+capabilities = ["infrastructure-as-code", "cloud-cli"]
+
+[linux]
+installMethod = "apt"
+notes = "Registers HashiCorp's own apt repo first."
+requiresElevation = true
+
+[macos]
+installMethod = "homebrew"
+notes = "HashiCorp's formula was removed from Homebrew core over their license change, so this uses HashiCorp's own tap (hashicorp/tap/terraform)."
+
+[windows]
+installMethod = "winget"

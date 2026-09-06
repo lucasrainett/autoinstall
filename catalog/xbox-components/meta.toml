@@ -1,0 +1,10 @@
+name = "Xbox support components"
+description = "The background Xbox services the Xbox app and Game Bar rely on"
+kind = "install"
+website = "https://www.xbox.com/"
+
+capabilities = ["game-overlay"]
+
+[windows]
+installMethod = "script"
+notes = "Preinstalled, so it usually starts already selected. Unchecking it removes these packages for the current user; it can be reinstalled from the Microsoft Store. Grouped into one entry because they only make sense together — removing some and keeping others leaves the Xbox app half-working. Remove the Xbox app and Game Bar too if you want none of it."

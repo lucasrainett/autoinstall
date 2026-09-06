@@ -1,0 +1,17 @@
+name = "Helium"
+description = "Chromium browser that blocks ads, trackers, cookie banners and fingerprinting by default"
+kind = "install"
+website = "https://helium.computer"
+
+capabilities = ["web-browsing", "tracker-blocking"]
+
+[linux]
+installMethod = "appimage"
+notes = "Integrated with Gear Lever, which manages the AppImage and adds the launcher entry, icon, and updates."
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "direct-download"
+notes = "Downloads the official mini-installer from GitHub releases and runs it silently (/silent /install)."

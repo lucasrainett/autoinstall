@@ -1,0 +1,15 @@
+name = "Reduce background services"
+description = "Disables background services a desktop machine does not normally need"
+kind = "configure"
+website = "https://www.freedesktop.org/software/systemd/man/latest/systemctl.html"
+
+capabilities = ["system-hardening"]
+
+[linux]
+installMethod = "script"
+notes = "Masks a short, deliberately conservative list: printer auto-discovery and the mobile-broadband manager. Anything widely relied on — Bluetooth, Avahi/mDNS, CUPS itself — is left alone. Reverting unmasks and re-enables exactly what was masked."
+requiresElevation = true
+
+[windows]
+installMethod = "script"
+notes = "Disables the telemetry and retail-demo services. Needs an elevated shell; without one the service control calls fail and the entry reports the failure rather than pretending to have worked."

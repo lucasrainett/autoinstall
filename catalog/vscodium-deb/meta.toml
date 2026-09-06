@@ -1,0 +1,11 @@
+name = "VSCodium (deb)"
+description = "Community build of VS Code without Microsoft telemetry, from VSCodium's apt repository"
+kind = "install"
+website = "https://vscodium.com/"
+
+capabilities = ["code-editing", "version-control"]
+
+[linux]
+installMethod = "apt"
+notes = "The vendor's own apt repository. Listed separately from the Flatpak because both can be installed at once, and a single entry could not express removing one while keeping the other."
+requiresElevation = true

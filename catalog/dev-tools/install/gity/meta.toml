@@ -1,9 +1,0 @@
-name = "GitY"
-description = "Fast native browser for git history: branches, tags, commits, diffs and search"
-website = "https://github.com/deepwell/gity"
-
-capabilities = ["version-control"]
-
-[linux]
-installMethod = "flatpak"
-notes = "Linux only: a GTK application with no macOS or Windows build."

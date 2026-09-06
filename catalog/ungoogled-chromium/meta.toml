@@ -1,0 +1,15 @@
+name = "Ungoogled Chromium"
+description = "Chromium browser with Google integration and telemetry removed"
+kind = "install"
+website = "https://ungoogled-software.github.io"
+
+capabilities = ["web-browsing"]
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+
+[windows]
+installMethod = "winget"

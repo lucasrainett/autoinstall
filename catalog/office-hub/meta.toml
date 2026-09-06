@@ -1,0 +1,10 @@
+name = "Office hub"
+description = "Microsoft 365 Copilot app: document hub, formerly 'Office', that upsells a subscription"
+kind = "install"
+website = "https://support.microsoft.com/en-us/office/the-microsoft-365-app-transition-to-the-microsoft-365-copilot-app-22eac811-08d6-4df3-92dd-77f193e354a5"
+
+capabilities = ["advertising", "ai-chat"]
+
+[windows]
+installMethod = "script"
+notes = "Preinstalled, so it usually starts already selected. Unchecking it removes the package for the current user; it can be reinstalled from the Microsoft Store."

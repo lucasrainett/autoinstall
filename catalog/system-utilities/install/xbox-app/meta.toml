@@ -1,9 +1,0 @@
-name = "Xbox app"
-description = "Xbox game library and Game Pass store, with cloud gaming and console remote play"
-website = "https://www.xbox.com/en-US/apps/xbox-app-on-pc"
-
-capabilities = ["game-launcher", "game-store", "game-streaming-client", "messaging"]
-
-[windows]
-installMethod = "script"
-notes = "Preinstalled, so it usually starts already selected. Unchecking it removes the package for the current user; it can be reinstalled from the Microsoft Store."

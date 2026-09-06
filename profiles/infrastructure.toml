@@ -1,14 +1,14 @@
 name = "Infrastructure"
 description = "Cloud and infrastructure-as-code tooling, containers, and virtual machines"
 entries = [
-  "dev-tools/install/aws-cli",
-  "dev-tools/install/terraform",
-  "dev-tools/install/docker",
-  "dev-tools/install/podman-desktop",
+  "aws-cli",
+  "terraform",
+  "docker",
+  "podman-desktop",
   # One VM manager per platform — GNOME Boxes, UTM and VirtualBox are different programs, so
   # they are different entries. Whichever applies to the machine is the one that acts.
-  "dev-tools/install/gnome-boxes",
-  "dev-tools/install/utm",
-  "dev-tools/install/virtualbox",
-  "dev-tools/install/go",
+  "gnome-boxes",
+  "utm",
+  "virtualbox",
+  "go",
 ]

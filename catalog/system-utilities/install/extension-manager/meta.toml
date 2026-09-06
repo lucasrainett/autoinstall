@@ -1,9 +1,0 @@
-name = "Extension Manager"
-description = "Browses, installs and configures GNOME Shell extensions"
-website = "https://github.com/mjakeman/extension-manager"
-
-capabilities = ["desktop-extensions"]
-
-[linux]
-installMethod = "flatpak"
-notes = "Linux-only by design: it manages Flatpak/AppImage/GNOME internals that exist only on Linux."

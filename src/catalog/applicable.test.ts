@@ -9,10 +9,10 @@ function entry(id: string, platforms: string[]): CatalogEntry {
     ops[p] = { detect: `${path}/${p}/detect.sh`, install: `${path}/${p}/install.sh` };
   }
   return {
-    category: "x",
+    categories: ["x"],
     kind: "install",
     id,
-    meta: { name: id, description: "d" },
+    meta: { kind: "install", name: id, description: "d" },
     path,
     platforms: ops,
   } as CatalogEntry;

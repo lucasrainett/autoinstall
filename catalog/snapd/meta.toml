@@ -1,0 +1,11 @@
+name = "snapd"
+description = "Canonical's snap package system"
+kind = "install"
+website = "https://snapcraft.io/"
+
+capabilities = ["package-management", "app-storefront", "automatic-updates"]
+
+[linux]
+installMethod = "apt"
+notes = "Preinstalled on Ubuntu, so it starts checked. Unchecking removes it — but on stock Ubuntu, Firefox and often the software centre ARE snaps, so the collateral guard will decline rather than take your browser with it. That refusal is the entry working correctly: remove those applications deliberately first if you really want snapd gone. Deliberately does NOT pin the package to block reinstallation, unlike the popular debloat scripts; a pin is a trap for whoever next wonders why apt refuses to install something."
+requiresElevation = true

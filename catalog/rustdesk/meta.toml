@@ -1,0 +1,13 @@
+name = "RustDesk"
+description = "Self-hostable remote desktop, an open alternative to TeamViewer"
+kind = "install"
+website = "https://rustdesk.com/"
+
+capabilities = ["remote-desktop", "remote-assistance", "file-transfer"]
+
+[linux]
+installMethod = "flatpak"
+
+[macos]
+installMethod = "homebrew"
+notes = "No winget package exists, so Windows is absent rather than guessed at — RustDesk ships an installer from its own site."
