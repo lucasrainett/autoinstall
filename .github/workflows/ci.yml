@@ -105,13 +105,18 @@ jobs:
             [ -e "$f" ] || continue
             # Expand through bash exactly as the runner would, capturing the -Command argument.
             script=$(sed 's|^powershell.exe|printf "%s\\n" |' "$f" | bash | tail -n +3)
-            printf '%s' "$script" > /tmp/ps-fragment.ps1
+            # Written beside the checkout and referenced relatively, because Git Bash and
+            # PowerShell do not share a path namespace: bash's /tmp/x is PowerShell's D:\tmp\x,
+            # which does not exist. A relative path resolves against the same working directory in
+            # both. This is the same trap the Windows entries themselves have to avoid.
+            printf '%s' "$script" > ps-fragment.ps1
             pwsh -NoProfile -Command '
               $errors = $null
               [System.Management.Automation.Language.Parser]::ParseFile(
-                "/tmp/ps-fragment.ps1", [ref]$null, [ref]$errors) | Out-Null
+                (Resolve-Path "ps-fragment.ps1"), [ref]$null, [ref]$errors) | Out-Null
               if ($errors) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
             ' || { echo "PowerShell parse error in $f"; failed=1; }
+            rm -f ps-fragment.ps1
           done
           exit $failed
 

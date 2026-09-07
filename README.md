@@ -100,6 +100,32 @@ On Windows you also need [Git for Windows](https://git-scm.com/download/win) —
 script runs through Git Bash. The installer says so if it is missing.
 
 <details>
+<summary>Installing a pre-release (beta)</summary>
+
+A pre-release is deliberately **not** what `latest` resolves to — GitHub's `releases/latest`
+skips them, so a beta only reaches people who ask for it by tag:
+
+```bash
+VERSION=v0.1.0-beta.1 curl -fsSL https://raw.githubusercontent.com/lucasrainett/autoinstall/master/install | bash
+```
+```powershell
+$env:VERSION = 'v0.1.0-beta.1'
+irm https://raw.githubusercontent.com/lucasrainett/autoinstall/master/install.ps1 | iex
+```
+
+Beta binaries are **not code-signed**, so both platforms will object the first time:
+
+- **macOS** — Gatekeeper refuses an unsigned binary. Allow this one:
+  `xattr -d com.apple.quarantine ~/.autoinstall/bin/autoinstall`
+- **Windows** — SmartScreen shows "Windows protected your PC". Choose *More info* → *Run anyway*.
+
+Both warnings are correct: nobody has vouched for these binaries. The installer still verifies the
+download against the release's `SHA256SUMS` and refuses anything that does not match, which proves
+the file is the one that was published — not who published it.
+
+</details>
+
+<details>
 <summary>Other ways to install</summary>
 
 Pick a version, or install somewhere else:

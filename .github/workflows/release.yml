@@ -46,12 +46,18 @@ jobs:
       # source immediately before compiling. Without this every release reported the hardcoded
       # placeholder, and the built-in update check told every user of every release that they were
       # out of date — permanently, and wrongly.
+      # Edits the one line rather than rewriting the file. It used to regenerate src/version.ts
+      # from scratch, which silently deleted everything added to it afterwards — by the time this
+      # was caught the file also held DEFAULT_UPDATE_REPO and updateRepo(), so a release would have
+      # failed to compile with "no exported member 'updateRepo'". Verified by simulating it.
       - name: Stamp the version from the tag
         run: |
           TAG="${{ github.event.inputs.tag || github.ref_name }}"
           VERSION="${TAG#v}"
-          printf 'export const TOOL_VERSION = "%s";\n' "$VERSION" > src/version.ts
-          printf 'export function isDevelopmentBuild(version: string = TOOL_VERSION): boolean {\n  return version.endsWith("-dev");\n}\n' >> src/version.ts
+          sed -i -E 's|^export const TOOL_VERSION = ".*";$|export const TOOL_VERSION = "'"$VERSION"'";|' src/version.ts
+          grep -q "export const TOOL_VERSION = \"$VERSION\";" src/version.ts \
+            || { echo "::error::failed to stamp the version into src/version.ts"; exit 1; }
+          deno check src/version.ts
           echo "Stamped version: $VERSION"
 
       - name: Compile
@@ -191,8 +197,17 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.event.inputs.tag || github.ref_name }}
         run: |
+          # A tag carrying a semver pre-release part (v0.1.0-beta.1) is published as a
+          # pre-release. That is not cosmetic: GitHub's /releases/latest endpoint skips
+          # pre-releases, and both installers and the built-in update check ask for exactly that
+          # endpoint — so a beta reaches the people who asked for it by tag, and nobody else is
+          # handed one by `curl … | bash`.
+          PRERELEASE=""
+          case "$TAG" in *-*) PRERELEASE="--prerelease" ;; esac
+
           gh release create "$TAG" staging/* \
             --repo "${{ github.repository }}" \
             --title "$TAG" \
             --generate-notes \
+            $PRERELEASE \
             --verify-tag || gh release upload "$TAG" staging/* --repo "${{ github.repository }}" --clobber
