@@ -522,3 +522,53 @@ Deno.test("bundled catalog - no meta.toml declares the same key twice", async ()
   }
   assertEquals(offenders, [], "duplicate keys silently discard the earlier value");
 });
+
+Deno.test("bundled catalog - an update script updates the app its own entry installs", async () => {
+  // Generated update scripts were derived from each install script's flatpak id — which for an
+  // AppImage entry is Gear Lever, the *tool*, not the software. Five entries ended up with an
+  // update that would have updated Gear Lever and reported success while changing nothing
+  // relevant. Caught by comparing the two ids rather than trusting the generator.
+  const mismatched: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    let update: string, install: string;
+    try {
+      update = await Deno.readTextFile(`${entryDir}/linux/update.sh`);
+      install = await Deno.readTextFile(`${entryDir}/linux/install.sh`);
+    } catch {
+      continue;
+    }
+    const updates = /flatpak update "\$scope" ([A-Za-z0-9_.-]+)/.exec(update)?.[1];
+    const installs = /flatpak install[^\n]*?\bflathub\s+([A-Za-z0-9_][A-Za-z0-9_.-]+)/.exec(install)
+      ?.[1];
+    if (updates !== undefined && installs !== undefined && updates !== installs) {
+      mismatched.push(`${entryDir}: updates ${updates}, installs ${installs}`);
+    }
+  }
+  assertEquals(mismatched, [], "an update script targeting a different app than its install");
+});
+
+Deno.test("bundled catalog - flatpak update and uninstall cover every installation", async () => {
+  // An app can be installed system-wide and per-user at once. `if/elif` removed the user copy and
+  // left the system one, after which detect correctly reported the entry as still present and the
+  // removal was recorded as a failure. Reported for real: 90 of that machine's 100 flatpaks were
+  // system-wide.
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    for (const op of ["update", "remove"]) {
+      let source: string;
+      try {
+        source = await Deno.readTextFile(`${entryDir}/linux/${op}.sh`);
+      } catch {
+        continue;
+      }
+      if (!/flatpak (update|uninstall)/.test(source)) continue;
+      // Either it loops over both installations, or it is not scoped at all.
+      const loops = /for scope in --user --system/.test(source);
+      const elif = /elif flatpak info --system/.test(source);
+      if (elif || (!loops && /--user|--system/.test(source))) {
+        offenders.push(`${entryDir}/linux/${op}.sh`);
+      }
+    }
+  }
+  assertEquals(offenders, [], "these touch only one flatpak installation");
+});

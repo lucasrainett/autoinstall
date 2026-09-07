@@ -6,8 +6,11 @@ command -v flatpak >/dev/null 2>&1 || exit 0
 
 # Remove it from whichever installation holds it; an unscoped uninstall is ambiguous
 # when the same remote is configured in more than one.
-if flatpak info --user it.mijorus.gearlever &>/dev/null; then
-  flatpak uninstall --user it.mijorus.gearlever -y
-elif flatpak info --system it.mijorus.gearlever &>/dev/null; then
-  flatpak uninstall --system it.mijorus.gearlever -y
-fi
+# Every installation, not the first one found. `if/elif` removed the user copy and left a
+# system-wide one behind, after which detect correctly reported the entry as still present and the
+# removal was recorded as having failed.
+for scope in --user --system; do
+  if flatpak info "$scope" it.mijorus.gearlever &>/dev/null; then
+    flatpak uninstall "$scope" it.mijorus.gearlever -y
+  fi
+done

@@ -39,6 +39,7 @@ import { readManifest } from "../manifest/store.ts";
 import { importManifest } from "../manifest/apply.ts";
 import { checkForUpdate } from "../update/version.ts";
 import { chipLines } from "./capability-chips.ts";
+import { detailBudget } from "./detail-budget.ts";
 import { appRunScript, launchApp } from "../exec/launcher.ts";
 import { isDevelopmentBuild, TOOL_VERSION, updateRepo } from "../version.ts";
 import { issueUrl } from "../report/issue.ts";
@@ -1049,78 +1050,95 @@ export function AppShell() {
                       ? "Result"
                       : "Details"}
                   />
-                  {screen === "browse" && cursorEntry && (
-                    <>
-                      <Text bold>{cursorEntry.meta.name}</Text>
-                      <Text>{cursorEntry.meta.description}</Text>
-                      {cursorEntry.meta.website && <Text dimColor>{cursorEntry.meta.website}</Text>}
-                      {
-                        /* What this entry actually lets you do. Shown as the real capability keys
+                  {screen === "browse" && cursorEntry && (() => {
+                    // What actually fits. Ink does not clip, so anything drawn beyond the pane's
+                    // height makes the box taller and pushes the panes below it off screen.
+                    const budget = detailBudget(
+                      layout.detail.height,
+                      (cursorEntry.meta.capabilities ?? []).length,
+                    );
+                    return (
+                      <>
+                        <Text bold>{cursorEntry.meta.name}</Text>
+                        {budget.description && <Text>{cursorEntry.meta.description}</Text>}
+                        {budget.website && cursorEntry.meta.website && (
+                          <Text dimColor>{cursorEntry.meta.website}</Text>
+                        )}
+                        {
+                          /* What this entry actually lets you do. Shown as the real capability keys
                           rather than prettified labels: they are the vocabulary the catalog and
                           `deno task capabilities` both speak, so the reader can carry one to find
                           the other programs providing it — which on another platform is a
                           different program entirely (Junction here, BrowserSelect on Windows).
                           Width comes from the measured pane, not a guess, because this is the
                           narrowest column and an over-wide row wraps the whole layout. */
-                      }
-                      {(cursorEntry.meta.capabilities ?? []).length > 0 &&
-                        layout.detail.height - 8 >= 1 && (
+                        }
+                        {(cursorEntry.meta.capabilities ?? []).length > 0 &&
+                          layout.detail.height - 9 >= 1 && (
+                          <Box marginTop={1} flexDirection="column">
+                            {chipLines(
+                              cursorEntry.meta.capabilities ?? [],
+                              Math.max(8, layout.detail.width - 4),
+                              budget.capabilityLines,
+                            ).map((line) => <Text key={line} color="cyan">{line}</Text>)}
+                          </Box>
+                        )}
                         <Box marginTop={1} flexDirection="column">
-                          {chipLines(
-                            cursorEntry.meta.capabilities ?? [],
-                            Math.max(8, layout.detail.width - 4),
-                            // Budget, not a guess: the pane also draws a title, name, description,
-                            // website, status, install method and notes. Without a cap, an entry
-                            // with many capabilities made the box taller than the layout allowed
-                            // and pushed the panes below it off screen at 80x24.
-                            layout.detail.height - 8,
-                          ).map((line) => <Text key={line} color="cyan">{line}</Text>)}
-                        </Box>
-                      )}
-                      <Box marginTop={1} flexDirection="column">
-                        {
-                          /* The diagnosed state spelled out. The list carries only a one-character
+                          {
+                            /* The diagnosed state spelled out. The list carries only a one-character
                           glyph, which is easy to miss and unreadable without the legend. Uses the
                           same tested resolver as the glyph, so the two can never disagree. */
-                        }
-                        <Text>
-                          {(() => {
-                            switch (statusIndicatorFor(cursorKey ?? "", snapshot)) {
-                              case "satisfied":
-                                return <Text color="green">● Installed</Text>;
-                              case "needs-update":
-                                return <Text color="yellow">● Update available</Text>;
-                              case "unsatisfied":
-                                return <Text>○ Not installed</Text>;
-                              default:
-                                return <Text color="gray">? Status unknown</Text>;
-                            }
-                          })()}
-                          {selection.has(cursorKey ?? "") && (
-                            <Text color="green" bold>{SELECTED_SUFFIX}</Text>
-                          )}
-                        </Text>
-                        {platform && cursorEntry.meta.platforms?.[platform]?.installMethod && (
-                          <Text dimColor>
-                            via {cursorEntry.meta.platforms[platform]?.installMethod}
+                          }
+                          <Text>
+                            {(() => {
+                              switch (statusIndicatorFor(cursorKey ?? "", snapshot)) {
+                                case "satisfied":
+                                  return <Text color="green">● Installed</Text>;
+                                case "needs-update":
+                                  return <Text color="yellow">● Update available</Text>;
+                                case "unsatisfied":
+                                  return <Text>○ Not installed</Text>;
+                                default:
+                                  return <Text color="gray">? Status unknown</Text>;
+                              }
+                            })()}
+                            {selection.has(cursorKey ?? "") && (
+                              <Text color="green" bold>{SELECTED_SUFFIX}</Text>
+                            )}
                           </Text>
-                        )}
-                        {
-                          /* Surfaced here rather than only at the review step, so the cost of a
+                          {budget.installMethod && platform &&
+                            cursorEntry.meta.platforms?.[platform]?.installMethod && (
+                            <Text dimColor>
+                              via {cursorEntry.meta.platforms[platform]?.installMethod}
+                            </Text>
+                          )}
+                          {
+                            /* Surfaced here rather than only at the review step, so the cost of a
                           choice is visible while it is being made. */
-                        }
-                        {platform && cursorEntry.meta.platforms?.[platform]?.requiresElevation && (
-                          <Text color="yellow">requires sudo</Text>
-                        )}
-                        {cursorEntry.meta.destructive && (
-                          <Text color="red" bold>destructive — overwrites existing state</Text>
-                        )}
-                        {platform && cursorEntry.meta.platforms?.[platform]?.notes && (
-                          <Text dimColor>{cursorEntry.meta.platforms[platform]?.notes}</Text>
-                        )}
-                      </Box>
-                    </>
-                  )}
+                          }
+                          {platform && cursorEntry.meta.platforms?.[platform]?.requiresElevation &&
+                            <Text color="yellow">requires sudo</Text>}
+                          {cursorEntry.meta.destructive && (
+                            <Text color="red" bold>destructive — overwrites existing state</Text>
+                          )}
+                          {
+                            /* Shown only when it would work: the entry has a run.sh for this
+                            platform and is actually installed. A hint for a key that would answer
+                            "not installed" teaches people to ignore hints. */
+                          }
+                          {budget.runHint &&
+                            appRunScript(cursorEntry.platforms, platform) !== undefined &&
+                            statusIndicatorFor(cursorKey ?? "", snapshot) !== "unsatisfied" && (
+                            <Text color="cyan">press o to run it</Text>
+                          )}
+                          {budget.notes && platform &&
+                            cursorEntry.meta.platforms?.[platform]?.notes && (
+                            <Text dimColor>{cursorEntry.meta.platforms[platform]?.notes}</Text>
+                          )}
+                        </Box>
+                      </>
+                    );
+                  })()}
                   {screen === "browse" && !cursorEntry && cursorCategory !== undefined && (() => {
                     const inCategory = applicable.filter((e) =>
                       e.categories.includes(cursorCategory)
@@ -1226,7 +1244,7 @@ export function AppShell() {
                     // the two keys a user most needs. Below that width show only the essentials
                     // and point at the help screen for the rest.
                     : terminalSize.columns >= 118
-                    ? `↑↓ move · space select · / search · p profiles · h history · n notices · e/i export/import · u update${
+                    ? `↑↓ move · space select · / search · o run · p profiles · h history · n notices · e/i export/import · u update${
                       updateKeys.size > 0 ? ` (${updateKeys.size})` : ""
                     } · ? help · Enter apply${
                       pendingKeys.size > 0 ? ` (${pendingKeys.size} pending)` : " (nothing pending)"
@@ -1433,7 +1451,7 @@ function DoneSummary(
       const first = failures[0];
       const { url, truncated } = issueUrl(updateRepo(), {
         key: first.key,
-        action: first.key.split("/")[1] ?? "install",
+        action: first.action ?? "install",
         platform,
         error: first.message ?? "(no detail captured)",
         output: failures.map((f) => `${f.key}: ${f.message ?? ""}`).join("\n"),

@@ -3,16 +3,20 @@ set -euo pipefail
 
 # Remove whichever packaging is actually present. Detect recognises both, so removal has to as
 # well — otherwise unchecking this would silently do nothing on a machine that used the flatpak.
+# Every flatpak installation, not the first one found: an app can be installed system-wide and
+# per-user at once, and stopping at the first left the other copy behind — after which detect
+# correctly reported the entry as still present and the removal was recorded as a failure.
+removed_flatpak=0
 if command -v flatpak >/dev/null 2>&1; then
-  if flatpak info --user org.gnome.Boxes &>/dev/null; then
-    flatpak uninstall --user org.gnome.Boxes -y
-    exit 0
-  fi
-  if flatpak info --system org.gnome.Boxes &>/dev/null; then
-    flatpak uninstall --system org.gnome.Boxes -y
-    exit 0
-  fi
+  for scope in --user --system; do
+    if flatpak info "$scope" org.gnome.Boxes &>/dev/null; then
+      flatpak uninstall "$scope" org.gnome.Boxes -y
+      removed_flatpak=1
+    fi
+  done
 fi
+# Only fall through to apt when this was not a flatpak install at all. Boxes can be either.
+[ "$removed_flatpak" -eq 1 ] && exit 0
 
 PACKAGES=("gnome-boxes")
 

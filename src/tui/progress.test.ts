@@ -139,3 +139,26 @@ Deno.test("executePlanActions - a plain success carries no message", async () =>
   );
   assertEquals(results, [{ key: "a", status: "success" }]);
 });
+
+Deno.test("executePlanActions - a result names the operation that was attempted", async () => {
+  // The bug report used to derive this from the entry key, which encoded the kind back when keys
+  // looked like "category/kind/id". Flat keys have no kind in them, so a failed *update* was
+  // reported as a failed install — seen in a real report for Bottles.
+  const results = await executePlanActions(
+    [{ key: "bottles", actionKind: "update" }],
+    () => Promise.resolve({ ok: false as const, error: "boom" }),
+    () => {},
+  );
+  assertEquals(results[0].action, "update");
+});
+
+Deno.test("executePlanActions - a caller with no actionKind gets no action key at all", async () => {
+  // Absent, not undefined: a result carrying `action: undefined` is not equal to one without it,
+  // which quietly broke every existing expectation the first time this was added.
+  const results = await executePlanActions(
+    [{ key: "jq" }],
+    () => Promise.resolve({ ok: true as const }),
+    () => {},
+  );
+  assertEquals(Object.hasOwn(results[0], "action"), false);
+});

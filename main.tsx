@@ -11,7 +11,8 @@
 
 import { dirname, fromFileUrl, join } from "@std/path";
 import { render } from "ink";
-import { parseCliArgs } from "./src/cli/args.ts";
+import { HELP_TEXT, parseCliArgs } from "./src/cli/args.ts";
+import { TOOL_VERSION } from "./src/version.ts";
 import { runCli } from "./src/cli/run.ts";
 import { AppShell } from "./src/tui/App.tsx";
 import { installDebugLogging } from "./src/tui/debug-log.ts";
@@ -40,6 +41,18 @@ import {
 const CATALOG_ROOT = fromFileUrl(new URL("./catalog", import.meta.url));
 
 const args = parseCliArgs(Deno.args);
+
+// Handled before anything else is touched: these only print, and must work with no terminal, no
+// catalog and no permissions beyond stdout — which is exactly the situation a bug reporter is in
+// when asked for a version number.
+if (args.mode === "version") {
+  console.log(TOOL_VERSION);
+  Deno.exit(0);
+}
+if (args.mode === "help") {
+  console.log(HELP_TEXT);
+  Deno.exit(0);
+}
 
 if (args.mode === "tui") {
   installDebugLogging();

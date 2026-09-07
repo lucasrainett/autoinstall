@@ -1,5 +1,5 @@
 import { assertEquals } from "@std/assert";
-import { parseCliArgs } from "./args.ts";
+import { HELP_TEXT, parseCliArgs } from "./args.ts";
 
 Deno.test("parseCliArgs - no recognized flags means the interactive TUI", () => {
   assertEquals(parseCliArgs([]), { mode: "tui", includeUpdates: false });
@@ -38,4 +38,32 @@ Deno.test("parseCliArgs - --with-updates opts into folding available updates int
     includeUpdates: true,
   });
   assertEquals(parseCliArgs(["--yes"]).includeUpdates, false);
+});
+
+Deno.test("parseCliArgs - --version and --help are recognised, and print-only", () => {
+  // Found by running a real release binary: --version was unrecognised, fell through to the
+  // interactive mode, and died with "Raw mode is not supported" — while the issue template asks
+  // reporters to run exactly that command.
+  assertEquals(parseCliArgs(["--version"]).mode, "version");
+  assertEquals(parseCliArgs(["-V"]).mode, "version");
+  assertEquals(parseCliArgs(["--help"]).mode, "help");
+  assertEquals(parseCliArgs(["-h"]).mode, "help");
+});
+
+Deno.test("parseCliArgs - printing wins over anything that would touch the machine", () => {
+  // Order must not matter: asking for the version alongside --yes must never run a plan.
+  assertEquals(parseCliArgs(["--yes", "--version"]).mode, "version");
+  assertEquals(parseCliArgs(["--version", "--yes"]).mode, "version");
+  assertEquals(parseCliArgs(["--dry-run", "--help"]).mode, "help");
+});
+
+Deno.test("parseCliArgs - no flags still means the interactive interface", () => {
+  assertEquals(parseCliArgs([]).mode, "tui");
+});
+
+Deno.test("HELP_TEXT - documents every mode the parser accepts", () => {
+  // A help text that omits a flag is worse than none: it implies the flag does not exist.
+  for (const flag of ["--dry-run", "--yes", "--with-updates", "--version", "--help"]) {
+    assertEquals(HELP_TEXT.includes(flag), true, `help does not mention ${flag}`);
+  }
 });

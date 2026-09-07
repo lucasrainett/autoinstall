@@ -124,14 +124,21 @@ export function issueUrl(
   ctx: RedactionContext,
 ): { url: string; truncated: boolean } {
   const base = `https://github.com/${repo}/issues/new`;
+  // `body`, not the issue form's field parameters.
+  //
+  // Field prefill (template=…&entry=…&output=…) only works when GitHub can resolve the template,
+  // and GitHub reads .github/ISSUE_TEMPLATE only from the repository's **default branch**. On a
+  // repo where the templates live on a working branch — or on any fork that has not copied them —
+  // the template silently fails to resolve, the form falls back to a blank issue, and every field
+  // parameter is dropped. The user gets an issue with nothing but a title, which is worse than
+  // useless: it looks like the tool reported the problem when it reported almost none of it.
+  // Reported after a real failure: "github didn't populate the issue content, only title".
+  //
+  // `body` works on the blank new-issue form unconditionally, so the report always arrives.
   const build = (body: string) => {
     const params = new URLSearchParams({
-      template: "entry-problem.yml",
       title: issueTitle(report),
-      entry: report.key,
-      platform: PLATFORM_LABEL[report.platform],
-      version: report.toolVersion,
-      output: body,
+      body,
     });
     return `${base}?${params.toString()}`;
   };

@@ -51,6 +51,11 @@ export interface ExecutionResult {
   key: string;
   status: "success" | "failed" | "skipped";
   message?: string;
+  /** What was attempted. Carried through so a failure can be reported as the operation it actually
+   * was: the bug report used to derive this from the entry key, which encoded the kind back when
+   * keys were "category/kind/id". Flat keys have no kind in them, so every failure — including
+   * updates — was reported as a failed *install*. */
+  action?: string;
 }
 
 export type OperationResult =
@@ -71,7 +76,9 @@ export type OperationResult =
  * (never running) rather than being attempted, and the loop stops.
  */
 export async function executePlanActions(
-  actions: readonly { key: string }[],
+  // actionKind is optional so callers that only have keys (tests, the CLI's simpler paths) still
+  // work; when present it rides along into the result so a failure can name what was attempted.
+  actions: readonly { key: string; actionKind?: string }[],
   runOperation: (key: string) => Promise<OperationResult>,
   onProgress: (state: ProgressState) => void,
   shouldAbort: () => boolean = () => false,
@@ -83,7 +90,11 @@ export async function executePlanActions(
   for (const action of actions) {
     if (shouldAbort()) {
       state = transition(state, action.key, "skipped");
-      results.push({ key: action.key, status: "skipped" });
+      results.push({
+        key: action.key,
+        status: "skipped",
+        ...(action.actionKind !== undefined ? { action: action.actionKind } : {}),
+      });
       onProgress(state);
       continue;
     }
@@ -103,11 +114,17 @@ export async function executePlanActions(
       results.push({
         key: action.key,
         status: "success",
+        ...(action.actionKind !== undefined ? { action: action.actionKind } : {}),
         ...(result.note !== undefined ? { message: result.note } : {}),
       });
     } else {
       state = transition(state, action.key, "failed", result.error);
-      results.push({ key: action.key, status: "failed", message: result.error });
+      results.push({
+        key: action.key,
+        status: "failed",
+        message: result.error,
+        ...(action.actionKind !== undefined ? { action: action.actionKind } : {}),
+      });
     }
     onProgress(state);
   }

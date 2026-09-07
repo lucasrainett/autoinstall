@@ -5,8 +5,11 @@ command -v flatpak >/dev/null 2>&1 || exit 0
 
 # Remove it from whichever installation holds it; an unscoped uninstall is ambiguous
 # when the same remote is configured in more than one.
-if flatpak info --user com.github.marktext.marktext &>/dev/null; then
-  flatpak uninstall --user com.github.marktext.marktext -y
-elif flatpak info --system com.github.marktext.marktext &>/dev/null; then
-  flatpak uninstall --system com.github.marktext.marktext -y
-fi
+# Every installation, not the first one found. `if/elif` removed the user copy and left a
+# system-wide one behind, after which detect correctly reported the entry as still present and the
+# removal was recorded as having failed.
+for scope in --user --system; do
+  if flatpak info "$scope" com.github.marktext.marktext &>/dev/null; then
+    flatpak uninstall "$scope" com.github.marktext.marktext -y
+  fi
+done

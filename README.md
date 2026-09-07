@@ -23,7 +23,7 @@ more there is shows at a glance. Press Enter to review the plan, then confirm.
 ```
 ┌──────────────────────────────────────┐┌────────────────────────────┐
 │ 📚 Catalog                          ┃││ 📋 Details                 │
-│ / (press / to search)  [1 of 123]    ┃││ Git                        │
+│ / (press / to search)  [1 of 124]    ┃││ Git                        │
 │ 🟨 🔧 dev-tools                      ┃││ Distributed version control│
 │   ✅ Git                            ┃││ https://git-scm.com        │
 │   ⬜ GitHub CLI                     │││ ● Installed · selected     │
@@ -37,7 +37,7 @@ more there is shows at a glance. Press Enter to review the plan, then confirm.
 ┌──────────────────────────────────────────────────────────────────────┐
 │ ⚡ Status                                                             │
 │ ↑↓ move · space select · / search · p profiles · ? help · Enter apply │
-│ ready — 123 entries diagnosed                                          │
+│ ready — 124 entries diagnosed                                          │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -106,8 +106,11 @@ A pre-release is deliberately **not** what `latest` resolves to — GitHub's `re
 skips them, so a beta only reaches people who ask for it by tag:
 
 ```bash
-VERSION=v0.1.0-beta.1 curl -fsSL https://raw.githubusercontent.com/lucasrainett/autoinstall/master/install | bash
+curl -fsSL https://raw.githubusercontent.com/lucasrainett/autoinstall/master/install | VERSION=v0.1.0-beta.1 bash
 ```
+
+Note where `VERSION` goes. In `VERSION=… curl … | bash` the assignment applies to **curl**, which
+does not read it, so the script falls back to `latest` and cannot find a pre-release.
 ```powershell
 $env:VERSION = 'v0.1.0-beta.1'
 irm https://raw.githubusercontent.com/lucasrainett/autoinstall/master/install.ps1 | iex
@@ -131,8 +134,8 @@ the file is the one that was published — not who published it.
 Pick a version, or install somewhere else:
 
 ```bash
-VERSION=v0.2.0 curl -fsSL .../install | bash          # a specific release
-AUTOINSTALL_INSTALL_DIR=~/bin curl -fsSL .../install | bash
+curl -fsSL .../install | VERSION=v0.2.0 bash          # a specific release
+curl -fsSL .../install | AUTOINSTALL_INSTALL_DIR=~/bin bash
 curl -fsSL .../install | bash -s -- --no-modify-path  # leave shell profiles alone
 ```
 
@@ -155,7 +158,7 @@ deno task compile          # or build a binary → dist/autoinstall
 | `space` | select / deselect — on a category row, the whole category |
 | `a` | select everything matching the current filter |
 | `c` | check / uncheck the whole category, from anywhere inside it (or click its header) |
-| `/` | search — type freely, `Enter` or `Esc` to finish |
+| `/` | search — matches names, descriptions, every category an entry belongs to, and its capability keys (`link-routing`, `video-editing`), so you can search for what you want to *do* |
 | `p` | profiles — apply a bundle of entries |
 | `h` | history of previous runs |
 | `n` | notices: startup checks, warnings and conflicts |
@@ -173,9 +176,9 @@ the removal of everything on screen.
 
 ## What's in the catalog
 
-**181 entries** across 13 categories — browsers, communication, dev-tools, media, gaming, creative,
+**182 entries** across 13 categories — browsers, communication, dev-tools, media, gaming, creative,
 productivity, security, privacy, system-utilities, AI, 3D printing and quality-of-life.
-Platform coverage is 123 Linux, 82 macOS, 110 Windows; an entry simply has no folder for a platform
+Platform coverage is 124 Linux, 83 macOS, 111 Windows; an entry simply has no folder for a platform
 where the software does not exist, which is how "not applicable here" is expressed.
 
 **Six profiles** — `developer`, `privacy`, `minimal`, `infrastructure`, `gaming`, `creative` —

@@ -1,0 +1,34 @@
+name = "autoinstall"
+description = "This tool itself — kept up to date through the same review-and-confirm path as everything else"
+kind = "install"
+website = "https://github.com/lucasrainett/autoinstall"
+
+capabilities = ["package-management"]
+
+# Unchecking this removes the tool. That is a legitimate thing to want, but it is not something to
+# discover from a one-line plan entry, so it carries the destructive marker and its full warning.
+destructive = true
+
+[linux]
+installMethod = "script"
+notes = """
+Runs the published installer, which verifies the download against the release's SHA256SUMS.
+
+Self-update works because unlinking a running executable on Linux leaves the running process on \
+its old inode: the session you started the update from finishes normally, and the next launch is \
+the new build. A working copy reporting 0.0.0-dev is never offered an update — it would overwrite \
+your build with a release.
+"""
+
+[macos]
+installMethod = "script"
+notes = "Same as Linux: replacing a running executable is safe on any POSIX system."
+
+[windows]
+installMethod = "script"
+notes = """
+Windows locks a running executable, so removal from inside the running tool is refused rather than \
+half-completed — it declines with exit 3 and changes nothing, and says to close the tool and run \
+it again. Updating in place has the same constraint; the installer handles it by writing the new \
+binary only once the old one is no longer held open.
+"""

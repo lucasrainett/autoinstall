@@ -64,10 +64,24 @@ api="https://api.github.com/repos/${REPO}/releases/latest"
 
 say "Resolving ${VERSION} release from ${REPO}..."
 if ! release=$(curl -fsSL "$api" 2>/dev/null); then
+  # Overwhelmingly the reason this is reached with VERSION unset: in
+  #   VERSION=v1.2.3 curl ... | bash
+  # the assignment applies to *curl*, which never reads it, so this script runs with the default
+  # and asks for `latest`. Pre-releases are excluded from `latest` by design, so anyone installing
+  # a beta hits exactly this. Naming the shell rule beats leaving them to spot it.
+  hint=""
+  if [ "$VERSION" = "latest" ]; then
+    hint="
+If you meant to install a specific version, note that in
+    VERSION=v1.2.3 curl ... | bash
+the assignment applies to curl, not to this script. Put it on bash instead:
+    curl ... | VERSION=v1.2.3 bash
+"
+  fi
   die "$(cat <<MSG
 Could not find a ${VERSION} release for ${REPO}.
-
-Either that repository has not published a release yet, or the name is wrong.
+${hint}
+Either that repository has not published a matching release, or the name is wrong.
 See https://github.com/${REPO}/releases
 MSG
 )"

@@ -1,5 +1,4 @@
 import { assert, assertEquals, assertStringIncludes } from "@std/assert";
-import { fromFileUrl } from "@std/path";
 import { type FailureReport, issueBody, issueTitle, issueUrl, MAX_URL_LENGTH } from "./issue.ts";
 
 const CTX = { homeDir: "/home/alice", username: "alice", hostname: "box" };
@@ -68,25 +67,31 @@ Deno.test("issueUrl - a short report is not marked truncated", () => {
   assertEquals(truncated, false);
 });
 
-Deno.test("issueUrl - points at the configured repository and the issue template", () => {
+Deno.test("issueUrl - points at the configured repository", () => {
   const { url } = issueUrl("someone/their-fork", REPORT, CTX);
   assertStringIncludes(url, "https://github.com/someone/their-fork/issues/new");
-  assertStringIncludes(url, "template=entry-problem.yml");
 });
 
-Deno.test("issueUrl - the platform value matches an option in the real issue template", async () => {
-  // GitHub only pre-fills a dropdown when the value matches an option exactly; a mismatch is
-  // silently ignored, so this would rot without a test reading the template itself.
-  const template = await Deno.readTextFile(
-    fromFileUrl(new URL("../../.github/ISSUE_TEMPLATE/entry-problem.yml", import.meta.url)),
-  );
+Deno.test("issueUrl - carries the report in `body`, which needs no issue template", () => {
+  // Field prefill only works when GitHub can resolve the template, and it reads templates solely
+  // from the default branch. Where they are absent the form falls back to a blank issue and drops
+  // every field parameter — the user gets a title and nothing else, which looks like the tool
+  // reported the problem when it reported almost none of it. Seen for real.
+  const { url } = issueUrl("owner/repo", REPORT, CTX);
+  const body = new URL(url).searchParams.get("body");
+  assert(body !== null, "no body parameter");
+  assertStringIncludes(body, "librewolf");
+  assertStringIncludes(body, "Unable to locate");
+  // Nothing may depend on a template resolving.
+  assertEquals(new URL(url).searchParams.get("template"), null);
+});
+
+Deno.test("issueUrl - names the platform in the body for every platform", () => {
+  // The platform used to ride in a dropdown field, which only pre-fills when GitHub resolves the
+  // template. In the body it always survives.
   for (const platform of ["linux", "macos", "windows"] as const) {
     const { url } = issueUrl("owner/repo", { ...REPORT, platform }, CTX);
-    const value = new URL(url).searchParams.get("platform");
-    assert(value !== null);
-    assert(
-      template.includes(`"${value}"`),
-      `the template has no dropdown option "${value}" — the prefill would be dropped`,
-    );
+    const body = new URL(url).searchParams.get("body") ?? "";
+    assertStringIncludes(body, "**Platform:**");
   }
 });
