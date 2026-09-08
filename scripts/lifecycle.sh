@@ -108,6 +108,23 @@ for key in $ENTRIES; do
       # Anything other than 1 means it is still there — including 2, which an earlier version of
       # this check treated as success and would have passed a failed removal.
       if [ "$gone" -ne 1 ]; then
+        # Capture *why* before giving up. A detect script that uses `grep -q` prints nothing, so
+        # its log entry is empty and the failure is unattributable — which is exactly the position
+        # VLC left us in twice. This dumps the package manager's own view instead of guessing.
+        {
+          echo "--- post-removal diagnostic for $key ---"
+          case "$PLATFORM" in
+            windows)
+              winget list --id "$key" --accept-source-agreements 2>&1 | head -20
+              echo "--- winget list, unfiltered, grepped for the entry name ---"
+              winget list --accept-source-agreements 2>&1 | grep -i "${key%%-*}" | head -10
+              ;;
+            macos) brew list --cask 2>&1 | grep -i "${key%%-*}" | head -10 ;;
+            linux) flatpak list --columns=application 2>&1 | grep -i "${key%%-*}" | head -10 ;;
+          esac
+          echo "--- detect.sh, with output ---"
+          bash -x "$dir/detect.sh" 2>&1 | tail -25
+        } >> "$log" 2>&1
         fail_ "$key: still reports present after removal (detect=$gone)"
         entry_ok=0
       fi

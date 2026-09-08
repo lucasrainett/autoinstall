@@ -6,7 +6,7 @@
     "fmt": "deno fmt src/ main.tsx",
     "lint": "deno lint src/ main.tsx",
     "start": "deno run --allow-read --allow-run --allow-write --allow-env --allow-net main.tsx",
-    "compile": "deno compile --allow-read --allow-run --allow-write --allow-env --allow-net --include ./catalog --include ./profiles --output dist/autoinstall main.tsx",
+    "compile": "deno compile --allow-read --allow-run --allow-write --allow-env --allow-net --allow-sys=osRelease,hostname --include ./catalog --include ./profiles --output dist/autoinstall main.tsx",
     "capabilities": "deno run --allow-read --allow-run --allow-env scripts/capability-coverage.ts"
   },
   "imports": {

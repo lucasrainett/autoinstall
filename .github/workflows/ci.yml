@@ -156,6 +156,7 @@ jobs:
         run: |
           deno compile --target ${{ matrix.target }} \
             --allow-read --allow-run --allow-write --allow-env --allow-net \
+            --allow-sys=osRelease,hostname \
             --include ./catalog --include ./profiles \
             --output "dist/autoinstall-${{ matrix.target }}" main.tsx
 
