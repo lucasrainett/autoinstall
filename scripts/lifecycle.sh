@@ -16,10 +16,21 @@ mkdir -p "$LOG_DIR"
 
 # Resolve "all" to every entry that has a folder for this platform.
 if [ "${1:-}" = "all" ]; then
-  ENTRIES=$(find catalog -mindepth 4 -maxdepth 4 -type d -name "$PLATFORM" |
+  # Depth 2, because the catalog is flat: catalog/<id>/<platform>. It used to be
+  # catalog/<category>/<kind>/<id>/<platform> — depth 4 — and this was not updated with the
+  # restructure, so "all" quietly resolved to no entries at all and the run would have reported
+  # success having tested nothing.
+  ENTRIES=$(find catalog -mindepth 2 -maxdepth 2 -type d -name "$PLATFORM" |
     sed "s|^catalog/||; s|/$PLATFORM$||" | sort)
 else
   ENTRIES="$*"
+fi
+
+# A run that tests nothing must not report success. The depth bug above did exactly that: "all"
+# resolved to an empty list and every job went green having installed nothing.
+if [ -z "${ENTRIES// /}" ]; then
+  echo "::error::no entries resolved for $PLATFORM — refusing to report success on an empty run"
+  exit 1
 fi
 
 pass=0; fail=0; skipped=0
