@@ -539,7 +539,7 @@ Also: the README screenshot had drifted to `[1 of 79]` against 90 Linux entries,
 
 ### Committed — 2026-09-03
 
-The rewrite is on `rewrite/typescript-tui` as a single commit: **1,130 files, 24,435 insertions**, with `.old/` preserving the previous scripts. `master` still points at `8ef0332`, so nothing has been overwritten and the old tool remains exactly where it was until the branch is merged deliberately.
+The rewrite lives on `rewrite/typescript-tui`, with `.old/` preserving the previous scripts verbatim. Merging it into `master` is a **fast-forward**: `master` is zero commits ahead, no file is deleted, and every top-level path the old repo had is still present under `.old/`. The one visible consequence is that the old tool's documented one-liner (`.../master/bootstrap.sh`) moves to `.old/bootstrap.sh` and that URL stops resolving.
 
 Verified rather than assumed: a **clean clone of the branch** passes `deno task check` with zero type errors and all **513 tests**, which is the check that matters — it proves the commit is self-contained and does not depend on anything left behind in a working tree. Executable bits survived the commit (688 catalog scripts, all `100755`), which git records and would otherwise silently drop.
 

@@ -3,7 +3,7 @@ description = "Self-hostable remote desktop, an open alternative to TeamViewer"
 kind = "install"
 website = "https://rustdesk.com/"
 
-capabilities = ["remote-desktop", "remote-assistance", "file-transfer"]
+capabilities = ["remote-desktop", "remote-assistance", "file-sharing"]
 
 [linux]
 installMethod = "flatpak"

@@ -5,6 +5,12 @@ website = "https://developer.hashicorp.com/terraform"
 
 capabilities = ["infrastructure-as-code", "cloud-cli"]
 
+# Licence note, because this catalog elsewhere prefers open tools (VSCodium over VS Code,
+# LibreWolf over Firefox) and this one stopped being open source without changing its name:
+# HashiCorp relicensed Terraform from MPL-2.0 to the Business Source License at v1.6. BUSL
+# forbids using it to build a competing product, which does not affect setting up your own
+# machine — so this entry stays, and OpenTofu is offered beside it rather than instead of it.
+
 [linux]
 installMethod = "apt"
 notes = "Registers HashiCorp's own apt repo first."

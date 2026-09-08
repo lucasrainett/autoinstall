@@ -27,7 +27,14 @@ export const CAPABILITIES = {
 
   // Files and sync
   "cloud-file-sync": { description: "Sync files with a cloud provider", category: "productivity" },
-  "file-transfer": { description: "Move data over the network by hand", category: "dev-tools" },
+  "file-transfer": {
+    description: "Move data over the network from a shell",
+    category: "dev-tools",
+  },
+  "file-sharing": {
+    description: "Send files between your own devices",
+    category: "system-utilities",
+  },
   "file-management": { description: "Browse and organise files", category: "system-utilities" },
   "filesystem-support": {
     description: "Read and write another platform's filesystems",
@@ -60,7 +67,7 @@ export const CAPABILITIES = {
   "raster-graphics": { description: "Edit photos and bitmap images", category: "creative" },
   "vector-graphics": { description: "Draw scalable vector artwork", category: "creative" },
   "3d-modeling": { description: "Create and edit 3D models", category: "creative" },
-  "3d-viewing": { description: "View 3D models", category: "3d-printing" },
+  "3d-viewing": { description: "View 3D models", category: "media" },
   "3d-slicing": { description: "Prepare 3D models for printing", category: "3d-printing" },
 
   // Documents
@@ -183,7 +190,10 @@ export const CAPABILITIES = {
     category: "system-utilities",
   },
   "phone-integration": { description: "Link a phone to the desktop", category: "system-utilities" },
-  "network-scanning": { description: "Scan a network for hosts and ports", category: "dev-tools" },
+  "network-scanning": {
+    description: "Scan a network for hosts and ports",
+    category: "system-utilities",
+  },
   "document-scanning": { description: "Scan paper documents", category: "system-utilities" },
   "device-management": { description: "Configure peripherals", category: "system-utilities" },
   "macro-keypad": { description: "Drive a macro keypad", category: "system-utilities" },

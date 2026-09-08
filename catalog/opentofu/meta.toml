@@ -1,0 +1,19 @@
+name = "OpenTofu"
+description = "Declarative infrastructure tool — the Linux Foundation's open-source fork of Terraform"
+website = "https://opentofu.org/"
+kind = "install"
+
+capabilities = ["infrastructure-as-code", "cloud-cli"]
+
+[linux]
+installMethod = "apt"
+requiresElevation = true
+notes = "OpenTofu's own apt repository, the channel get.opentofu.org documents. The command is `tofu`, so it can sit alongside Terraform without either shadowing the other."
+
+[macos]
+installMethod = "homebrew"
+notes = "A formula, not a cask — `tofu` is a command-line tool with no app bundle. Verified live against formulae.brew.sh (opentofu 1.12.6)."
+
+[windows]
+installMethod = "winget"
+notes = "Verified live in microsoft/winget-pkgs at manifests/o/OpenTofu/Tofu (stable versions through 1.11.x, alongside separate Alpha/Beta/RC channels this entry deliberately does not use)."

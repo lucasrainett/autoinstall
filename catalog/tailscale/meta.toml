@@ -3,7 +3,7 @@ description = "Private mesh VPN that connects your machines directly"
 kind = "install"
 website = "https://tailscale.com/"
 
-capabilities = ["mesh-vpn", "vpn", "ssh", "file-transfer"]
+capabilities = ["mesh-vpn", "vpn", "ssh", "file-sharing"]
 
 [linux]
 installMethod = "apt"

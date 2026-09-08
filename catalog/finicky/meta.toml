@@ -1,0 +1,18 @@
+name = "Finicky"
+description = "Chooses which browser opens a link, by rule rather than by asking each time"
+website = "https://github.com/johnste/finicky"
+kind = "install"
+
+capabilities = ["link-routing"]
+
+[macos]
+installMethod = "homebrew"
+notes = """
+Verified live against formulae.brew.sh — cask `finicky`, and the upstream repository is MIT, \
+unarchived, last pushed 2026-09-04.
+
+Works differently from Junction on Linux, which pops up a chooser for every link: Finicky routes \
+by rules you write in a config file, so a work URL can always open in one browser and everything \
+else in another. Same capability, a different idea of how to decide. Browserosaurus is the closer \
+match to Junction's behaviour but was archived by its author in August 2025.
+"""

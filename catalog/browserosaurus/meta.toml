@@ -7,4 +7,13 @@ capabilities = ["link-routing"]
 
 [macos]
 installMethod = "homebrew"
-notes = "Verified live against formulae.brew.sh — cask `browserosaurus`, \"Open-source browser prompter\". The Linux entry for this capability is Junction; they are separate programs, so they are separate entries."
+notes = """
+**No longer maintained.** The author archived the repository in August 2025 and its README says \
+so; browserosaurus.com now shows "Download (Coming Soon)". The Homebrew cask still installs \
+v20.12.0, so it works today, but it will get no fixes for future macOS versions.
+
+Kept because it is the closest match to Junction's behaviour — a chooser that pops up for every \
+link. Finicky is the maintained alternative for the same capability and decides by rule instead.
+
+Verified live against formulae.brew.sh — cask `browserosaurus`.
+"""

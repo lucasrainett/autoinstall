@@ -3,7 +3,7 @@ description = "Links a phone to the desktop for notifications, messages, files a
 kind = "install"
 website = "https://kdeconnect.kde.org/"
 
-capabilities = ["phone-integration", "file-transfer", "sms"]
+capabilities = ["phone-integration", "file-sharing", "sms"]
 
 [linux]
 installMethod = "apt"
