@@ -118,6 +118,16 @@ for key in $ENTRIES; do
               winget list --id "$key" --accept-source-agreements 2>&1 | head -20
               echo "--- winget list, unfiltered, grepped for the entry name ---"
               winget list --accept-source-agreements 2>&1 | grep -i "${key%%-*}" | head -10
+              # Distinguishes "the files are gone but the registry entry is stale" from "the
+              # uninstall never happened" — the two have completely different fixes, and winget's
+              # own listing cannot tell them apart because it reads Add/Remove Programs.
+              echo "--- do the program files still exist? ---"
+              for d in "/c/Program Files/VideoLAN" "/c/Program Files (x86)/VideoLAN" \
+                       "/c/Program Files/${key}" "/c/Program Files (x86)/${key}"; do
+                [ -e "$d" ] && echo "PRESENT: $d" || echo "absent:  $d"
+              done
+              echo "--- uninstall registry entries mentioning it ---"
+              reg.exe query "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall" /s /f "${key%%-*}" 2>&1 | head -12
               ;;
             macos) brew list --cask 2>&1 | grep -i "${key%%-*}" | head -10 ;;
             linux) flatpak list --columns=application 2>&1 | grep -i "${key%%-*}" | head -10 ;;
