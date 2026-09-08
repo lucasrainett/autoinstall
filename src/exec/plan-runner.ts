@@ -82,15 +82,43 @@ export async function runPlanAction(
 }
 
 /** Returns a result only when verification found a problem; undefined means the action held up. */
+/**
+ * How long to keep re-checking a removal before believing the software is still there.
+ *
+ * Windows uninstallers are frequently asynchronous: winget reports "Successfully uninstalled" as
+ * soon as it has *launched* the uninstaller, which may still be removing files and registry keys
+ * when the verification runs a moment later. Observed on a real Windows runner with VLC, where the
+ * removal genuinely succeeded and the immediate re-check still saw it installed.
+ *
+ * Only removals get this. An install that has not taken effect is not going to start working while
+ * we wait, so retrying there would only slow down a real failure.
+ */
+export const REMOVAL_SETTLE_ATTEMPTS = 4;
+export const REMOVAL_SETTLE_DELAY_MS = 2000;
+
 async function verifyAction(
   action: PlanAction,
   execute: typeof runScript,
   env?: Record<string, string>,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((r) => setTimeout(r, ms)),
 ): Promise<PlanActionResult | undefined> {
-  const detect = await execute(action.detectScript as string, {
-    timeoutMs: VERIFY_TIMEOUT_MS,
-    ...(env !== undefined ? { env } : {}),
-  });
+  const runDetect = () =>
+    execute(action.detectScript as string, {
+      timeoutMs: VERIFY_TIMEOUT_MS,
+      ...(env !== undefined ? { env } : {}),
+    });
+
+  let detect = await runDetect();
+  if (action.actionKind === "remove") {
+    // Re-check rather than sleep-then-check: a synchronous uninstaller — which is most of them —
+    // is verified on the first attempt and costs nothing.
+    for (let attempt = 1; attempt < REMOVAL_SETTLE_ATTEMPTS; attempt++) {
+      const interim = resolveDetectState(detect);
+      if (interim.ok && interim.state === "unsatisfied") break;
+      await sleep(REMOVAL_SETTLE_DELAY_MS);
+      detect = await runDetect();
+    }
+  }
 
   const state = resolveDetectState(detect);
   if (!state.ok) {

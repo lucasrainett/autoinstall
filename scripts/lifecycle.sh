@@ -95,7 +95,16 @@ for key in $ENTRIES; do
       fail_ "$key: remove failed (exit $rc)"
       entry_ok=0
     else
-      bash "$dir/detect.sh" >> "$log" 2>&1; gone=$?
+      # Re-checked rather than checked once: Windows uninstallers are frequently asynchronous, and
+      # winget reports success as soon as it has *launched* one. Observed with VLC on a real
+      # runner, where the removal succeeded and the immediate re-check still saw it installed. A
+      # synchronous uninstaller — most of them — passes on the first attempt and costs nothing.
+      gone=0
+      for attempt in 1 2 3 4; do
+        bash "$dir/detect.sh" >> "$log" 2>&1; gone=$?
+        [ "$gone" -eq 1 ] && break
+        [ "$attempt" -lt 4 ] && sleep 2
+      done
       # Anything other than 1 means it is still there — including 2, which an earlier version of
       # this check treated as success and would have passed a failed removal.
       if [ "$gone" -ne 1 ]; then

@@ -174,3 +174,62 @@ Deno.test("runPlanAction - an action with no detect script simply is not verifie
   const result = await runPlanAction(bare, runnerFor({ "/x/install.sh": { exitCode: 0 } }));
   assertEquals(result.ok, true);
 });
+
+Deno.test("runPlanAction - a removal is re-checked, so an async uninstaller is not called a failure", async () => {
+  // Windows uninstallers frequently return before they have finished: winget reports
+  // "Successfully uninstalled" once it has launched one. Observed with VLC on a real runner, where
+  // the removal genuinely worked and the immediate re-check still saw it installed.
+  let detects = 0;
+  const execute = ((script: string) => {
+    if (script.endsWith("remove.sh")) {
+      return Promise.resolve({ exitCode: 0, stdout: "", stderr: "", timedOut: false });
+    }
+    detects++;
+    // Still present on the first two checks, gone by the third.
+    return Promise.resolve({
+      exitCode: detects < 3 ? 0 : 1,
+      stdout: "",
+      stderr: "",
+      timedOut: false,
+    });
+  }) as unknown as Parameters<typeof runPlanAction>[1];
+
+  const result = await runPlanAction(
+    {
+      key: "vlc",
+      actionKind: "remove",
+      scriptPath: "/catalog/vlc/windows/remove.sh",
+      detectScript: "/catalog/vlc/windows/detect.sh",
+      requiresElevation: false,
+      destructive: true,
+    } as Parameters<typeof runPlanAction>[0],
+    execute,
+  );
+  assertEquals(result, { ok: true });
+  assertEquals(detects >= 3, true, `gave up after ${detects} checks`);
+});
+
+Deno.test("runPlanAction - a removal that never takes effect is still a failure", async () => {
+  // The retry must not become "eventually give up and call it success", which would hide every
+  // genuinely failed removal.
+  const execute = (() =>
+    Promise.resolve({
+      exitCode: 0, // remove succeeds, and detect keeps reporting present
+      stdout: "",
+      stderr: "",
+      timedOut: false,
+    })) as unknown as Parameters<typeof runPlanAction>[1];
+
+  const result = await runPlanAction(
+    {
+      key: "vlc",
+      actionKind: "remove",
+      scriptPath: "/catalog/vlc/windows/remove.sh",
+      detectScript: "/catalog/vlc/windows/detect.sh",
+      requiresElevation: false,
+      destructive: true,
+    } as Parameters<typeof runPlanAction>[0],
+    execute,
+  );
+  assertEquals(result.ok, false);
+});
