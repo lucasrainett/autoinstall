@@ -8,7 +8,7 @@ if [ -z "${AUTOINSTALL_IDENTITY_NAME:-}" ] || [ -z "${AUTOINSTALL_IDENTITY_EMAIL
   echo "No identity configured, so there is nothing to apply." >&2
   echo "Set your name and email in this tool's config (or your overlay repo's identity), then" >&2
   echo "re-run this entry. Refusing to write a blank or partial git identity." >&2
-  exit 1
+  exit 3
 fi
 
 command -v git >/dev/null 2>&1 || { echo "git is not installed." >&2; exit 1; }

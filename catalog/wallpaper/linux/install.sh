@@ -3,7 +3,7 @@ set -euo pipefail
 
 if ! command -v gsettings >/dev/null 2>&1 || [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
   echo "No desktop session bus — the wallpaper is a per-session GNOME setting." >&2
-  exit 1
+  exit 3
 fi
 
 WALLPAPER="$(cd "$(dirname "$0")/.." && pwd)/wallpaper.png"

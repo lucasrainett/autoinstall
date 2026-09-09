@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Gear Lever's own --remove trashes the AppImage together with its .desktop entry and icon, so the
-# integration is undone by the same tool that created it. It takes a file path, not an app name,
-# and its AppImage folder is user-configurable — so the path is read back out of --list-installed
-# (everything after the final "]" column) rather than hardcoded.
+# Gear Lever's --list-installed output is column-padded, so a value taken with
+# `sed 's/^Name.*\]  *//p'` carries the padding with it and the path ends in spaces. Gear Lever
+# then answers "please specify a valid AppImage file" and the removal silently does nothing — the
+# entry stayed installed and the run recorded a failed removal. Proven against the real output:
+# sed yielded "/home/u/AppImages/cryptomator.appimage          ", awk yields it clean.
 #
-# Vaults and their contents live wherever the user put them and are never touched here: this
-# uninstalls the app, not the encrypted data it opens.
+# The last field is the path in every row, including names that contain spaces ("T3 Code (Alpha)").
+command -v flatpak >/dev/null 2>&1 || { echo "flatpak is not installed; nothing to remove."; exit 0; }
+flatpak info it.mijorus.gearlever &>/dev/null || {
+  echo "Gear Lever is not installed, so nothing was integrated through it."; exit 0; }
+
 APPIMAGE=$(flatpak run it.mijorus.gearlever --list-installed 2>/dev/null |
-  sed -n 's/^Cryptomator.*\]  *//p')
+  awk '/^Cryptomator/ { print $NF }' | head -1)
 
 if [ -z "$APPIMAGE" ]; then
   echo "Cryptomator is not integrated with Gear Lever; nothing to remove."

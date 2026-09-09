@@ -233,3 +233,37 @@ Deno.test("runPlanAction - a removal that never takes effect is still a failure"
   );
   assertEquals(result.ok, false);
 });
+
+Deno.test("runPlanAction - an install that declines is reported as declined, not failed", async () => {
+  // Exit 3 means "this does not apply here and nothing changed". It was honoured only for
+  // removals, so an entry correctly refusing — no desktop session to theme, no identity to write —
+  // was recorded as a failure. A full Linux run showed 19 failures of which 8 were exactly this,
+  // burying the real ones.
+  const execute = (() =>
+    Promise.resolve({
+      exitCode: 3,
+      stdout: "",
+      stderr: "No GNOME session available, so there is no desktop appearance to change.",
+      timedOut: false,
+    })) as unknown as Parameters<typeof runPlanAction>[1];
+
+  const result = await runPlanAction(
+    { ...ACTION, actionKind: "configure", key: "dark-mode" },
+    execute,
+  );
+  assertEquals(result.ok, true);
+  if (result.ok) assertStringIncludes(result.note ?? "", "No GNOME session");
+});
+
+Deno.test("runPlanAction - a declined action still explains itself when it says nothing", async () => {
+  const execute = (() =>
+    Promise.resolve({
+      exitCode: 3,
+      stdout: "",
+      stderr: "",
+      timedOut: false,
+    })) as unknown as Parameters<typeof runPlanAction>[1];
+  const result = await runPlanAction({ ...ACTION, actionKind: "install" }, execute);
+  assertEquals(result.ok, true);
+  if (result.ok) assertStringIncludes(result.note ?? "", "does not apply here");
+});

@@ -44,32 +44,35 @@ fi
 OP_TIMEOUT="${LIFECYCLE_OP_TIMEOUT:-600}"
 
 run_op() { # run_op <script> <log>  — returns the script's exit code, or 124 on timeout
-  # `timeout` alone is not enough: it signals only the direct child, so an installer that has
-  # spawned its own workers leaves them running. Verified — a timed-out script left its `sleep`
-  # behind, and on a real runner that is an installer still holding a package-manager lock while
-  # the next entry tries to use it.
+  # The timeout is implemented here rather than shelled out to `timeout`, because macOS ships
+  # neither `timeout` nor `setsid`: the first version of this called `timeout`, every macOS detect
+  # returned 127 (command not found), and the run "passed" 85 entries in two seconds having tested
+  # none of them. Assuming a POSIX-looking tool exists everywhere is the same mistake that once
+  # made the whole application non-functional on macOS.
   #
-  # Where setsid exists (Linux, macOS) the script gets its own process group and the whole group is
-  # killed. Git Bash on Windows has no setsid, so it falls back to plain timeout and accepts the
-  # orphan — the runner is ephemeral and terminates them at job end.
+  # setsid, where it exists, puts the script in its own process group so a hung installer's workers
+  # die with it. Without setsid only the script itself is killed; the runner is ephemeral and
+  # reaps the rest at job end.
   if command -v setsid >/dev/null 2>&1; then
     setsid bash "$1" >> "$2" 2>&1 &
-    op_pid=$!
-    waited=0
-    while kill -0 "$op_pid" 2>/dev/null; do
-      if [ "$waited" -ge "$OP_TIMEOUT" ]; then
-        kill -KILL -- -"$op_pid" 2>/dev/null || kill -KILL "$op_pid" 2>/dev/null
-        wait "$op_pid" 2>/dev/null
-        return 124
-      fi
-      sleep 1
-      waited=$((waited + 1))
-    done
-    wait "$op_pid"
-    return $?
+  else
+    bash "$1" >> "$2" 2>&1 &
   fi
-  timeout --kill-after=30s "$OP_TIMEOUT" bash "$1" >> "$2" 2>&1
+  op_pid=$!
+  waited=0
+  while kill -0 "$op_pid" 2>/dev/null; do
+    if [ "$waited" -ge "$OP_TIMEOUT" ]; then
+      kill -KILL -- -"$op_pid" 2>/dev/null || kill -KILL "$op_pid" 2>/dev/null
+      wait "$op_pid" 2>/dev/null
+      return 124
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+  wait "$op_pid"
+  return $?
 }
+
 
 pass=0; fail=0; skipped=0
 summary=""
@@ -97,6 +100,26 @@ for key in $ENTRIES; do
   # Already present on the runner: exercising it would remove software the image shipped, and the
   # install step would prove nothing because there is nothing to install. Skipped rather than
   # silently "passing".
+  # A detect script may only answer 0, 1 or 2. Anything else is a broken script or a missing
+  # command, and must fail rather than skip: treating "not 1" as "already installed" turned an
+  # entire macOS run — 85 entries, every detect exiting 127 because `timeout` does not exist there
+  # — into a green build that had tested nothing.
+  case "$before" in
+    0 | 1 | 2) ;;
+    124)
+      fail_ "$key: detect timed out after ${OP_TIMEOUT}s"
+      summary="${summary}| \`$key\` | ✗ | detect timed out |"$'\n'
+      fail=$((fail + 1))
+      continue
+      ;;
+    *)
+      fail_ "$key: detect exited $before, outside the 0/1/2 contract"
+      summary="${summary}| \`$key\` | ✗ | detect exited $before |"$'\n'
+      fail=$((fail + 1))
+      continue
+      ;;
+  esac
+
   if [ "$before" -ne 1 ]; then
     note "$key was already present on this runner (detect=$before) — skipping to avoid removing it"
     summary="${summary}| \`$key\` | — | already present, skipped |"$'\n'
@@ -113,6 +136,16 @@ for key in $ENTRIES; do
     fail_ "$key: install timed out after ${OP_TIMEOUT}s — it never exited"
     summary="${summary}| \`$key\` | ✗ | install timed out |"$'\n'
     fail=$((fail + 1))
+    continue
+  fi
+  if [ "$install_rc" -eq 3 ]; then
+    # Exit 3 is "declined, nothing changed" — the same contract removals already used. An entry
+    # that correctly refuses because the machine cannot satisfy it (no desktop session to theme,
+    # no configured identity to write) has not failed, and counting it as a failure buried the
+    # real ones: 8 of 19 Linux failures were entries behaving exactly as designed.
+    note "$key declined: $(tail -2 "$log" | tr '\n' ' ' | cut -c1-160)"
+    summary="${summary}| \`$key\` | — | declined (does not apply here) |"$'\n'
+    skipped=$((skipped + 1))
     continue
   fi
   if [ "$install_rc" -ne 0 ]; then

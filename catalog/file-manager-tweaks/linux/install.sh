@@ -3,7 +3,7 @@ set -euo pipefail
 
 if ! command -v gsettings >/dev/null 2>&1 || [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
   echo "No desktop session bus — these are per-session GNOME settings." >&2
-  exit 1
+  exit 3
 fi
 
 # Hidden files in the file chooser, list view in Nautilus, and a real delete alongside "move to

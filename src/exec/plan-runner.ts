@@ -54,11 +54,18 @@ export async function runPlanAction(
   if (result.timedOut) {
     return { ok: false, error: `timed out running ${action.scriptPath}` };
   }
-  if (result.exitCode === DECLINED_EXIT_CODE && action.actionKind === "remove") {
-    // A correct outcome, not a failure: the script refused to take unrelated software with it.
+  if (result.exitCode === DECLINED_EXIT_CODE) {
+    // A correct outcome, not a failure: the script decided the action does not apply here and
+    // changed nothing. Removals use this when taking unrelated software with them; installs and
+    // configures use it when a precondition the user controls is absent — no desktop session to
+    // theme, no identity configured to write into a git config. Reporting those as failures buried
+    // real ones: a full Linux run showed 19 failures of which 8 were entries correctly refusing.
+    const detail = result.stderr.trim() || result.stdout.trim();
     return {
       ok: true,
-      note: "declined — removing it would have taken unrelated software with it; left installed",
+      note: action.actionKind === "remove"
+        ? "declined — removing it would have taken unrelated software with it; left installed"
+        : `declined — ${detail.split("\n")[0] || "this entry does not apply here"}`,
     };
   }
 

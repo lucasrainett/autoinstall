@@ -4,7 +4,7 @@ set -euo pipefail
 if ! command -v gsettings >/dev/null 2>&1 || [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
   echo "No GNOME session available, so there is no desktop appearance to change." >&2
   echo "Run this from a graphical session." >&2
-  exit 1
+  exit 3
 fi
 
 # Both keys: color-scheme drives GTK4/libadwaita apps, gtk-theme still matters for older GTK3

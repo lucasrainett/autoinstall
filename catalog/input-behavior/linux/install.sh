@@ -3,7 +3,7 @@ set -euo pipefail
 
 if ! command -v gsettings >/dev/null 2>&1 || [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
   echo "No desktop session bus — these are per-session GNOME settings and cannot be applied here." >&2
-  exit 1
+  exit 3
 fi
 
 gsettings set org.gnome.desktop.peripherals.touchpad tap-to-click true

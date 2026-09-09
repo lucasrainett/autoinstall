@@ -21,7 +21,7 @@ if [ "$have_key" = false ]; then
   echo "Refusing to harden SSH: no authorized_keys found for $CURRENT_USER or root." >&2
   echo "Disabling password authentication without a working key would lock you out of this" >&2
   echo "machine over SSH. Add your public key first, then re-run this entry." >&2
-  exit 1
+  exit 3
 fi
 
 # Establish whether sshd's config is already valid *before* changing anything. Without this
@@ -50,7 +50,7 @@ if [ "$baseline_ok" = true ]; then
   if ! sudo sshd -t 2>/dev/null; then
     sudo rm -f "$DROPIN"
     echo "sshd rejected the hardening config; reverted and made no changes." >&2
-    exit 1
+    exit 3
   fi
 else
   echo "Note: sshd -t already failed before this change, so its result was not used as a gate." >&2
