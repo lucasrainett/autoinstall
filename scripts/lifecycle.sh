@@ -127,7 +127,7 @@ for key in $ENTRIES; do
                 [ -e "$d" ] && echo "PRESENT: $d" || echo "absent:  $d"
               done
               echo "--- uninstall registry entries mentioning it ---"
-              reg.exe query "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall" /s /f "${key%%-*}" 2>&1 | head -12
+              reg.exe query 'HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall' /s /f "${key%%-*}" 2>&1 | head -12
               ;;
             macos) brew list --cask 2>&1 | grep -i "${key%%-*}" | head -10 ;;
             linux) flatpak list --columns=application 2>&1 | grep -i "${key%%-*}" | head -10 ;;

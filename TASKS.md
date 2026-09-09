@@ -12,7 +12,7 @@ Remaining open decisions this task list assumes a default for (see memory / prio
 
 ---
 
-## Current state — as of 2026-09-02
+## Current state — as of 2026-09-08
 
 ### What the checkboxes mean
 
@@ -54,17 +54,27 @@ Catalog loading/validation, platform detection, diagnostics scan, plan compute/r
 Still expected-unreachable until Phase 7 (Windows), not a defect: `exec/git-bash`, `platform/wsl`, `elevation/progress-protocol`.
 
 ### Catalog coverage
-**82 entries across 13 categories**, 532 scripts, 177 platform folders, 0 load errors. By kind: **74 `install`, 8 `configure`, 0 `cleanup`**.
+**184 entries across 13 categories**, 1160 scripts, 322 platform folders, 0 load errors. By kind: **157 `install`, 27 `configure`, 0 `cleanup`**.
 
 The zero is deliberate, not a gap: the `cleanup` kind was **retired** on 2026-09-02 (see below). Debloat is expressed as ordinary entries that start checked because the software is present, and unchecking one removes it — one mental model instead of two. The kind remains in the schema for overlay repos that still use it.
 
-Platform coverage: **71 Linux, 55 macOS, 51 Windows**. A missing platform folder is how "not applicable here" is expressed. These counts are pinned by `src/catalog/docs-accuracy.test.ts`, so adding an entry fails a test rather than quietly making the README wrong.
+Platform coverage: **125 Linux, 85 macOS, 112 Windows**. A missing platform folder is how "not applicable here" is expressed. These counts are pinned by `src/catalog/docs-accuracy.test.ts` — which checks this file as well as the README, because the figures here drifted to 71/55/51 while the catalog grew to more than double that, and nothing noticed.
 
 ### Verification honesty
-- **macOS and Windows scripts have never been executed anywhere.** They are verified only by package-registry/API lookups. Every claim about them is inference, not observation. This remains the **single largest gap in the project** — 106 platform folders. **Planned fix**: cross-OS GitHub Actions runners (Phase 9) — real macOS/Windows machines running the same full lifecycle the Linux container harness runs. The workflow is written (`.github/workflows/catalog-lifecycle.yml`) but **has never run**, because that needs the repo pushed to GitHub.
+- **The cross-OS lifecycle now runs.** `catalog-lifecycle.yml` was dispatchable for the first time on 2026-09-08, once the rewrite reached `master` — GitHub only registers `workflow_dispatch` workflows from the default branch, which is why it sat unused for weeks. First runs used four entries (`jq`, `git`, `vlc`, `obs-studio`) rather than all of them, deliberately: a broken harness would have wasted a two-hour run.
+
+  That decision paid for itself immediately, because **the harness itself was broken**: `lifecycle.sh` resolved `all` with `find -mindepth 4 -maxdepth 4`, the *old* nested catalog depth. Under the flat layout that matches nothing, so a full run would have reported success having installed nothing at all. Fixed to depth 2, plus a guard that fails rather than passing an empty run.
+
+  **What the real runs found, none of which any amount of static checking would have caught:**
+  - **The Windows binary crashed at startup**: `NotCapable: Requires sys access to "osRelease"`. Ink's colour detection calls `os.release()` on Windows and no compile path granted `--allow-sys`. The published `v0.1.0-beta.1` Windows executable does not start. Fixed with a scoped `--allow-sys=osRelease,hostname` in `deno.json`, `ci.yml` and `release.yml`. Cross-compiling proves a binary builds; only running it natively proves it starts.
+  - **Every winget install failed on re-run.** `winget install` on an already-present package reports "No available upgrade found" and exits *non-zero* (`APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE`). That is not a failure, but every caller checking an exit code sees one — including this tool's own runner. 60 Windows install scripts now check first and no-op cleanly.
+  - **winget reported removing VLC and did not.** After `winget uninstall --purge --silent` printed "Successfully uninstalled" and exited 0, `winget list` still showed the package *and* `C:\Program Files\VideoLAN` still existed. VLC's NSIS uninstaller ignores the switches winget passes it. The tool's post-action verification caught this correctly — a removal that silently fails is precisely what that check is for. VLC's `remove.sh` now falls back to the vendor's own `uninstall.exe /S` and waits for the directory to go.
+  - Third-party flakiness is real: one run failed because winget's own package source would not refresh (`0x8a15000f`). Weekly rather than per-PR remains the right cadence.
+
+- **macOS and Windows entries beyond those four have still never been executed.** Everything else about them is inference from package-registry lookups, not observation.
 - **14 of 82 entries** have had a real `detect → install → detect → reinstall → remove → detect` lifecycle run in a container: jq, git, curl, python, cmake, btop, github-cli, terraform, vscodium, signal, proton-mail, proton-pass, vm-manager, aws-cli. The rest have not. The proportion fell as the catalog grew from 28 to 82 entries — coverage did not regress, it was outpaced.
 - Docker, Proton VPN, the firewall and Thunderbird's snap **cannot** be verified in a container (systemd/netfilter) — they need a VM.
-- The whole rewrite is **uncommitted**. `HEAD` is still `8ef0332`, the old shell-script repo; everything since exists only in the working tree.
+- The rewrite is merged: `master` fast-forwarded to it on 2026-09-08, with `.old/` preserving the previous scripts. That unblocked both the lifecycle workflow and the issue templates, which GitHub reads only from the default branch.
 
 ### Correctness audit — 2026-09-01, verified against the files (not from notes)
 
