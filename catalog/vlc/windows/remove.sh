@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
 # winget alone does not remove VLC, and says it did.
 #
@@ -16,15 +16,25 @@ winget uninstall --id VideoLAN.VLC -e --accept-source-agreements --purge --silen
 # `winget list` reads Add/Remove Programs, so it can lag; the directory is the fact on disk.
 for dir in "/c/Program Files/VideoLAN/VLC" "/c/Program Files (x86)/VideoLAN/VLC"; do
   [ -d "$dir" ] || continue
-  uninstaller="$dir/uninstall.exe"
-  if [ -x "$uninstaller" ]; then
-    echo "winget left VLC in place; running its own uninstaller."
-    # NSIS returns immediately, so wait for the directory to actually go rather than assuming.
-    "$uninstaller" /S || true
+  echo "winget left VLC in place; falling back to its own uninstaller."
+  ls -la "$dir" | head -20
+  # VLC's NSIS uninstaller has been named both uninstall.exe and unins000.exe across versions, and
+  # the exit code matters — a silent failure here is what sent this investigation in circles.
+  uninstaller=""
+  for candidate in "$dir/uninstall.exe" "$dir/unins000.exe" "$dir/Uninstall.exe"; do
+    [ -f "$candidate" ] && { uninstaller="$candidate"; break; }
+  done
+  if [ -z "$uninstaller" ]; then
+    echo "no uninstaller found in $dir" >&2
+  else
+    echo "running: $uninstaller /S"
+    "$uninstaller" /S; rc=$?
+    echo "uninstaller exit code: $rc"
     for _ in 1 2 3 4 5 6 7 8 9 10; do
       [ -d "$dir" ] || break
       sleep 2
     done
+    echo "after waiting, $dir $([ -d "$dir" ] && echo 'still exists' || echo 'is gone')"
   fi
 done
 

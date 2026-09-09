@@ -33,6 +33,44 @@ if [ -z "${ENTRIES// /}" ]; then
   exit 1
 fi
 
+# Every catalog script runs under a timeout, because one that never exits takes the whole run with
+# it. Brave's Windows installer did exactly that on the first full run: ten entries completed in
+# four minutes, then Brave hung for 117 more until the job's two-hour cap, leaving 101 Windows
+# entries untested and the run cancelled rather than reported. A bounded failure is information; a
+# hung job is none.
+#
+# Ten minutes is generous for a large installer on a cold runner and still lets a full platform
+# finish well inside the job limit.
+OP_TIMEOUT="${LIFECYCLE_OP_TIMEOUT:-600}"
+
+run_op() { # run_op <script> <log>  — returns the script's exit code, or 124 on timeout
+  # `timeout` alone is not enough: it signals only the direct child, so an installer that has
+  # spawned its own workers leaves them running. Verified — a timed-out script left its `sleep`
+  # behind, and on a real runner that is an installer still holding a package-manager lock while
+  # the next entry tries to use it.
+  #
+  # Where setsid exists (Linux, macOS) the script gets its own process group and the whole group is
+  # killed. Git Bash on Windows has no setsid, so it falls back to plain timeout and accepts the
+  # orphan — the runner is ephemeral and terminates them at job end.
+  if command -v setsid >/dev/null 2>&1; then
+    setsid bash "$1" >> "$2" 2>&1 &
+    op_pid=$!
+    waited=0
+    while kill -0 "$op_pid" 2>/dev/null; do
+      if [ "$waited" -ge "$OP_TIMEOUT" ]; then
+        kill -KILL -- -"$op_pid" 2>/dev/null || kill -KILL "$op_pid" 2>/dev/null
+        wait "$op_pid" 2>/dev/null
+        return 124
+      fi
+      sleep 1
+      waited=$((waited + 1))
+    done
+    wait "$op_pid"
+    return $?
+  fi
+  timeout --kill-after=30s "$OP_TIMEOUT" bash "$1" >> "$2" 2>&1
+}
+
 pass=0; fail=0; skipped=0
 summary=""
 
@@ -53,7 +91,7 @@ for key in $ENTRIES; do
   echo "::group::$key"
   { echo "=== $key ($PLATFORM) ==="; date -u; } > "$log"
 
-  bash "$dir/detect.sh" >> "$log" 2>&1; before=$?
+  run_op "$dir/detect.sh" "$log"; before=$?
   echo "detect(before)=$before" | tee -a "$log"
 
   # Already present on the runner: exercising it would remove software the image shipped, and the
@@ -69,11 +107,19 @@ for key in $ENTRIES; do
 
   entry_ok=1
 
-  if ! bash "$dir/install.sh" >> "$log" 2>&1; then
+  install_rc=0
+  run_op "$dir/install.sh" "$log" || install_rc=$?
+  if [ "$install_rc" -eq 124 ] || [ "$install_rc" -eq 137 ]; then
+    fail_ "$key: install timed out after ${OP_TIMEOUT}s — it never exited"
+    summary="${summary}| \`$key\` | ✗ | install timed out |"$'\n'
+    fail=$((fail + 1))
+    continue
+  fi
+  if [ "$install_rc" -ne 0 ]; then
     fail_ "$key: install failed"
     entry_ok=0
   else
-    bash "$dir/detect.sh" >> "$log" 2>&1; after=$?
+    run_op "$dir/detect.sh" "$log"; after=$?
     # 0 = installed and current, 2 = installed but an update exists. Both mean present.
     if [ "$after" -eq 1 ]; then
       fail_ "$key: detect still reports absent after install"
@@ -82,12 +128,12 @@ for key in $ENTRIES; do
 
     # The second install is the point of this exercise: it catches the re-run failures a single
     # pass cannot see, like an installer that refuses when the package is already there.
-    if ! bash "$dir/install.sh" >> "$log" 2>&1; then
+    if ! run_op "$dir/install.sh" "$log"; then
       fail_ "$key: not safe to re-run"
       entry_ok=0
     fi
 
-    bash "$dir/remove.sh" >> "$log" 2>&1; rc=$?
+    run_op "$dir/remove.sh" "$log"; rc=$?
     # Exit 3 means the collateral guard declined: a deliberate, correct non-removal, not a failure.
     if [ "$rc" -eq 3 ]; then
       note "$key: removal declined to avoid taking unrelated packages (exit 3)"
@@ -101,7 +147,7 @@ for key in $ENTRIES; do
       # synchronous uninstaller — most of them — passes on the first attempt and costs nothing.
       gone=0
       for attempt in 1 2 3 4; do
-        bash "$dir/detect.sh" >> "$log" 2>&1; gone=$?
+        run_op "$dir/detect.sh" "$log"; gone=$?
         [ "$gone" -eq 1 ] && break
         [ "$attempt" -lt 4 ] && sleep 2
       done

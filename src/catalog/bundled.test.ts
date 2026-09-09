@@ -572,3 +572,32 @@ Deno.test("bundled catalog - flatpak update and uninstall cover every installati
   }
   assertEquals(offenders, [], "these touch only one flatpak installation");
 });
+
+Deno.test("bundled catalog - a keyring written with gpg -o also passes --yes", async () => {
+  // `gpg --dearmor -o <file>` refuses when the file already exists, and under --batch that is a
+  // hard failure rather than a prompt — so the script works once and fails on every re-run. Either
+  // write to stdout (what most entries here do) or pass --yes. Caught by the first full lifecycle
+  // run, which reported the OpenTofu entry as "not safe to re-run"; Terraform and VSCodium use the
+  // same flag correctly, which is what made the difference visible.
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    for (const platform of ["linux", "macos", "windows"]) {
+      for (const op of ["install", "update", "remove"]) {
+        let source: string;
+        try {
+          source = await Deno.readTextFile(`${entryDir}/${platform}/${op}.sh`);
+        } catch {
+          continue;
+        }
+        for (const line of source.split("\n")) {
+          if (line.trimStart().startsWith("#")) continue;
+          if (!/gpg\b[^|>]*--dearmor\b[^|>]*\s-o\s/.test(line)) continue;
+          if (!/--yes\b/.test(line)) {
+            offenders.push(`${entryDir}/${platform}/${op}.sh`);
+          }
+        }
+      }
+    }
+  }
+  assertEquals(offenders, [], "gpg --dearmor -o without --yes fails on a second run");
+});
