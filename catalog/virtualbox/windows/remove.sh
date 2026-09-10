@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-winget uninstall --id Oracle.VirtualBox -e --accept-source-agreements --purge --silent
+winget uninstall --id Oracle.VirtualBox -e --accept-source-agreements --disable-interactivity --purge --silent

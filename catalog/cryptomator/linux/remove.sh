@@ -12,8 +12,12 @@ command -v flatpak >/dev/null 2>&1 || { echo "flatpak is not installed; nothing 
 flatpak info it.mijorus.gearlever &>/dev/null || {
   echo "Gear Lever is not installed, so nothing was integrated through it."; exit 0; }
 
+# Matched case-insensitively: Gear Lever labels a row from the AppImage it integrated, so a file
+# named cryptomator.appimage lists as "cryptomator", not "Cryptomator". The case-sensitive /^Cryptomator/ found
+# nothing, the script reported "nothing to remove" and exited 0, and detect afterwards still said
+# installed. detect had always matched with `grep -qi`, which is why the two disagreed.
 APPIMAGE=$(flatpak run it.mijorus.gearlever --list-installed 2>/dev/null |
-  awk '/^Cryptomator/ { print $NF }' | head -1)
+  awk 'tolower($0) ~ /^cryptomator/ { print $NF }' | head -1)
 
 if [ -z "$APPIMAGE" ]; then
   echo "Cryptomator is not integrated with Gear Lever; nothing to remove."

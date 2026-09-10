@@ -620,3 +620,139 @@ Deno.test("bundled catalog - a Store-only Windows install declines instead of cl
   }
   assertEquals(offenders, [], "a Store-only install that does not decline");
 });
+
+Deno.test("bundled catalog - a Windows entry needing elevation checks for it before changing anything", async () => {
+  // Without the check these run partway and then stop on the first operation that touches HKLM or
+  // a scheduled task, leaving some settings applied and some not. On an unelevated CI runner
+  // disable-telemetry failed with "PermissionDenied ... HRESULT 0x80070005" after it had already
+  // written several values. Exit 3 — declined, nothing changed — leaves the machine consistent.
+  //
+  // Windows PowerShell 5.1 is what `powershell.exe` runs, and it has no ternary operator, so the
+  // check has to be written as if/else. `? :` there is a parse error, not a false answer, which
+  // would make every one of these entries decline unconditionally.
+  const { entries } = await loadCatalog(BUNDLED_CATALOG_ROOT);
+  const offenders: string[] = [];
+  for (const entry of entries) {
+    if (entry.meta.platforms?.windows?.requiresElevation !== true) continue;
+    const entryDir = `${BUNDLED_CATALOG_ROOT}/${entryKey(entry)}`;
+    for (const op of ["install", "remove"]) {
+      let source: string;
+      try {
+        source = await Deno.readTextFile(`${entryDir}/windows/${op}.sh`);
+      } catch {
+        continue;
+      }
+      if (!source.includes("WindowsBuiltInRole]::Administrator")) {
+        offenders.push(`${entryDir}/windows/${op}.sh: no administrator check`);
+      } else if (!/\bexit 3\b/.test(source)) {
+        offenders.push(`${entryDir}/windows/${op}.sh: checks for elevation but does not decline`);
+      }
+      if (/\)\s*\?\s*\d+\s*:\s*\d+/.test(source)) {
+        offenders.push(`${entryDir}/windows/${op}.sh: ternary is a parse error in PowerShell 5.1`);
+      }
+    }
+  }
+  assertEquals(offenders, [], "a Windows entry that needs elevation but does not check for it");
+});
+
+Deno.test("bundled catalog - a PowerShell variable in a Windows script is escaped from bash", async () => {
+  // These scripts run under Git Bash and hand PowerShell a bash double-quoted string, so `$v` is
+  // expanded by bash — to nothing — before PowerShell ever sees it. A PowerShell variable has to
+  // be written `\$v`. Unescaped, the command became " = (Get-ItemProperty ...", a parse error, and
+  // PowerShell exited non-zero. In a detect script that reads as exit 1, "not installed": both
+  // dark-mode and disable-telemetry applied their setting correctly on every run and could never
+  // see it afterwards, which showed up as "detect still reports absent after install".
+  //
+  // A name the script assigns itself, or a Windows environment variable, is a real bash expansion
+  // and is meant to be interpolated — those are not flagged.
+  const fromEnvironment = ["LOCALAPPDATA", "APPDATA", "USERPROFILE", "HOME", "PATH", "TEMP", "TMP"];
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    for (const op of ["detect", "install", "update", "remove", "run"]) {
+      const path = `${entryDir}/windows/${op}.sh`;
+      let source: string;
+      try {
+        source = await Deno.readTextFile(path);
+      } catch {
+        continue;
+      }
+      if (!source.includes("powershell.exe")) continue;
+      const assigned = new Set(
+        [...source.matchAll(/^\s*([A-Za-z_][A-Za-z0-9_]*)=/gm)].map((m) => m[1]),
+      );
+      for (const name of fromEnvironment) assigned.add(name);
+      source.split("\n").forEach((line, index) => {
+        if (line.trimStart().startsWith("#")) return;
+        for (const match of line.matchAll(/(?<![\\$])\$(?!\{)([A-Za-z_][A-Za-z0-9_]*)/g)) {
+          if (assigned.has(match[1])) continue;
+          offenders.push(
+            `${path}:${index + 1}: $${match[1]} is eaten by bash — write \\$${match[1]}`,
+          );
+        }
+      });
+    }
+  }
+  assertEquals(offenders, [], "an unescaped PowerShell variable in a Windows script");
+});
+
+Deno.test("bundled catalog - an apt removal checks what else apt would remove first", async () => {
+  // `apt remove` silently drags out every reverse-dependency. Measured on a real machine: removing
+  // `curl` would also have uninstalled Steam, and removing `python3-pip` would have uninstalled a
+  // PAM authentication module. Uninstalling one entry must never quietly take unrelated software
+  // with it, so every apt removal simulates first and exits 3 — declined, nothing changed — when
+  // the simulation lists anything the entry does not own.
+  //
+  // thunderbird and winboat were written later than the rest and went straight to `apt remove -y`.
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    let source: string;
+    try {
+      source = await Deno.readTextFile(`${entryDir}/linux/remove.sh`);
+    } catch {
+      continue;
+    }
+    const lines = source.split("\n").filter((line) => !line.trimStart().startsWith("#"));
+    if (!lines.some((line) => /\bapt(-get)?\s+(remove|purge)/.test(line))) continue;
+    const simulates = lines.some((line) => /apt-get\s+-s\s+remove/.test(line));
+    if (!simulates || !/\bexit 3\b/.test(source)) {
+      offenders.push(`${entryDir}/linux/remove.sh`);
+    }
+  }
+  assertEquals(offenders, [], "an apt removal with no collateral check");
+});
+
+Deno.test("bundled catalog - a winget install, upgrade or uninstall disables interactivity", async () => {
+  // winget prompts and animates unless told not to, and neither is survivable unattended. Brave's
+  // uninstall sat waiting on a survey dialog nobody could see until the harness killed it at ten
+  // minutes — and killing winget mid-uninstall leaves the Windows installer lock held, so the
+  // following sixteen entries each sat on "Waiting for another install/uninstall to complete..."
+  // for ten minutes of their own. One interactive uninstaller cost about two and a half hours and
+  // the rest of the run.
+  //
+  // It is also why the logs were unreadable: jq's was 236 KB, almost entirely spinner frames
+  // redrawn into a redirected file.
+  //
+  // `winget list` is exempt: it is a query, it neither prompts nor animates.
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    for (const op of ["install", "update", "remove", "detect", "run"]) {
+      const path = `${entryDir}/windows/${op}.sh`;
+      let source: string;
+      try {
+        source = await Deno.readTextFile(path);
+      } catch {
+        continue;
+      }
+      source.split("\n").forEach((line, index) => {
+        if (line.trimStart().startsWith("#")) return;
+        if (!/\bwinget\s+(install|upgrade|uninstall)\b/.test(line)) return;
+        // The flags may sit on a continuation line, so the whole command is what gets checked.
+        const command = source.split("\n").slice(index).join("\n").split(/\n(?!\s)/)[0];
+        if (!command.includes("--disable-interactivity")) {
+          offenders.push(`${path}:${index + 1}: winget without --disable-interactivity`);
+        }
+      });
+    }
+  }
+  assertEquals(offenders, [], "a winget mutation that can block on a prompt");
+});

@@ -12,4 +12,4 @@ if winget list --id HandBrake.HandBrake -e --accept-source-agreements 2>/dev/nul
 fi
 
 winget install --id HandBrake.HandBrake -e \
-  --accept-source-agreements --accept-package-agreements --silent
+  --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

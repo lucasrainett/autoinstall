@@ -11,7 +11,7 @@ set -uo pipefail
 # So: ask winget first — it is the right tool when it works, and it keeps the package database
 # consistent — then check, and fall back to VLC's own uninstaller with the /S switch NSIS
 # documents for silent removal.
-winget uninstall --id VideoLAN.VLC -e --accept-source-agreements --purge --silent || true
+winget uninstall --id VideoLAN.VLC -e --accept-source-agreements --disable-interactivity --purge --silent || true
 
 # `winget list` reads Add/Remove Programs, so it can lag; the directory is the fact on disk.
 for dir in "/c/Program Files/VideoLAN/VLC" "/c/Program Files (x86)/VideoLAN/VLC"; do

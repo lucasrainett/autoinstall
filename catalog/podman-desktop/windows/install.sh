@@ -12,4 +12,4 @@ if winget list --id RedHat.Podman-Desktop -e --accept-source-agreements 2>/dev/n
 fi
 
 winget install --id RedHat.Podman-Desktop -e \
-  --accept-source-agreements --accept-package-agreements --silent
+  --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

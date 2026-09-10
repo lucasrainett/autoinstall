@@ -12,4 +12,4 @@ if winget list --id JetBrains.Toolbox -e --accept-source-agreements 2>/dev/null 
 fi
 
 winget install --id JetBrains.Toolbox -e \
-  --accept-source-agreements --accept-package-agreements --silent
+  --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

@@ -6,4 +6,4 @@ set -euo pipefail
 powershell.exe -NoProfile -Command \
   "Get-Process OneDrive -ErrorAction SilentlyContinue | Stop-Process -Force" 2>/dev/null || true
 
-winget uninstall --id Microsoft.OneDrive -e --accept-source-agreements --purge --silent
+winget uninstall --id Microsoft.OneDrive -e --accept-source-agreements --disable-interactivity --purge --silent

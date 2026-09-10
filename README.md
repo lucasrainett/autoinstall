@@ -252,10 +252,13 @@ for example) receive it from your config at run time.
 The engine, the interface and the catalog are working and used. Honest gaps, kept current in
 `TASKS.md`:
 
-- **macOS and Windows catalog entries have never been executed** — they are verified against
-  package registries and vendor documentation, not by running them. This is the largest gap in
-  the project. The workflow that would close it (`catalog-lifecycle.yml`, a full
-  install/re-install/remove on real runners) is written but has not run yet.
+- **Windows catalog entries have never completed a run.** `catalog-lifecycle.yml` does a full
+  install / re-install / remove on real runners, and macOS entries have now been through it — 82
+  of them, which found and fixed 13 real failures. Windows has not: three consecutive full jobs
+  were cancelled at their time cap having reported nothing, because 112 entries installing real
+  MSIs do not fit in one job. It is now split across four runners, which is expected to close
+  this, but until a sharded run lands the Windows entries remain verified against package
+  registries and vendor documentation rather than by running them.
 - The **engine** underneath them *is* verified on all three platforms: CI runs the type-check and
   the full unit suite on Linux, macOS and Windows on every push, plus a Windows job that exercises
   the Git Bash bridge the Windows entries drive `winget`, `powershell.exe` and `reg.exe` through.

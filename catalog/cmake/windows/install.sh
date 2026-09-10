@@ -12,4 +12,4 @@ if winget list --id Kitware.CMake -e --accept-source-agreements 2>/dev/null | gr
 fi
 
 winget install --id Kitware.CMake -e \
-  --accept-source-agreements --accept-package-agreements --silent
+  --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

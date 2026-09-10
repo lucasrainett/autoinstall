@@ -12,4 +12,4 @@ if winget list --id Nickvision.Parabolic -e --accept-source-agreements 2>/dev/nu
 fi
 
 winget install --id Nickvision.Parabolic -e \
-  --accept-source-agreements --accept-package-agreements --silent
+  --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

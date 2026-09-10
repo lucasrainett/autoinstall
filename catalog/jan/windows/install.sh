@@ -12,4 +12,4 @@ if winget list --id Jan.Jan -e --accept-source-agreements 2>/dev/null | grep -qi
 fi
 
 winget install --id Jan.Jan -e \
-  --accept-source-agreements --accept-package-agreements --silent
+  --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

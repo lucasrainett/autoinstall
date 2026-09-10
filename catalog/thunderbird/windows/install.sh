@@ -12,4 +12,4 @@ if winget list --id Mozilla.Thunderbird -e --accept-source-agreements 2>/dev/nul
 fi
 
 winget install --id Mozilla.Thunderbird -e \\
-  --accept-source-agreements --accept-package-agreements --silent
+  --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

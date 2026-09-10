@@ -83,6 +83,17 @@ Two rules the test suite enforces:
 - **Fail with a sentence, not a status code.** Check for a missing tool up front and say what to
   install, rather than dying with `command not found` and exit 127.
 
+Windows scripts run under Git Bash and hand PowerShell a command as a bash string, which adds two
+rules that tests now enforce:
+
+- **Escape PowerShell variables.** Write `\$v`, never `$v` — bash expands it to nothing first, and
+  PowerShell gets a syntax error. In a `detect.sh` that reads as "not installed", so the entry
+  applies its setting correctly on every run and can never see it afterwards.
+- **Check for elevation before changing anything.** An entry whose `[windows]` table sets
+  `requiresElevation` must confirm it is running as administrator and `exit 3` if not, rather than
+  writing half its settings and then failing on the first one that touches HKLM. Note that
+  `powershell.exe` is Windows PowerShell 5.1, which has no `? :` operator; write `if`/`else`.
+
 ### Verify before you claim
 
 Do not trust a package identifier from memory — every one of these has been wrong at least once:
@@ -101,6 +112,32 @@ detect (expect 1) → install → detect (expect 0) → install again → remove
 
 The re-run and the removal are where bugs actually live.
 
+`scripts/lifecycle.sh` runs exactly that sequence, and is what the `Catalog lifecycle` workflow
+runs on real macOS and Windows runners:
+
+```bash
+bash scripts/lifecycle.sh linux git jq     # named entries
+bash scripts/lifecycle.sh linux all        # everything with a linux/ folder
+```
+
+It installs and removes real software, so run it in a container or a VM.
+
+An operation that has not exited after `LIFECYCLE_OP_TIMEOUT` seconds (default 600) is killed and
+recorded as a timeout — one hung installer used to take the whole run with it. Set
+`LIFECYCLE_SHARD_TOTAL` and `LIFECYCLE_SHARD_INDEX` to run every Nth entry, which is how the
+Windows job is split across four runners; a full Windows pass does not fit in one.
+
+Because `detect.sh` is read-only, all of them can be run at once against a clean container:
+
+```bash
+bash scripts/detect-sweep.sh
+```
+
+That reports any detect script which blocks, exits outside the 0/1/2 contract, or claims software
+is present on a machine that has never had it. It is how `thunderbird` was found hanging forever
+on `snap list` — snapd installed, daemon not running, so the call retried the socket rather than
+failing.
+
 ## Adding a profile
 
 A profile is one TOML file in `profiles/`, listing entries by id:
@@ -108,7 +145,7 @@ A profile is one TOML file in `profiles/`, listing entries by id:
 ```toml
 name = "Example"
 description = "What this bundle is for"
-entries = ["dev-tools/install/git", "dev-tools/install/jq"]
+entries = ["git", "jq"]
 ```
 
 Profiles are additive: applying one never unchecks something already selected. A test validates

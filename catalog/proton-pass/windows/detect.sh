@@ -6,7 +6,7 @@
 winget list --id Proton.ProtonPass -e --accept-source-agreements 2>/dev/null | grep -qi "Proton.ProtonPass" || exit 1
 
 # `winget upgrade --id` lists the package only when an upgrade is actually available.
-if winget upgrade --id Proton.ProtonPass -e --accept-source-agreements 2>/dev/null | grep -qi "Proton.ProtonPass"; then
+if winget upgrade --id Proton.ProtonPass -e --accept-source-agreements --disable-interactivity 2>/dev/null | grep -qi "Proton.ProtonPass"; then
   exit 2
 fi
 exit 0

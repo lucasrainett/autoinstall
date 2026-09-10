@@ -12,4 +12,4 @@ if winget list --id ONLYOFFICE.DesktopEditors -e --accept-source-agreements 2>/d
 fi
 
 winget install --id ONLYOFFICE.DesktopEditors -e \
-  --accept-source-agreements --accept-package-agreements --silent
+  --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

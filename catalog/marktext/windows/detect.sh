@@ -6,7 +6,7 @@
 winget list --id MarkText.MarkText -e --accept-source-agreements 2>/dev/null | grep -qi "MarkText.MarkText" || exit 1
 
 # `winget upgrade --id` lists the package only when an upgrade is actually available.
-if winget upgrade --id MarkText.MarkText -e --accept-source-agreements 2>/dev/null | grep -qi "MarkText.MarkText"; then
+if winget upgrade --id MarkText.MarkText -e --accept-source-agreements --disable-interactivity 2>/dev/null | grep -qi "MarkText.MarkText"; then
   exit 2
 fi
 exit 0

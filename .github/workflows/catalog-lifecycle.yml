@@ -24,20 +24,26 @@ on:
 
 jobs:
   lifecycle:
-    name: Lifecycle on ${{ matrix.os }}
+    name: Lifecycle on ${{ matrix.label }}
     runs-on: ${{ matrix.os }}
     # Installing real software from real vendors is slow; the default 360-minute cap is generous
     # but a hung installer should not hold a runner for six hours.
-    #
-    # Raised from 120 after a full Windows run reached only 48 of 112 entries before being
-    # cancelled — with per-operation timeouts now bounding any single hang, the cap only needs to
-    # accommodate the honest total. Each platform is its own job, so this costs nothing when a
-    # platform finishes early.
     timeout-minutes: 180
     strategy:
       fail-fast: false   # one platform's failure must not hide another's result
+      # Windows is split across four runners because a single job cannot finish. Its entries
+      # install real MSIs through winget on a cold runner at roughly two and a half minutes each,
+      # and every full Windows run so far — three of them — was cancelled at its cap having
+      # reported nothing: two at 120 minutes, and 112 entries would not have fitted in 180 either.
+      # Linux and macOS finish comfortably in one job (35 and 22 minutes) and stay unsharded.
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - { os: ubuntu-latest,  label: ubuntu-latest,          shard: 0, shards: 1 }
+          - { os: macos-latest,   label: macos-latest,           shard: 0, shards: 1 }
+          - { os: windows-latest, label: "windows-latest (1/4)", shard: 0, shards: 4 }
+          - { os: windows-latest, label: "windows-latest (2/4)", shard: 1, shards: 4 }
+          - { os: windows-latest, label: "windows-latest (3/4)", shard: 2, shards: 4 }
+          - { os: windows-latest, label: "windows-latest (4/4)", shard: 3, shards: 4 }
     steps:
       - uses: actions/checkout@v4
 
@@ -72,6 +78,8 @@ jobs:
         shell: bash
         env:
           LIFECYCLE_LOG_DIR: lifecycle-logs
+          LIFECYCLE_SHARD_INDEX: ${{ matrix.shard }}
+          LIFECYCLE_SHARD_TOTAL: ${{ matrix.shards }}
         run: |
           bash scripts/lifecycle.sh "${{ steps.plat.outputs.dir }}" \
             ${{ github.event.inputs.entries || 'all' }}
@@ -82,7 +90,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: lifecycle-${{ matrix.os }}
+          name: lifecycle-${{ matrix.os }}-shard-${{ matrix.shard }}
           path: lifecycle-logs/
           retention-days: 90
           if-no-files-found: warn

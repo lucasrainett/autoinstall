@@ -23,7 +23,39 @@ if [ "${1:-}" = "all" ]; then
   ENTRIES=$(find catalog -mindepth 2 -maxdepth 2 -type d -name "$PLATFORM" |
     sed "s|^catalog/||; s|/$PLATFORM$||" | sort)
 else
-  ENTRIES="$*"
+  # One per line, matching the "all" branch. Sharding counts records, so a space-separated list on
+  # a single line would put every named entry in shard 0 and leave the other shards empty.
+  ENTRIES=$(printf '%s\n' "$@")
+fi
+
+# Sharding, because a Windows run does not fit in one job. Windows entries install real MSIs
+# through winget on a cold runner, and three consecutive full runs were cancelled at their cap —
+# two at 120 minutes and, on the honest estimate of ~2.5 minutes an entry, the 180-minute cap would
+# not have held 112 of them either. Every Windows run so far has therefore reported nothing at all.
+# Splitting the list across parallel runners is the fix: the work is per-entry independent, and
+# each shard finishes well inside the cap.
+#
+# Every-Nth rather than contiguous blocks: entry cost varies enormously (a registry write is
+# instant, a browser MSI is minutes) and alphabetical neighbours are often the same kind of thing,
+# so contiguous blocks would put the slow ones together and the last shard would still time out.
+if [ -n "${LIFECYCLE_SHARD_TOTAL:-}" ] && [ "${LIFECYCLE_SHARD_TOTAL}" -gt 1 ]; then
+  shard_index="${LIFECYCLE_SHARD_INDEX:?LIFECYCLE_SHARD_INDEX required when sharding}"
+  # Checked before selecting, so an out-of-range index reports the shard settings rather than
+  # selecting nothing and failing later with a confusing message about the catalog.
+  if [ "$shard_index" -ge "$LIFECYCLE_SHARD_TOTAL" ]; then
+    echo "::error::LIFECYCLE_SHARD_INDEX=$shard_index is out of range for $LIFECYCLE_SHARD_TOTAL shards"
+    exit 1
+  fi
+  ENTRIES=$(echo "$ENTRIES" | awk -v i="$shard_index" -v n="$LIFECYCLE_SHARD_TOTAL" \
+    'NF { if ((NR - 1) % n == i) print }')
+  echo "Shard $shard_index of $LIFECYCLE_SHARD_TOTAL: $(echo "$ENTRIES" | grep -c .) entries"
+  # An empty shard is normal when fewer entries were named than there are shards — dispatching two
+  # entry keys across four Windows runners leaves two with nothing. That is not the empty-run bug
+  # the guard below exists for: the catalog resolved fine, this runner simply has no work.
+  if [ -z "${ENTRIES// /}" ]; then
+    echo "Nothing in this shard; the other shards cover the requested entries."
+    exit 0
+  fi
 fi
 
 # A run that tests nothing must not report success. The depth bug above did exactly that: "all"
@@ -42,6 +74,11 @@ fi
 # Ten minutes is generous for a large installer on a cold runner and still lets a full platform
 # finish well inside the job limit.
 OP_TIMEOUT="${LIFECYCLE_OP_TIMEOUT:-600}"
+
+# How long a Windows operation may sit blocked on the global installer lock before we stop waiting.
+# Long enough to ride out a genuinely concurrent install (Windows Update, say), far short of the
+# ten minutes that turned one wedged uninstaller into a lost run.
+STUCK_LOCK_GRACE="${LIFECYCLE_STUCK_LOCK_GRACE:-90}"
 
 run_op() { # run_op <script> <log>  — returns the script's exit code, or 124 on timeout
   # The timeout is implemented here rather than shelled out to `timeout`, because macOS ships
@@ -65,6 +102,19 @@ run_op() { # run_op <script> <log>  — returns the script's exit code, or 124 o
       kill -KILL -- -"$op_pid" 2>/dev/null || kill -KILL "$op_pid" 2>/dev/null
       wait "$op_pid" 2>/dev/null
       return 124
+    fi
+    # Windows serialises installs behind a global lock, and a winget killed mid-operation leaves it
+    # held. Once that happens every later winget operation sits on "Waiting for another
+    # install/uninstall to complete..." until it too is killed at OP_TIMEOUT. That is not
+    # hypothetical: a Brave uninstall waiting on a survey dialog was killed at ten minutes and cost
+    # the following sixteen entries ten minutes each — about two and a half hours, and the rest of
+    # the run. Waiting the full timeout to learn the machine is wedged buys nothing, so bail out
+    # early and say so.
+    if [ "$waited" -ge "$STUCK_LOCK_GRACE" ] &&
+       grep -q "Waiting for another install/uninstall" "$2" 2>/dev/null; then
+      kill -KILL -- -"$op_pid" 2>/dev/null || kill -KILL "$op_pid" 2>/dev/null
+      wait "$op_pid" 2>/dev/null
+      return 125
     fi
     sleep 1
     waited=$((waited + 1))
@@ -112,6 +162,12 @@ for key in $ENTRIES; do
       fail=$((fail + 1))
       continue
       ;;
+    125)
+      fail_ "$key: detect blocked on the Windows installer lock — something earlier left it held"
+      summary="${summary}| \`$key\` | ✗ | installer lock held |"$'\n'
+      fail=$((fail + 1))
+      continue
+      ;;
     *)
       fail_ "$key: detect exited $before, outside the 0/1/2 contract"
       summary="${summary}| \`$key\` | ✗ | detect exited $before |"$'\n'
@@ -135,6 +191,17 @@ for key in $ENTRIES; do
   if [ "$install_rc" -eq 124 ] || [ "$install_rc" -eq 137 ]; then
     fail_ "$key: install timed out after ${OP_TIMEOUT}s — it never exited"
     summary="${summary}| \`$key\` | ✗ | install timed out |"$'\n'
+    fail=$((fail + 1))
+    continue
+  fi
+  # Distinguished from a plain timeout because the cause is elsewhere: this entry did nothing
+  # wrong, an earlier one left the machine's installer lock held. Reported per entry rather than
+  # aborting the run, because the lock does sometimes clear on its own and the remaining entries
+  # are still worth attempting — but named clearly, so a wall of these points at the entry that
+  # actually broke rather than at sixteen innocent ones.
+  if [ "$install_rc" -eq 125 ]; then
+    fail_ "$key: install blocked on the Windows installer lock — something earlier left it held"
+    summary="${summary}| \`$key\` | ✗ | installer lock held |"$'\n'
     fail=$((fail + 1))
     continue
   fi
@@ -168,7 +235,10 @@ for key in $ENTRIES; do
 
     run_op "$dir/remove.sh" "$log"; rc=$?
     # Exit 3 means the collateral guard declined: a deliberate, correct non-removal, not a failure.
-    if [ "$rc" -eq 3 ]; then
+    if [ "$rc" -eq 125 ]; then
+      fail_ "$key: remove blocked on the Windows installer lock — something earlier left it held"
+      entry_ok=0
+    elif [ "$rc" -eq 3 ]; then
       note "$key: removal declined to avoid taking unrelated packages (exit 3)"
     elif [ "$rc" -ne 0 ]; then
       fail_ "$key: remove failed (exit $rc)"

@@ -6,7 +6,7 @@
 winget list --id Zen-Team.Zen-Browser -e --accept-source-agreements 2>/dev/null | grep -qi "Zen-Team.Zen-Browser" || exit 1
 
 # `winget upgrade --id` lists the package only when an upgrade is actually available.
-if winget upgrade --id Zen-Team.Zen-Browser -e --accept-source-agreements 2>/dev/null | grep -qi "Zen-Team.Zen-Browser"; then
+if winget upgrade --id Zen-Team.Zen-Browser -e --accept-source-agreements --disable-interactivity 2>/dev/null | grep -qi "Zen-Team.Zen-Browser"; then
   exit 2
 fi
 exit 0
