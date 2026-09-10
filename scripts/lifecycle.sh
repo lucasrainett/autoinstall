@@ -290,24 +290,42 @@ for key in $ENTRIES; do
           echo "--- post-removal diagnostic for $key ---"
           case "$PLATFORM" in
             windows)
-              winget list --id "$key" --accept-source-agreements 2>&1 | head -20
-              echo "--- winget list, unfiltered, grepped for the entry name ---"
-              winget list --accept-source-agreements 2>&1 | grep -i "${key%%-*}" | head -10
-              # Distinguishes "the files are gone but the registry entry is stale" from "the
-              # uninstall never happened" — the two have completely different fixes, and winget's
-              # own listing cannot tell them apart because it reads Add/Remove Programs.
-              echo "--- do the program files still exist? ---"
-              for d in "/c/Program Files/VideoLAN" "/c/Program Files (x86)/VideoLAN" \
-                       "/c/Program Files/${key}" "/c/Program Files (x86)/${key}"; do
-                [ -e "$d" ] && echo "PRESENT: $d" || echo "absent:  $d"
+              # The package id, taken from the entry's own scripts. The previous version of this
+              # asked `winget list --id "$key"` using the *entry key* — msi-afterburner rather than
+              # Guru3D.Afterburner — so it always answered "No installed package found", which
+              # reads exactly like proof the removal worked. It proved nothing, and it was read as
+              # evidence. Same mistake in the other two probes: the file check guessed
+              # "Program Files/<entry key>", so it reported KDE Connect absent while it sat in
+              # "Program Files/KDE Connect", and the registry search covered only HKLM, which is
+              # the one place a per-user install such as Steam does not register.
+              pkg_id=$(grep -ohE -- "--id [A-Za-z0-9._+-]+" "$dir"/*.sh 2>/dev/null |
+                       awk '{print $2}' | sort -u | head -1)
+              echo "package id: ${pkg_id:-<none declared>}"
+              if [ -n "$pkg_id" ]; then
+                echo "--- winget list, by package id ---"
+                winget list --id "$pkg_id" -e --accept-source-agreements 2>&1 | head -10
+              fi
+              echo "--- winget list, unfiltered, matched on the package id and the entry name ---"
+              winget list --accept-source-agreements 2>&1 |
+                grep -iE "${pkg_id:-$key}|${key%%-*}" | head -10
+              echo "--- uninstall registry entries, all three trees ---"
+              for hive in \
+                'HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall' \
+                'HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall' \
+                'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall'; do
+                echo "  [$hive]"
+                # MSYS_NO_PATHCONV, because Git Bash rewrites /s and /f into Windows paths before
+                # reg.exe sees them, and it answers "ERROR: Invalid syntax".
+                MSYS_NO_PATHCONV=1 reg.exe query "$hive" /s /f "${key%%-*}" 2>&1 |
+                  grep -viE "^$|End of search" | head -6
               done
-              echo "--- uninstall registry entries mentioning it ---"
-              # MSYS_NO_PATHCONV, because this runs under Git Bash: an argument that looks like a POSIX path is
-              # rewritten to a Windows one before the native program sees it, so /s becomes something like
-              # C:/Program Files/Git/s. reg.exe answered "ERROR: Invalid syntax", VLC's uninstaller took /S as a
-              # path and silently did nothing while still exiting 0, and Helium's installer ignored
-              # /silent /install the same way. The switch is passed through unchanged with this set.
-              MSYS_NO_PATHCONV=1 reg.exe query 'HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall' /s /f "${key%%-*}" 2>&1 | head -12
+              # Where the vendor actually put it, rather than a guess built from the entry key.
+              echo "--- directories matching the entry name ---"
+              for base in "/c/Program Files" "/c/Program Files (x86)" \
+                          "${LOCALAPPDATA:-$HOME/AppData/Local}" "${APPDATA:-$HOME/AppData/Roaming}"; do
+                [ -d "$base" ] || continue
+                find "$base" -maxdepth 1 -iname "*${key%%-*}*" 2>/dev/null | head -5
+              done
               ;;
             macos) brew list --cask 2>&1 | grep -i "${key%%-*}" | head -10 ;;
             linux) flatpak list --columns=application 2>&1 | grep -i "${key%%-*}" | head -10 ;;
