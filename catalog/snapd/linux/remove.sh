@@ -67,7 +67,8 @@ done
 
 # The per-user snap folder holds each user's snap data. Only the invoking user's is touched —
 # deleting other people's home directories is far beyond "uninstall snapd".
-USER_HOME=$(getent passwd "${SUDO_USER:-$(id -un)}" | cut -d: -f6)
+USER_HOME=$(getent passwd "${SUDO_USER:-$(id -un)}" 2>/dev/null | cut -d: -f6 || true)
+USER_HOME="${USER_HOME:-$HOME}"
 if [ -n "$USER_HOME" ] && [ -d "$USER_HOME/snap" ]; then
   rm -rf "$USER_HOME/snap"
 fi

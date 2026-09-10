@@ -8,10 +8,17 @@ capabilities = ["markdown-editing"]
 [linux]
 installMethod = "flatpak"
 
-[macos]
-installMethod = "homebrew"
-notes = "The same program — MarkText is Electron and ships builds for all three. Verified live against formulae.brew.sh; note the cask token is `mark-text`, hyphenated, while the project is not."
-
 [windows]
 installMethod = "winget"
 notes = "Verified live in microsoft/winget-pkgs at manifests/m/MarkText/MarkText (v0.19.1)."
+
+[macos]
+notes = """
+**Not available on macOS.** Homebrew disabled the `mark-text` cask on 2026-09-01 with the reason \
+`fails_gatekeeper_check`: the app is unsigned, so modern macOS refuses to run it. Installing it by \
+direct download instead would hand the user an application Gatekeeper blocks, which is worse than \
+not offering it — so this entry has no macOS folder, which is how this catalog expresses "not \
+applicable here".
+
+Verified live against formulae.brew.sh, which reports `disabled: true` for the cask.
+"""

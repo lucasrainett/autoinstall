@@ -7,7 +7,11 @@ DROPIN=/etc/ssh/sshd_config.d/99-autoinstall-hardening.conf
 # cron, `su` without a login shell), and under `set -u` an unset $USER aborts the script with an
 # obscure "unbound variable" instead of the clear refusal below.
 CURRENT_USER="$(id -un)"
-CURRENT_HOME="$(getent passwd "$CURRENT_USER" 2>/dev/null | cut -d: -f6)"
+# `|| true` is load-bearing: macOS has no getent, and under `set -euo pipefail` a failing
+# command substitution aborts the script before the fallback below can run. The macOS
+# ssh-hardening entry died here with no output at all — the same class of mistake as
+# assuming setsid or timeout exists everywhere.
+CURRENT_HOME="$(getent passwd "$CURRENT_USER" 2>/dev/null | cut -d: -f6 || true)"
 CURRENT_HOME="${CURRENT_HOME:-${HOME:-}}"
 
 # Refuse rather than lock the user out. Turning off password authentication with no usable key is

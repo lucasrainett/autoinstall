@@ -9,9 +9,17 @@ capabilities = ["web-browsing", "tracker-blocking"]
 installMethod = "appimage"
 notes = "Integrated with Gear Lever, which manages the AppImage and adds the launcher entry, icon, and updates."
 
-[macos]
-installMethod = "homebrew"
-
 [windows]
 installMethod = "direct-download"
 notes = "Downloads the official mini-installer from GitHub releases and runs it silently (/silent /install)."
+
+[macos]
+notes = """
+**Not available on macOS.** Homebrew disabled the `helium` cask on 2026-09-01 with the reason \
+`fails_gatekeeper_check`: the app is unsigned, so modern macOS refuses to run it. Installing it by \
+direct download instead would hand the user an application Gatekeeper blocks, which is worse than \
+not offering it — so this entry has no macOS folder, which is how this catalog expresses "not \
+applicable here".
+
+Verified live against formulae.brew.sh, which reports `disabled: true` for the cask.
+"""

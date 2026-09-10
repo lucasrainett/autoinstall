@@ -54,11 +54,11 @@ Catalog loading/validation, platform detection, diagnostics scan, plan compute/r
 Still expected-unreachable until Phase 7 (Windows), not a defect: `exec/git-bash`, `platform/wsl`, `elevation/progress-protocol`.
 
 ### Catalog coverage
-**184 entries across 13 categories**, 1160 scripts, 322 platform folders, 0 load errors. By kind: **157 `install`, 27 `configure`, 0 `cleanup`**.
+**184 entries across 13 categories**, 1148 scripts, 319 platform folders, 0 load errors. By kind: **157 `install`, 27 `configure`, 0 `cleanup`**.
 
 The zero is deliberate, not a gap: the `cleanup` kind was **retired** on 2026-09-02 (see below). Debloat is expressed as ordinary entries that start checked because the software is present, and unchecking one removes it — one mental model instead of two. The kind remains in the schema for overlay repos that still use it.
 
-Platform coverage: **125 Linux, 85 macOS, 112 Windows**. A missing platform folder is how "not applicable here" is expressed. These counts are pinned by `src/catalog/docs-accuracy.test.ts` — which checks this file as well as the README, because the figures here drifted to 71/55/51 while the catalog grew to more than double that, and nothing noticed.
+Platform coverage: **125 Linux, 82 macOS, 112 Windows**. A missing platform folder is how "not applicable here" is expressed. These counts are pinned by `src/catalog/docs-accuracy.test.ts` — which checks this file as well as the README, because the figures here drifted to 71/55/51 while the catalog grew to more than double that, and nothing noticed.
 
 ### Verification honesty
 - **The cross-OS lifecycle now runs.** `catalog-lifecycle.yml` was dispatchable for the first time on 2026-09-08, once the rewrite reached `master` — GitHub only registers `workflow_dispatch` workflows from the default branch, which is why it sat unused for weeks. First runs used four entries (`jq`, `git`, `vlc`, `obs-studio`) rather than all of them, deliberately: a broken harness would have wasted a two-hour run.

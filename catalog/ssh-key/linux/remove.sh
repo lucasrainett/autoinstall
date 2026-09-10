@@ -19,3 +19,8 @@ echo "A private key is irreplaceable and may still be authorised on machines thi
 echo "know about. If you are certain it is unused, delete it yourself:"
 echo "    rm -i $KEY $KEY.pub"
 exit 0
+
+# Exit 3, not 0: this deliberately did not remove anything, and the runner verifies each action by
+# re-running detect afterwards. Reporting success made a correct, protective decision look like a
+# removal that silently failed.
+exit 3

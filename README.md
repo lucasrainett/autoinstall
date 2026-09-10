@@ -178,7 +178,7 @@ the removal of everything on screen.
 
 **184 entries** across 13 categories — browsers, communication, dev-tools, media, gaming, creative,
 productivity, security, privacy, system-utilities, AI, 3D printing and quality-of-life.
-Platform coverage is 125 Linux, 85 macOS, 112 Windows; an entry simply has no folder for a platform
+Platform coverage is 125 Linux, 82 macOS, 112 Windows; an entry simply has no folder for a platform
 where the software does not exist, which is how "not applicable here" is expressed.
 
 **Six profiles** — `developer`, `privacy`, `minimal`, `infrastructure`, `gaming`, `creative` —
