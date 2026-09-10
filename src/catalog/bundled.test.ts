@@ -601,3 +601,22 @@ Deno.test("bundled catalog - a keyring written with gpg -o also passes --yes", a
   }
   assertEquals(offenders, [], "gpg --dearmor -o without --yes fails on a second run");
 });
+
+Deno.test("bundled catalog - a Store-only Windows install declines instead of claiming success", async () => {
+  // These open the Microsoft Store and cannot complete unattended. They used to exit 0 having
+  // installed nothing, which the verification caught as "detect still reports absent after
+  // install" — and on a runner with no Store, Start-Process never returned and four of them hung
+  // for the full ten-minute timeout. Exit 3 is "declined, nothing changed".
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    let source: string;
+    try {
+      source = await Deno.readTextFile(`${entryDir}/windows/install.sh`);
+    } catch {
+      continue;
+    }
+    if (!source.includes("ms-windows-store")) continue;
+    if (!/\bexit 3\b/.test(source)) offenders.push(`${entryDir}/windows/install.sh`);
+  }
+  assertEquals(offenders, [], "a Store-only install that does not decline");
+});

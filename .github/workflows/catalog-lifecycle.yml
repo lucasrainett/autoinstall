@@ -28,7 +28,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     # Installing real software from real vendors is slow; the default 360-minute cap is generous
     # but a hung installer should not hold a runner for six hours.
-    timeout-minutes: 120
+    #
+    # Raised from 120 after a full Windows run reached only 48 of 112 entries before being
+    # cancelled — with per-operation timeouts now bounding any single hang, the cap only needs to
+    # accommodate the honest total. Each platform is its own job, so this costs nothing when a
+    # platform finishes early.
+    timeout-minutes: 180
     strategy:
       fail-fast: false   # one platform's failure must not hide another's result
       matrix:
