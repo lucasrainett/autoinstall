@@ -80,6 +80,25 @@ OP_TIMEOUT="${LIFECYCLE_OP_TIMEOUT:-600}"
 # ten minutes that turned one wedged uninstaller into a lost run.
 STUCK_LOCK_GRACE="${LIFECYCLE_STUCK_LOCK_GRACE:-90}"
 
+# How long a stopped operation gets to unwind after SIGTERM before it is killed outright.
+TERM_GRACE="${LIFECYCLE_TERM_GRACE:-20}"
+
+stop_op() { # stop_op <pid> — ask the process group to stop, then insist
+  # SIGTERM first, and only SIGKILL if it will not go. This matters specifically because of what
+  # winget does with the Windows installer lock: killed outright it never unwinds, the lock stays
+  # held, and every later install on that runner sits on "Waiting for another install/uninstall to
+  # complete...". Three separate shards lost their remaining entries that way, each to a single
+  # uninstaller that ran past the cap — docker, ungoogled-chromium and jetbrains-toolbox. On
+  # SIGTERM winget prints "Cancelling operation" and releases what it holds.
+  kill -TERM -- -"$1" 2>/dev/null || kill -TERM "$1" 2>/dev/null
+  for _ in $(seq 1 "$TERM_GRACE"); do
+    kill -0 "$1" 2>/dev/null || { wait "$1" 2>/dev/null; return; }
+    sleep 1
+  done
+  kill -KILL -- -"$1" 2>/dev/null || kill -KILL "$1" 2>/dev/null
+  wait "$1" 2>/dev/null
+}
+
 run_op() { # run_op <script> <log>  — returns the script's exit code, or 124 on timeout
   # The timeout is implemented here rather than shelled out to `timeout`, because macOS ships
   # neither `timeout` nor `setsid`: the first version of this called `timeout`, every macOS detect
@@ -99,8 +118,7 @@ run_op() { # run_op <script> <log>  — returns the script's exit code, or 124 o
   waited=0
   while kill -0 "$op_pid" 2>/dev/null; do
     if [ "$waited" -ge "$OP_TIMEOUT" ]; then
-      kill -KILL -- -"$op_pid" 2>/dev/null || kill -KILL "$op_pid" 2>/dev/null
-      wait "$op_pid" 2>/dev/null
+      stop_op "$op_pid"
       return 124
     fi
     # Windows serialises installs behind a global lock, and a winget killed mid-operation leaves it
@@ -112,8 +130,7 @@ run_op() { # run_op <script> <log>  — returns the script's exit code, or 124 o
     # early and say so.
     if [ "$waited" -ge "$STUCK_LOCK_GRACE" ] &&
        grep -q "Waiting for another install/uninstall" "$2" 2>/dev/null; then
-      kill -KILL -- -"$op_pid" 2>/dev/null || kill -KILL "$op_pid" 2>/dev/null
-      wait "$op_pid" 2>/dev/null
+      stop_op "$op_pid"
       return 125
     fi
     sleep 1
@@ -248,11 +265,20 @@ for key in $ENTRIES; do
       # winget reports success as soon as it has *launched* one. Observed with VLC on a real
       # runner, where the removal succeeded and the immediate re-check still saw it installed. A
       # synchronous uninstaller — most of them — passes on the first attempt and costs nothing.
+      # Windows gets a longer settle window than the others. winget reports success as soon as it
+      # has *launched* a vendor uninstaller, and Add/Remove Programs — which `winget list` reads —
+      # can take appreciably longer than eight seconds to catch up. Five entries reported "still
+      # present after removal" in a single run, which is a great deal more likely to be this than
+      # five independently broken uninstallers.
+      case "$PLATFORM" in
+        windows) settle_attempts=10; settle_delay=3 ;;
+        *)       settle_attempts=4;  settle_delay=2 ;;
+      esac
       gone=0
-      for attempt in 1 2 3 4; do
+      for attempt in $(seq 1 "$settle_attempts"); do
         run_op "$dir/detect.sh" "$log"; gone=$?
         [ "$gone" -eq 1 ] && break
-        [ "$attempt" -lt 4 ] && sleep 2
+        [ "$attempt" -lt "$settle_attempts" ] && sleep "$settle_delay"
       done
       # Anything other than 1 means it is still there — including 2, which an earlier version of
       # this check treated as success and would have passed a failed removal.
@@ -276,7 +302,12 @@ for key in $ENTRIES; do
                 [ -e "$d" ] && echo "PRESENT: $d" || echo "absent:  $d"
               done
               echo "--- uninstall registry entries mentioning it ---"
-              reg.exe query 'HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall' /s /f "${key%%-*}" 2>&1 | head -12
+              # MSYS_NO_PATHCONV, because this runs under Git Bash: an argument that looks like a POSIX path is
+              # rewritten to a Windows one before the native program sees it, so /s becomes something like
+              # C:/Program Files/Git/s. reg.exe answered "ERROR: Invalid syntax", VLC's uninstaller took /S as a
+              # path and silently did nothing while still exiting 0, and Helium's installer ignored
+              # /silent /install the same way. The switch is passed through unchanged with this set.
+              MSYS_NO_PATHCONV=1 reg.exe query 'HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall' /s /f "${key%%-*}" 2>&1 | head -12
               ;;
             macos) brew list --cask 2>&1 | grep -i "${key%%-*}" | head -10 ;;
             linux) flatpak list --columns=application 2>&1 | grep -i "${key%%-*}" | head -10 ;;

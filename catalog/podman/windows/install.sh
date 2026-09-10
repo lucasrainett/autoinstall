@@ -11,5 +11,5 @@ if winget list --id RedHat.Podman -e --accept-source-agreements 2>/dev/null | gr
   exit 0
 fi
 
-winget install --id RedHat.Podman -e \\
+winget install --id RedHat.Podman -e \
   --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

@@ -14,9 +14,15 @@ then
   exit 3
 fi
 
+# Test-Path before New-Item, because -Force on a registry key that already exists does not merely
+# ensure it. Microsoft documents that the key and all its properties and values are overwritten
+# with an empty key. In a loop writing several values to one key, each pass wiped what the pass
+# before it had written and only the last survived: location-services, search-web-results and
+# windows-recall all reported applied and then failed detection for exactly this reason, while the
+# entries writing one value per key were unaffected -- which is what made the pattern visible.
 powershell.exe -NoProfile -Command "
   foreach (\$e in @(@{k='HKCU:\\Software\\Policies\\Microsoft\\Windows\\Explorer'; n='DisableSearchBoxSuggestions'; v=1}, @{k='HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Search'; n='AllowCortana'; v=0}, @{k='HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows Search'; n='ConnectedSearchUseWeb'; v=0})) {
-    New-Item -Path \$e.k -Force | Out-Null
+    if (-not (Test-Path \$e.k)) { New-Item -Path \$e.k -Force | Out-Null }
     Set-ItemProperty -Path \$e.k -Name \$e.n -Value \$e.v -Type DWord -Force
   }"
 

@@ -745,6 +745,8 @@ Deno.test("bundled catalog - a winget install, upgrade or uninstall disables int
       }
       source.split("\n").forEach((line, index) => {
         if (line.trimStart().startsWith("#")) return;
+        // A line that only prints the word is not running the command.
+        if (/^\s*(echo|printf)\b/.test(line.trimStart())) return;
         if (!/\bwinget\s+(install|upgrade|uninstall)\b/.test(line)) return;
         // The flags may sit on a continuation line, so the whole command is what gets checked.
         const command = source.split("\n").slice(index).join("\n").split(/\n(?!\s)/)[0];
@@ -755,4 +757,110 @@ Deno.test("bundled catalog - a winget install, upgrade or uninstall disables int
     }
   }
   assertEquals(offenders, [], "a winget mutation that can block on a prompt");
+});
+
+Deno.test("bundled catalog - no script ends a line with an escaped backslash", async () => {
+  // `\\` at the end of a line is an escaped backslash, not a line continuation. The command ends
+  // there and receives a literal `\` as its last argument, and whatever was meant to continue it
+  // runs as a command of its own.
+  //
+  // Seven Windows entries shipped this from the day the catalog was written — claude-desktop,
+  // element, libreoffice, logi-options-plus, podman, thunderbird, wireguard. Each ran
+  // `winget install --id X -e \`, which with `-e` matched nothing, so all seven reported "No
+  // package found matching input criteria" and none of them had ever been able to install. It went
+  // unnoticed for as long as it did because no Windows lifecycle run had ever completed.
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    for (const platform of ["linux", "macos", "windows"]) {
+      for (const op of ["detect", "install", "update", "remove", "run"]) {
+        const path = `${entryDir}/${platform}/${op}.sh`;
+        let source: string;
+        try {
+          source = await Deno.readTextFile(path);
+        } catch {
+          continue;
+        }
+        source.split("\n").forEach((line, index) => {
+          // An odd number of trailing backslashes continues the line; an even number does not.
+          const trailing = /(\\+)$/.exec(line);
+          if (trailing && trailing[1].length % 2 === 0) {
+            offenders.push(
+              `${path}:${index + 1}: line ends with \\\\, which is not a continuation`,
+            );
+          }
+        });
+      }
+    }
+  }
+  assertEquals(offenders, [], "an escaped backslash where a line continuation was meant");
+});
+
+Deno.test("bundled catalog - New-Item on a registry key checks Test-Path first", async () => {
+  // Microsoft documents that New-Item -Force on an existing registry key does not merely ensure
+  // it: "the key and all properties and values will be overwritten with an empty registry key".
+  //
+  // In a loop writing several values to one key, each pass therefore wiped what the pass before it
+  // had written and only the last survived. location-services, search-web-results and
+  // windows-recall all printed "applied" and then failed detection for exactly this reason, while
+  // delivery-optimization — one value per key — passed, which is what made the pattern visible.
+  //
+  // Even where an entry writes a single value it must still check, because the wipe takes any
+  // other value under that key with it, and clearing settings the user did not ask about is not
+  // an entry's business.
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    for (const op of ["install", "update", "remove"]) {
+      const path = `${entryDir}/windows/${op}.sh`;
+      let source: string;
+      try {
+        source = await Deno.readTextFile(path);
+      } catch {
+        continue;
+      }
+      if (!/New-Item\s+-Path/.test(source)) continue;
+      if (!source.includes("Test-Path")) {
+        offenders.push(`${path}: New-Item -Force with no Test-Path guard`);
+      }
+    }
+  }
+  assertEquals(offenders, [], "a registry key creation that can wipe existing values");
+});
+
+Deno.test("bundled catalog - a Windows switch starting with a slash is protected from Git Bash", async () => {
+  // These scripts run under Git Bash, which rewrites any argument that looks like a POSIX path
+  // into a Windows one before the native program sees it. A switch like /S or /silent becomes
+  // something like C:/Program Files/Git/S, and the program either rejects it or ignores it.
+  //
+  // It cost three separate failures, none of which looked related: reg.exe answered "ERROR:
+  // Invalid syntax" so Helium could never be detected, VLC's uninstaller treated /S as a path and
+  // did nothing while still exiting 0, and Helium's installer ignored /silent /install outright.
+  // MSYS_NO_PATHCONV=1 on the invocation passes the switch through unchanged.
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    for (const op of ["detect", "install", "update", "remove", "run"]) {
+      const path = `${entryDir}/windows/${op}.sh`;
+      let source: string;
+      try {
+        source = await Deno.readTextFile(path);
+      } catch {
+        continue;
+      }
+      source.split("\n").forEach((line, index) => {
+        if (line.trimStart().startsWith("#")) return;
+        if (line.includes("MSYS_NO_PATHCONV")) return;
+        // A line that only prints the command is not running it — `echo "running: $u /S"` is
+        // reporting, not invoking, and conversion never touches it.
+        if (/^\s*(echo|printf)\b/.test(line.trimStart())) return;
+        // A bare /Switch argument: preceded by whitespace, not part of a path or a URL. The
+        // terminator is a lookahead rather than \s, because `"$uninstaller" /S; rc=$?` ends the
+        // switch with a semicolon — which an earlier version of this test did not match, so it
+        // passed over the very line it was written for.
+        if (!/\s\/[A-Za-z][A-Za-z0-9]*(?![\w/])/.test(line)) return;
+        // Only meaningful when a native program is being run on that line.
+        if (!/\.exe|\$\w*(INSTALLER|UNINSTALLER|uninstaller|setup)/i.test(line)) return;
+        offenders.push(`${path}:${index + 1}: /switch will be rewritten by Git Bash`);
+      });
+    }
+  }
+  assertEquals(offenders, [], "a Windows switch Git Bash will mangle into a path");
 });

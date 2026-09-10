@@ -18,9 +18,9 @@ echo "Leaving $KEY in place on purpose."
 echo "A private key is irreplaceable and may still be authorised on machines this tool does not"
 echo "know about. If you are certain it is unused, delete it yourself:"
 echo "    rm -i $KEY $KEY.pub"
-exit 0
 
 # Exit 3, not 0: this deliberately did not remove anything, and the runner verifies each action by
 # re-running detect afterwards. Reporting success made a correct, protective decision look like a
-# removal that silently failed.
+# removal that silently failed — which is exactly what happened, because an `exit 0` was left
+# sitting above this line and the exit 3 was never reached.
 exit 3

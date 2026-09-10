@@ -11,5 +11,5 @@ if winget list --id Element.Element -e --accept-source-agreements 2>/dev/null | 
   exit 0
 fi
 
-winget install --id Element.Element -e \\
+winget install --id Element.Element -e \
   --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

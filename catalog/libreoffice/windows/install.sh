@@ -11,5 +11,5 @@ if winget list --id TheDocumentFoundation.LibreOffice -e --accept-source-agreeme
   exit 0
 fi
 
-winget install --id TheDocumentFoundation.LibreOffice -e \\
+winget install --id TheDocumentFoundation.LibreOffice -e \
   --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

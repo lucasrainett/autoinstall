@@ -28,7 +28,11 @@ for dir in "/c/Program Files/VideoLAN/VLC" "/c/Program Files (x86)/VideoLAN/VLC"
     echo "no uninstaller found in $dir" >&2
   else
     echo "running: $uninstaller /S"
-    "$uninstaller" /S; rc=$?
+    # MSYS_NO_PATHCONV, because this runs under Git Bash: an argument that looks like a POSIX path
+    # is rewritten to a Windows one before the native program sees it, so /S becomes something like
+    # C:/Program Files/Git/S. That is why this uninstaller exited 0 having removed nothing — it was
+    # never given the silent switch at all.
+    MSYS_NO_PATHCONV=1 "$uninstaller" /S; rc=$?
     echo "uninstaller exit code: $rc"
     for _ in 1 2 3 4 5 6 7 8 9 10; do
       [ -d "$dir" ] || break

@@ -14,12 +14,18 @@ then
   exit 3
 fi
 
+# Test-Path before New-Item: -Force on an existing registry key overwrites it with an empty one,
+# taking every value it held. This entry writes a single value, so it loses nothing of its own --
+# but it would still discard anything else present under DataCollection, and clearing settings the
+# user did not ask about is not this entry's business.
+#
 # AllowTelemetry=0 ("Security") is honoured fully on Enterprise/Education; Home and Pro clamp it
 # to the "Required" level. Setting it is still the correct, documented minimum for the edition —
 # it is not silently ineffective, it is bounded by the edition.
 powershell.exe -NoProfile -Command \
-  "New-Item -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection' -Force | Out-Null; \
-   Set-ItemProperty -Path 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection' -Name AllowTelemetry -Type DWord -Value 0"
+  "\$k = 'HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection'; \
+   if (-not (Test-Path \$k)) { New-Item -Path \$k -Force | Out-Null }; \
+   Set-ItemProperty -Path \$k -Name AllowTelemetry -Type DWord -Value 0"
 
 # The scheduled tasks that gather and upload the data. Best-effort, and deliberately not fatal:
 # several of these tasks are owned by TrustedInstaller, so Disable-ScheduledTask answers

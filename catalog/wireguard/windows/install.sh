@@ -11,5 +11,5 @@ if winget list --id WireGuard.WireGuard -e --accept-source-agreements 2>/dev/nul
   exit 0
 fi
 
-winget install --id WireGuard.WireGuard -e \\
+winget install --id WireGuard.WireGuard -e \
   --accept-source-agreements --disable-interactivity --accept-package-agreements --silent

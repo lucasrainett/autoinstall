@@ -11,5 +11,5 @@ if winget list --id Logitech.OptionsPlus -e --accept-source-agreements 2>/dev/nu
   exit 0
 fi
 
-winget install --id Logitech.OptionsPlus -e \\
+winget install --id Logitech.OptionsPlus -e \
   --accept-source-agreements --disable-interactivity --accept-package-agreements --silent
