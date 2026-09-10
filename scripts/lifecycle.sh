@@ -73,6 +73,14 @@ fi
 #
 # Ten minutes is generous for a large installer on a cold runner and still lets a full platform
 # finish well inside the job limit.
+# The same non-interactive environment the engine's runner sets, for the same reason: Homebrew
+# asks "Do you want to proceed with the installation?" and waits, and nothing here can answer. It
+# cost a full ten-minute timeout on an install that had already printed
+# "freeplane was successfully installed!" and simply never exited.
+export HOMEBREW_NO_ASK=1
+export HOMEBREW_NO_AUTO_UPDATE=1
+export HOMEBREW_NO_INSTALL_UPGRADE=1
+
 OP_TIMEOUT="${LIFECYCLE_OP_TIMEOUT:-600}"
 
 # How long a Windows operation may sit blocked on the global installer lock before we stop waiting.

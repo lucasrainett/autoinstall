@@ -140,9 +140,23 @@ export async function runScript(
   // The exception is a script keeping the controlling terminal on purpose: `sudo` reads the
   // password from stdin, so denying it there would break elevation entirely.
   const stdin = options.preserveControllingTerminal === true ? "inherit" : "null";
+  // Homebrew asks "Do you want to proceed with the installation?" and waits, and with stdin closed
+  // nothing can answer it. On a runner that shows up as an install producing its whole successful
+  // output — "freeplane was successfully installed!" — and then never exiting, until the ten-minute
+  // cap kills it. HOMEBREW_NO_ASK answers the confirmation; the other two stop brew wandering off
+  // to update itself or a cask mid-install, which is slow and can prompt in its own right.
+  //
+  // Set here rather than in each of the 59 scripts that call brew: it is a property of running a
+  // script without a terminal, which is this runner's decision, not the entry's.
+  const env = {
+    HOMEBREW_NO_ASK: "1",
+    HOMEBREW_NO_AUTO_UPDATE: "1",
+    HOMEBREW_NO_INSTALL_UPGRADE: "1",
+    ...options.env,
+  };
   const shared = {
     cwd: options.cwd,
-    env: options.env,
+    env,
     stdin,
     stdout: "piped",
     stderr: "piped",

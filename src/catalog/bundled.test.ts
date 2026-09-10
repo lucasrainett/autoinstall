@@ -864,3 +864,43 @@ Deno.test("bundled catalog - a Windows switch starting with a slash is protected
   }
   assertEquals(offenders, [], "a Windows switch Git Bash will mangle into a path");
 });
+
+Deno.test("bundled catalog - the duplicated Add/Remove Programs fallback has not drifted", async () => {
+  // winget reports "Successfully uninstalled" and leaves the application installed. Proven on a
+  // runner: eight entries in one run still had an Add/Remove Programs entry afterwards, most with
+  // their program directory intact. winget hands the vendor's uninstaller its own --silent, which
+  // most of them ignore, then reports what it asked for rather than what happened.
+  //
+  // The fallback is copy-pasted per entry rather than sourced, for the same reason the apt
+  // collateral guard is: each operation has to stay runnable standalone. What duplication costs is
+  // silent drift, and that is what this buys back. Only the package id and the DisplayName pattern
+  // may differ between copies.
+  const bodies: { path: string; body: string }[] = [];
+  for (const entryDir of await entryDirs()) {
+    let source: string;
+    try {
+      source = await Deno.readTextFile(`${entryDir}/windows/remove.sh`);
+    } catch {
+      continue;
+    }
+    if (!source.includes("QuietUninstallString")) continue;
+    const start = source.indexOf("powershell.exe -NoProfile -Command");
+    assert(start >= 0, `${entryDir}: fallback with no powershell invocation`);
+    bodies.push({ path: `${entryDir}/windows/remove.sh`, body: source.slice(start) });
+  }
+
+  assert(bodies.length > 1, "expected several entries to carry the shared fallback");
+  const [first, ...rest] = bodies;
+  for (const other of rest) {
+    assertEquals(
+      other.body,
+      first.body,
+      `the fallback in ${other.path} has drifted from ${first.path}`,
+    );
+  }
+
+  // The switches are the part that silently does nothing when wrong, so they are pinned by name.
+  assert(first.body.includes("/VERYSILENT"), "Inno Setup uninstallers need /VERYSILENT");
+  assert(first.body.includes("'/S'"), "NSIS uninstallers need /S");
+  assert(first.body.includes("/qn"), "MSI uninstalls need /qn");
+});
