@@ -18,7 +18,12 @@ fi
 winget uninstall --id Rustlang.Rustup -e \
   --accept-source-agreements --disable-interactivity --purge --silent || true
 
-if command -v rustup >/dev/null 2>&1; then
-  echo "rustup is still on PATH after both attempts." >&2
+# `command -v` is answered from bash's own hash table, which still held the path after rustup had
+# deleted itself — the uninstall logged "rustup is uninstalled" and this still called it a failure.
+# The file on disk is the fact.
+hash -r 2>/dev/null || true
+CARGO_BIN="${CARGO_HOME:-$HOME/.cargo}/bin/rustup.exe"
+if [ -f "$CARGO_BIN" ] || [ -f "${CARGO_BIN%.exe}" ]; then
+  echo "rustup is still installed at $CARGO_BIN." >&2
   exit 1
 fi

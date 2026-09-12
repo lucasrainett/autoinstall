@@ -34,7 +34,9 @@ for installer in "${installers[@]}"; do
   done
 done
 
-if [ -d "/c/Program Files/Docker/Docker" ]; then
+# The directory survives a successful uninstall — Docker leaves configuration and logs behind by
+# design — so its presence is not evidence. The application executable is.
+if [ -f "/c/Program Files/Docker/Docker/Docker Desktop.exe" ]; then
   echo "Docker Desktop is still installed after both winget and its own uninstaller." >&2
   exit 1
 fi

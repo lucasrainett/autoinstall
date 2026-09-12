@@ -37,9 +37,18 @@ powershell.exe -NoProfile -Command "
   if (-not \$cmd) { \$cmd = \$app.UninstallString }
   if (-not \$cmd) { Write-Host 'That entry names no uninstaller.'; exit 1 }
 
+  # Bounded rather than -Wait. MSI Afterburner's uninstall sat there until the harness killed the
+  # whole operation at ten minutes, and a winget killed mid-flight leaves the Windows installer
+  # lock held, which costs every entry behind it in the same shard. Four minutes is generous for an
+  # uninstall and still fails inside the harness cap, so the damage stops here.
   if (\$cmd -match 'MsiExec') {
     \$code = [regex]::Match(\$cmd, '\{[0-9A-Fa-f-]+\}').Value
-    Start-Process msiexec.exe -ArgumentList \"/X\$code\", '/qn', '/norestart' -Wait
+    \$proc = Start-Process msiexec.exe -ArgumentList \"/X\$code\", '/qn', '/norestart' -PassThru
+    if (-not \$proc.WaitForExit(240000)) {
+      \$proc.Kill()
+      Write-Host 'The MSI uninstall did not finish in four minutes; stopped it.'
+      exit 1
+    }
   } else {
     # Split the executable from any arguments the registry already carries.
     if (\$cmd -match '^\"([^\"]+)\"\s*(.*)$') { \$exe = \$Matches[1]; \$rest = \$Matches[2] }
@@ -49,6 +58,11 @@ powershell.exe -NoProfile -Command "
     \$switches = @('/S')
     if (\$exe -match 'unins\d*\.exe\$') { \$switches = @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') }
     if (\$rest) { \$switches = \$switches + \$rest.Split(' ') }
-    Start-Process \$exe -ArgumentList \$switches -Wait
+    \$proc = Start-Process \$exe -ArgumentList \$switches -PassThru
+    if (-not \$proc.WaitForExit(240000)) {
+      \$proc.Kill()
+      Write-Host 'The vendor uninstaller did not finish in four minutes; stopped it.'
+      exit 1
+    }
   }
   Write-Host 'Vendor uninstaller finished.'"
