@@ -1,25 +1,32 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# Portable package: winget unpacked a tofu.exe and registered a command alias. Asking winget to
-# uninstall is still right — it owns the alias — but it answered "No installed package found" and
-# exited non-zero, because its own record of a portable install does not match an `--id -e` query.
-# Treat that specific outcome as "already gone" rather than as a failure.
-out=$(winget uninstall --id OpenTofu.Tofu -e \
-  --accept-source-agreements --disable-interactivity --purge --silent 2>&1)
-rc=$?
-echo "$out"
+# OpenTofu is a portable package: winget unpacks tofu.exe and registers it in Add/Remove Programs
+# with the uninstall command "winget uninstall --product-code OpenTofu.Tofu_Microsoft.Winget.Source_…".
+# `winget uninstall --id OpenTofu.Tofu -e` answered "No installed package found" against that very
+# install — shown by the before/after snapshots, which still had the registry entry and the
+# WinGet\Links\tofu.exe shim after it. So the product code is read from the registry and used, as
+# Windows itself would.
+code=""
+for hive in 'HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall' \
+            'HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall' \
+            'HKLM\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'; do
+  # MSYS_NO_PATHCONV: Git Bash would otherwise rewrite /s and /f into Windows paths.
+  code=$(MSYS_NO_PATHCONV=1 reg.exe query "$hive" /s /f "OpenTofu" 2>/dev/null | tr -d '\r' |
+         grep -oE 'product-code [^ ]+' | head -1 | cut -d' ' -f2)
+  [ -n "$code" ] && break
+done
 
-if [ "$rc" -ne 0 ]; then
-  if echo "$out" | grep -qi "No installed package found"; then
-    echo "winget has no record of it; checking whether the binary is gone anyway."
-  else
-    echo "winget uninstall returned $rc." >&2
-    exit "$rc"
-  fi
+if [ -n "$code" ]; then
+  echo "Removing through the product code Add/Remove Programs registered: $code"
+  winget uninstall --product-code "$code" \
+    --accept-source-agreements --disable-interactivity --silent || true
+else
+  winget uninstall --id OpenTofu.Tofu -e \
+    --accept-source-agreements --disable-interactivity --purge --silent || true
 fi
 
-# Same as detect: the shim lives in winget's Links directory, which this shell's PATH predates.
+# The shim lives in winget's Links directory, which this shell's PATH predates; the file is the fact.
 hash -r 2>/dev/null || true
 WINGET_LINKS="${LOCALAPPDATA:-$HOME/AppData/Local}/Microsoft/WinGet/Links"
 if [ -f "$WINGET_LINKS/tofu.exe" ] || [ -f "$WINGET_LINKS/tofu" ]; then

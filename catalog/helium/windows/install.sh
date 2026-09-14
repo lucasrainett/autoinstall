@@ -9,7 +9,14 @@ set -euo pipefail
 # against Helium's own binary: Helium's own README states its Windows packaging is only "based
 # on" ungoogled-chromium-windows and "heavily modified", so this is a well-reasoned inference
 # from shared lineage, not a direct test. Flag rather than trust blindly if this misbehaves.
-VERSION=$(curl -fsSL https://api.github.com/repos/imputnet/helium-windows/releases/latest | grep -oP '"tag_name": "\K[^"]+')
+# Resolved from the web redirect, not api.github.com. The API allows 60 unauthenticated requests an
+# hour per address, shared by every job on a CI runner's IP, and it answered helium's Windows
+# install with HTTP 403. /releases/latest redirects to /releases/tag/<version> and is not counted.
+VERSION=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/imputnet/helium-windows/releases/latest |
+  sed 's|.*/tag/||')
+case "$VERSION" in
+  "" | */*) echo "Could not resolve the latest imputnet/helium-windows release." >&2; exit 1 ;;
+esac
 INSTALLER="$(mktemp -u).exe"
 curl -fsSL -o "$INSTALLER" \
   "https://github.com/imputnet/helium-windows/releases/download/${VERSION}/helium_${VERSION}_x64-mini-installer.exe"

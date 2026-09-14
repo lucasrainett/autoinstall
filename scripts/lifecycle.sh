@@ -111,9 +111,11 @@ case "${LIFECYCLE_EVIDENCE:-auto}" in
 esac
 EVIDENCE_DIR="$LOG_DIR/evidence"
 
+# Also the OS's own background churn (kernel workers, Spotlight, Windows servicing) and winget's
+# spinner and table-header lines, which the first evidence run showed drowning out the real changes.
 # Processes that exist only because this harness is running. Without the filter every snapshot diff
 # is dominated by the shells, greps and PowerShell instances taking the snapshot itself.
-EVIDENCE_NOISE='^proc\|([^|]*/)?(bash|sh|dash|zsh|powershell|pwsh|conhost|cmd|winget|WindowsPackageManagerServer|AppInstallerCLI|sleep|timeout|ps|sort|grep|sed|awk|tr|find|comm|head|tail|cat|reg|git|mintty|cygpath|basename|dirname|date|mktemp|xargs|wc|uniq|systemctl|dpkg-query|flatpak|brew|pkgutil|launchctl|ruby|curl)(\.exe)?(\||$)'
+EVIDENCE_NOISE='^proc\|([^|]*/)?(bash|sh|dash|zsh|powershell|pwsh|conhost|cmd|winget|WindowsPackageManagerServer|AppInstallerCLI|sleep|timeout|ps|sort|grep|sed|awk|tr|find|comm|head|tail|cat|reg|git|mintty|cygpath|basename|dirname|date|mktemp|xargs|wc|uniq|systemctl|dpkg-query|flatpak|brew|pkgutil|launchctl|ruby|curl|svchost|WmiPrvSE|TiWorker|TrustedInstaller|MoUsoCoreWorker|msdtc|dllhost|RuntimeBroker|taskhostw|backgroundTaskHost|SearchProtocolHost|SearchFilterHost|sppsvc|CompatTelRunner|MpCmdRun|smartscreen|tipsd|snapd)(\.exe)?(\||$)|^proc\|(kworker/|\(udev-worker\)|.*mdworker)|^launchd\|com\.apple\.mdworker|^winget\|[[:space:]]|^winget\|-----|^winget\|Name[[:space:]]+Id[[:space:]]'
 
 if [ "$EVIDENCE" -eq 1 ] && [ "$PLATFORM" = "windows" ]; then
   # A .ps1 file rather than an inline -Command string: every PowerShell variable inline has to

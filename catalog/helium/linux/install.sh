@@ -23,8 +23,14 @@ flatpak install --user flathub it.mijorus.gearlever -y --noninteractive
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-VERSION=$(curl -fsSL https://api.github.com/repos/imputnet/helium-linux/releases/latest |
-  grep -oP '"tag_name": "\K[^"]+')
+# Resolved from the web redirect, not api.github.com. The API allows 60 unauthenticated requests an
+# hour per address, shared by every job on a CI runner's IP, and it answered helium's Windows
+# install with HTTP 403. /releases/latest redirects to /releases/tag/<version> and is not counted.
+VERSION=$(curl -fsSLI -o /dev/null -w '%{url_effective}' https://github.com/imputnet/helium-linux/releases/latest |
+  sed 's|.*/tag/||')
+case "$VERSION" in
+  "" | */*) echo "Could not resolve the latest imputnet/helium-linux release." >&2; exit 1 ;;
+esac
 # The filename here becomes the name Gear Lever stores it under, so keep it stable and lowercase.
 curl -fsSL -o "$TMP_DIR/helium.appimage" \
   "https://github.com/imputnet/helium-linux/releases/download/${VERSION}/helium-${VERSION}-x86_64.AppImage"

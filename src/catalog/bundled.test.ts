@@ -677,9 +677,13 @@ Deno.test("bundled catalog - a PowerShell variable in a Windows script is escape
         continue;
       }
       if (!source.includes("powershell.exe")) continue;
-      const assigned = new Set(
-        [...source.matchAll(/^\s*([A-Za-z_][A-Za-z0-9_]*)=/gm)].map((m) => m[1]),
-      );
+      // `NAME=` assignments and `for NAME in` loop variables are both genuine bash variables. The
+      // loop form was missed at first, so proton-mail's `for image in ...; taskkill ... "$image"`
+      // — a bash variable used outside any PowerShell string — was reported as eaten.
+      const assigned = new Set([
+        ...[...source.matchAll(/^\s*([A-Za-z_][A-Za-z0-9_]*)=/gm)].map((m) => m[1]),
+        ...[...source.matchAll(/^\s*for\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\b/gm)].map((m) => m[1]),
+      ]);
       for (const name of fromEnvironment) assigned.add(name);
       source.split("\n").forEach((line, index) => {
         if (line.trimStart().startsWith("#")) return;
@@ -912,4 +916,33 @@ Deno.test("bundled catalog - the duplicated Add/Remove Programs fallback has not
   assert(first.body.includes("/VERYSILENT"), "Inno Setup uninstallers need /VERYSILENT");
   assert(first.body.includes("'/S'"), "NSIS uninstallers need /S");
   assert(first.body.includes("/qn"), "MSI uninstalls need /qn");
+});
+
+Deno.test("bundled catalog - an install does not resolve a release through the rate-limited GitHub API", async () => {
+  // api.github.com allows 60 unauthenticated requests an hour per address, and every job on a CI
+  // runner's IP shares that budget. helium's Windows install got HTTP 403 from it and failed before
+  // downloading anything. https://github.com/<owner>/<repo>/releases/latest redirects to the tag
+  // page without counting against the limit, so installs resolve the version from that redirect.
+  //
+  // autoinstall's own entry is exempt: it asks the API on purpose, to tell "no full release exists"
+  // (404) apart from a release it can install.
+  const offenders: string[] = [];
+  for (const entryDir of await entryDirs()) {
+    if (entryDir.endsWith("/autoinstall")) continue;
+    for (const platform of ["linux", "macos", "windows"]) {
+      for (const op of ["install", "update"]) {
+        const path = `${entryDir}/${platform}/${op}.sh`;
+        let source: string;
+        try {
+          source = await Deno.readTextFile(path);
+        } catch {
+          continue;
+        }
+        if (/api\.github\.com\/repos\/[^\s"']+\/releases/.test(source)) {
+          offenders.push(`${path}: resolves a release through api.github.com`);
+        }
+      }
+    }
+  }
+  assertEquals(offenders, [], "an install that depends on the rate-limited GitHub API");
 });

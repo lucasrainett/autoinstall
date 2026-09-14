@@ -1,29 +1,83 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# Proton Mail's uninstaller answered 4294967295 (0xFFFFFFFF, -1) on a runner. That is what its
-# Squirrel/Electron uninstaller returns when the application is still running — and Proton Mail
-# launches itself at the end of its own installation, so an install-then-remove sequence hits this
-# every time. Closing it first is the documented remedy for the whole Electron family.
+# winget reports "Successfully uninstalled" and leaves the application installed.
 #
-# taskkill rather than a graceful close: there is no window to click, and the mailbox is not being
-# modified — the process is being stopped so its files can be deleted.
-for image in "Proton Mail.exe" ProtonMail.exe "Proton Mail Bridge.exe"; do
+# Proven with before/after snapshots of the machine on a Windows runner: after the uninstall below
+# returned success, the Add/Remove Programs entry and the program directory were both still there.
+# winget hands the vendor's uninstaller its own --silent, which most of them ignore, and reports
+# what it asked for rather than what happened.
+#
+# So: ask winget first, because it is the right tool when it works and it keeps winget's own record
+# straight, then check Add/Remove Programs and run the uninstaller it names.
+#
+# The fallback runs in PowerShell rather than bash. It has to read the registry anyway, and it means
+# switches are passed natively — under Git Bash a bare /S is rewritten into a Windows path before
+# the uninstaller ever sees it, which is its own silent no-op.
+DISPLAY_NAME='Proton Mail'
+
+# Proton Mail relaunches itself at the end of its own install, and its uninstaller refuses while it
+# runs. Closing it first; taskkill rather than a graceful close, since there is no window to click
+# and nothing in the mailbox is being changed.
+for image in "Proton Mail.exe" ProtonMail.exe; do
   MSYS_NO_PATHCONV=1 taskkill //F //IM "$image" >/dev/null 2>&1 || true
 done
-# Give Windows a moment to release the file handles the uninstaller is about to need.
 sleep 3
 
 winget uninstall --id Proton.ProtonMail -e \
-  --accept-source-agreements --disable-interactivity --purge --silent
-rc=$?
+  --accept-source-agreements --disable-interactivity --purge --silent || true
 
-if [ "$rc" -ne 0 ]; then
-  echo "winget uninstall returned $rc." >&2
-  # 4294967295 is the uninstaller's own -1, not winget's. Report it as itself rather than as a
-  # generic failure, so the next person does not start by suspecting winget.
-  if [ "$rc" = "4294967295" ] || [ "$rc" = "-1" ]; then
-    echo "That is the vendor uninstaller's -1, which normally means the app was still running." >&2
-  fi
-  exit "$rc"
-fi
+powershell.exe -NoProfile -Command "
+  \$pattern = '$DISPLAY_NAME'
+  \$roots = @(
+    'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
+    'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
+    'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*')
+  \$app = Get-ItemProperty \$roots -ErrorAction SilentlyContinue |
+          Where-Object { \$_.DisplayName -like \$pattern } | Select-Object -First 1
+  if (-not \$app) { Write-Host 'Add/Remove Programs has no entry; the removal is complete.'; exit 0 }
+  Write-Host \"winget left '\$(\$app.DisplayName)' registered; running its own uninstaller.\"
+
+  if (\$app.QuietUninstallString) {
+    # The vendor's own unattended command, run exactly as registered. Adding a switch to it is how
+    # Proton Mail's Squirrel updater, registered as Update.exe --uninstall -s, was handed an NSIS /S.
+    \$cmd = \$app.QuietUninstallString
+    \$switches = @()
+  } else {
+    \$cmd = \$app.UninstallString
+    if (-not \$cmd) { Write-Host 'That entry names no uninstaller.'; exit 1 }
+    \$switches = @('/S')
+  }
+
+  if (\$cmd -match 'MsiExec') {
+    \$code = [regex]::Match(\$cmd, '\{[0-9A-Fa-f-]+\}').Value
+    \$exe = 'msiexec.exe'
+    \$switches = @(\"/X\$code\", '/qn', '/norestart')
+  } else {
+    # Split the executable from any arguments the registry already carries.
+    if (\$cmd -match '^\"([^\"]+)\"\s*(.*)\$') { \$exe = \$Matches[1]; \$rest = \$Matches[2] }
+    else { \$exe = \$cmd; \$rest = '' }
+    # unins000.exe is Inno Setup, which wants /VERYSILENT; the rest here are NSIS, which want /S.
+    if (\$switches.Count -gt 0 -and \$exe -match 'unins\d*\.exe\$') {
+      \$switches = @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
+    }
+    if (\$rest) { \$switches = \$switches + \$rest.Split(' ') }
+  }
+
+  if (\$switches.Count -gt 0) { \$proc = Start-Process \$exe -ArgumentList \$switches -PassThru }
+  else { \$proc = Start-Process \$exe -PassThru }
+
+  # Wait for Add/Remove Programs to let go of the entry, not for the process. An NSIS uninstaller
+  # copies itself to TEMP and relaunches, so the process started here exits at once: waiting on it
+  # reported MSI Afterburner as finished while it was still fully installed, and the snapshots
+  # taken half a minute later still showed its entry and directory. Bounded at four minutes, which
+  # is generous for an uninstall and still fails inside the harness cap, so a stuck uninstaller
+  # stops here rather than costing the entries behind it.
+  \$deadline = (Get-Date).AddSeconds(240)
+  while ((Test-Path \$app.PSPath) -and ((Get-Date) -lt \$deadline)) { Start-Sleep -Seconds 3 }
+  if (Test-Path \$app.PSPath) {
+    if (-not \$proc.HasExited) { \$proc.Kill() }
+    Write-Host 'Still registered after four minutes; the vendor uninstaller did not complete.'
+    exit 1
+  }
+  Write-Host 'Vendor uninstaller finished; Add/Remove Programs no longer lists it.'"
