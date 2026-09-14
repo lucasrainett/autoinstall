@@ -946,3 +946,27 @@ Deno.test("bundled catalog - an install does not resolve a release through the r
   }
   assertEquals(offenders, [], "an install that depends on the rate-limited GitHub API");
 });
+
+Deno.test("lifecycle known issues - every line names a real entry on that platform, with a reason", async () => {
+  // The list turns a failure into a warning, so a stale or mistyped line would quietly hide a real
+  // failure — or excuse an entry that no longer exists. Each line must name a platform folder that
+  // is actually there, and say why.
+  const path = fromFileUrl(new URL("../../scripts/lifecycle-known-issues.txt", import.meta.url));
+  const offenders: string[] = [];
+  const lines = (await Deno.readTextFile(path)).split("\n");
+  lines.forEach((line, index) => {
+    if (line.trim() === "" || line.trimStart().startsWith("#")) return;
+    const [platform, entry, ...reason] = line.trim().split(/\s+/);
+    if (!["linux", "macos", "windows"].includes(platform)) {
+      offenders.push(`line ${index + 1}: unknown platform "${platform}"`);
+      return;
+    }
+    try {
+      if (!Deno.statSync(`${BUNDLED_CATALOG_ROOT}/${entry}/${platform}`).isDirectory) throw 0;
+    } catch {
+      offenders.push(`line ${index + 1}: ${entry} has no ${platform} folder`);
+    }
+    if (reason.join(" ").length < 20) offenders.push(`line ${index + 1}: no real reason given`);
+  });
+  assertEquals(offenders, [], "a known-issues line that does not hold up");
+});

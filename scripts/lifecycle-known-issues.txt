@@ -1,0 +1,13 @@
+# Entries known not to complete their lifecycle on a GitHub-hosted runner, one per line:
+#   <platform> <entry> <why>
+#
+# A listed entry is still attempted on every run and still reported, but as a known issue rather
+# than a failure, so it does not turn the run red. If a listed entry passes, the run says so — take
+# it off this list then, or it stops meaning anything.
+#
+# Only for failures proven to come from the runner rather than the entry, with the evidence named.
+# Both below were shown by the before/after snapshots of run 34854454723: the uninstaller was
+# still running four minutes later, waiting on something that needs a desktop session, which a
+# hosted runner does not have.
+windows msi-afterburner The NSIS uninstaller relaunches as Un_A.exe and starts RivaTuner's as Un_B.exe; both were still running after four minutes, waiting on a prompt /S does not suppress.
+windows proton-mail     The Squirrel uninstaller relaunches Proton Mail.exe and waits for it to exit, which it never does without a desktop session.

@@ -277,14 +277,32 @@ run_op() { # run_op <script> <log>  — returns the script's exit code, or 124 o
 }
 
 
-pass=0; fail=0; skipped=0
+pass=0; fail=0; skipped=0; known=0
+
+# Known issues: entries proven unable to finish on a hosted runner. Looked up with awk rather than an
+# associative array, because macOS still ships bash 3.2, which has none.
+KNOWN_ISSUES_FILE="${LIFECYCLE_KNOWN_ISSUES:-scripts/lifecycle-known-issues.txt}"
+known_issue() { # known_issue <entry> — prints the reason and succeeds if the entry is listed here
+  [ -f "$KNOWN_ISSUES_FILE" ] || return 1
+  awk -v p="$PLATFORM" -v k="$1" '
+    /^[[:space:]]*#/ || NF < 3 { next }
+    $1 == p && $2 == k { $1 = ""; $2 = ""; sub(/^[[:space:]]+/, ""); print; found = 1; exit }
+    END { exit !found }' "$KNOWN_ISSUES_FILE"
+}
+known_reason=""
+record_failure() { # counts against the run, unless this entry is a listed known issue
+  if [ -n "$known_reason" ]; then known=$((known + 1)); else fail=$((fail + 1)); fi
+}
 summary=""
 
 note()  { echo "::notice::$*"; }
-fail_() { echo "::error::$*"; }
+# A known issue is reported as a warning, so the annotation list does not show red errors on a run
+# that is correctly green.
+fail_() { if [ -n "$known_reason" ]; then echo "::warning::known issue — $*"; else echo "::error::$*"; fi; }
 
 for key in $ENTRIES; do
   dir="catalog/$key/$PLATFORM"
+  known_reason=$(known_issue "$key" || true)
   log="$LOG_DIR/$(echo "$key" | tr '/' '_').log"
 
   if [ ! -d "$dir" ]; then
@@ -312,19 +330,19 @@ for key in $ENTRIES; do
     124)
       fail_ "$key: detect timed out after ${OP_TIMEOUT}s"
       summary="${summary}| \`$key\` | ✗ | detect timed out |"$'\n'
-      fail=$((fail + 1))
+      record_failure
       continue
       ;;
     125)
       fail_ "$key: detect blocked on the Windows installer lock — something earlier left it held"
       summary="${summary}| \`$key\` | ✗ | installer lock held |"$'\n'
-      fail=$((fail + 1))
+      record_failure
       continue
       ;;
     *)
       fail_ "$key: detect exited $before, outside the 0/1/2 contract"
       summary="${summary}| \`$key\` | ✗ | detect exited $before |"$'\n'
-      fail=$((fail + 1))
+      record_failure
       continue
       ;;
   esac
@@ -345,7 +363,7 @@ for key in $ENTRIES; do
   if [ "$install_rc" -eq 124 ] || [ "$install_rc" -eq 137 ]; then
     fail_ "$key: install timed out after ${OP_TIMEOUT}s — it never exited"
     summary="${summary}| \`$key\` | ✗ | install timed out |"$'\n'
-    fail=$((fail + 1))
+    record_failure
     snapshot "$key" after-install; evidence_summary "$key" "$log"
     continue
   fi
@@ -357,7 +375,7 @@ for key in $ENTRIES; do
   if [ "$install_rc" -eq 125 ]; then
     fail_ "$key: install blocked on the Windows installer lock — something earlier left it held"
     summary="${summary}| \`$key\` | ✗ | installer lock held |"$'\n'
-    fail=$((fail + 1))
+    record_failure
     snapshot "$key" after-install; evidence_summary "$key" "$log"
     continue
   fi
@@ -485,9 +503,16 @@ for key in $ENTRIES; do
   if [ "$entry_ok" -eq 1 ]; then
     pass=$((pass + 1))
     summary="${summary}| \`$key\` | ✅ | full lifecycle |"$'\n'
+    if [ -n "$known_reason" ]; then
+      echo "::warning::$key passed but is listed as a known issue for $PLATFORM — remove it from $KNOWN_ISSUES_FILE"
+    fi
   else
-    fail=$((fail + 1))
-    summary="${summary}| \`$key\` | ❌ | see \`$log\` |"$'\n'
+    record_failure
+    if [ -n "$known_reason" ]; then
+      summary="${summary}| \`$key\` | ⚠️ | known issue: $known_reason |"$'\n'
+    else
+      summary="${summary}| \`$key\` | ❌ | see \`$log\` |"$'\n'
+    fi
   fi
   echo "::endgroup::"
 done
@@ -497,7 +522,7 @@ if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   {
     echo "## Catalog lifecycle — $PLATFORM"
     echo
-    echo "**$pass passed · $fail failed · $skipped skipped**"
+    echo "**$pass passed · $fail failed · $skipped skipped · $known known issues**"
     echo
     echo "| Entry | Result | Notes |"
     echo "| --- | --- | --- |"
@@ -505,5 +530,5 @@ if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   } >> "$GITHUB_STEP_SUMMARY"
 fi
 
-echo "passed=$pass failed=$fail skipped=$skipped"
+echo "passed=$pass failed=$fail skipped=$skipped known=$known"
 [ "$fail" -eq 0 ]
