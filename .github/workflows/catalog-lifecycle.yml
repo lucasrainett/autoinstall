@@ -16,6 +16,11 @@ on:
         description: 'Space-separated entry keys, or "all" for every entry on each platform'
         required: false
         default: "all"
+      evidence:
+        description: 'Record before/after machine state for every entry (slower). Always on when specific entries are named.'
+        required: false
+        type: boolean
+        default: false
   schedule:
     # Weekly rather than per-PR: these install real software from third-party endpoints, so a
     # failure is as likely to mean "vendor had a bad day" as "we broke something". Keeping it off
@@ -80,6 +85,9 @@ jobs:
           LIFECYCLE_LOG_DIR: lifecycle-logs
           LIFECYCLE_SHARD_INDEX: ${{ matrix.shard }}
           LIFECYCLE_SHARD_TOTAL: ${{ matrix.shards }}
+          # 'auto' turns evidence on when specific entries are named and off for "all"; the checkbox
+          # forces it on. A scheduled run has no inputs, so it gets 'auto'.
+          LIFECYCLE_EVIDENCE: ${{ github.event.inputs.evidence == 'true' && '1' || 'auto' }}
         run: |
           bash scripts/lifecycle.sh "${{ steps.plat.outputs.dir }}" \
             ${{ github.event.inputs.entries || 'all' }}

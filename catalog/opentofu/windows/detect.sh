@@ -9,7 +9,15 @@
 #
 # For a portable package the binary on disk is the fact. winget is still asked, second, because it
 # is the only one of the two that knows whether a newer version exists.
-command -v tofu >/dev/null 2>&1 || exit 1
+# `command -v tofu` is not enough: winget puts a portable package's shim in its own Links
+# directory and adds that to PATH for *future* shells. The shell running this one started before
+# the install, so the shim is on disk and invisible to it — detect reported the entry absent
+# immediately after a successful install for exactly that reason.
+WINGET_LINKS="${LOCALAPPDATA:-$HOME/AppData/Local}/Microsoft/WinGet/Links"
+if ! command -v tofu >/dev/null 2>&1 &&
+   [ ! -f "$WINGET_LINKS/tofu.exe" ] && [ ! -f "$WINGET_LINKS/tofu" ]; then
+  exit 1
+fi
 
 if winget upgrade --id OpenTofu.Tofu -e --accept-source-agreements --disable-interactivity 2>/dev/null |
    grep -qi "OpenTofu.Tofu"; then

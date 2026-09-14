@@ -1,37 +1,39 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-# Hung at "Starting package uninstall..." until the harness killed it at ten minutes, wedging the
-# Windows installer lock for the entries behind it. System Informer ships an Inno Setup uninstaller,
-# and winget's --silent does not reach it; Inno's own switches do.
+# Deliberately the reverse order of the other fallbacks: Add/Remove Programs first, winget second.
 #
-# /VERYSILENT suppresses the wizard entirely, /SUPPRESSMSGBOXES answers the prompts it would still
-# raise, and /NORESTART stops it asking to reboot. MSYS_NO_PATHCONV keeps Git Bash from rewriting
-# them into paths before the uninstaller sees them.
-UNINSTALLERS=(
-  "/c/Program Files/SystemInformer/unins000.exe"
-  "/c/Program Files (x86)/SystemInformer/unins000.exe"
-  "${LOCALAPPDATA:-$HOME/AppData/Local}/Programs/SystemInformer/unins000.exe"
-)
+# `winget uninstall` for this package hangs at "Starting package uninstall..." and never returns.
+# Git Bash cannot signal a native Windows process, so the harness's only option is to kill it, and
+# a winget killed mid-uninstall leaves the Windows installer lock held — which then costs every
+# entry behind it in the same shard. In the run that exposed this it took thunderbird and volta
+# outright, and made minecraft's uninstall fail with 1618, ERROR_INSTALL_ALREADY_RUNNING.
+#
+# Running the vendor's own uninstaller first means winget has nothing left to do and returns
+# immediately. An earlier attempt guessed the uninstaller path and guessed wrong; this reads it
+# from the registry, which is where the previous eight fallbacks got theirs.
+powershell.exe -NoProfile -Command "
+  \$roots = @(
+    'HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
+    'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*',
+    'HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\*')
+  \$app = Get-ItemProperty \$roots -ErrorAction SilentlyContinue |
+          Where-Object { \$_.DisplayName -like 'System Informer*' } | Select-Object -First 1
+  if (-not \$app) { Write-Host 'Not registered in Add/Remove Programs.'; exit 0 }
+  \$cmd = \$app.QuietUninstallString
+  if (-not \$cmd) { \$cmd = \$app.UninstallString }
+  if (-not \$cmd) { Write-Host 'That entry names no uninstaller.'; exit 0 }
+  Write-Host \"Running: \$cmd\"
+  if (\$cmd -match '^\"([^\"]+)\"\s*(.*)\$') { \$exe = \$Matches[1]; \$rest = \$Matches[2] }
+  else { \$exe = \$cmd; \$rest = '' }
+  \$switches = @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART')
+  if (\$rest) { \$switches = \$switches + \$rest.Split(' ') }
+  \$proc = Start-Process \$exe -ArgumentList \$switches -PassThru
+  if (-not \$proc.WaitForExit(240000)) {
+    \$proc.Kill()
+    Write-Host 'The vendor uninstaller did not finish in four minutes; stopped it.'
+  }"
 
-for u in "${UNINSTALLERS[@]}"; do
-  [ -f "$u" ] || continue
-  echo "Running System Informer's own uninstaller before winget, so nothing waits on a wizard."
-  MSYS_NO_PATHCONV=1 "$u" /VERYSILENT /SUPPRESSMSGBOXES /NORESTART
-  echo "  uninstaller exit code: $?"
-  for _ in 1 2 3 4 5 6 7 8 9 10; do
-    [ -f "$u" ] || break
-    sleep 2
-  done
-  break
-done
-
+# Now winget, which should find nothing left to do and return at once.
 winget uninstall --id WinsiderSS.SystemInformer -e \
   --accept-source-agreements --disable-interactivity --purge --silent || true
-
-for u in "${UNINSTALLERS[@]}"; do
-  if [ -f "$u" ]; then
-    echo "System Informer is still installed at $(dirname "$u")." >&2
-    exit 1
-  fi
-done

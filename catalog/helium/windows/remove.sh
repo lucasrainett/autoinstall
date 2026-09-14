@@ -1,19 +1,36 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 
-# Best-effort: reads the uninstall command Helium's own installer registered (the standard way
-# any registered Windows app is uninstalled) since there's no winget package to uninstall
-# through instead. Unverified against a real Windows Helium install — flagged rather than
-# assumed correct, same as this entry's detect.sh.
+# MSYS_NO_PATHCONV, because this runs under Git Bash: an argument that looks like a POSIX path is
+# rewritten to a Windows one before the native program sees it, so /s becomes something like
+# C:/Program Files/Git/s and reg.exe answers "ERROR: Invalid syntax".
 UNINSTALL_CMD=$(
-  # MSYS_NO_PATHCONV, because this runs under Git Bash: an argument that looks like a POSIX path is
-  # rewritten to a Windows one before the native program sees it, so /s becomes something like
-  # C:/Program Files/Git/s. reg.exe answered "ERROR: Invalid syntax", VLC's uninstaller took /S as a
-  # path and silently did nothing while still exiting 0, and Helium's installer ignored
-  # /silent /install the same way. The switch is passed through unchanged with this set.
   MSYS_NO_PATHCONV=1 reg.exe query "HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall" /s /f "Helium" 2>/dev/null \
     | grep "UninstallString" | head -1 | sed -E 's/.*REG_SZ +//'
 )
-if [ -n "$UNINSTALL_CMD" ]; then
-  eval "$UNINSTALL_CMD --force-uninstall"
+
+if [ -z "$UNINSTALL_CMD" ]; then
+  echo "Helium is not registered in Add/Remove Programs; nothing to remove."
+  exit 0
+fi
+
+eval "$UNINSTALL_CMD --force-uninstall"
+rc=$?
+
+# 19 is not a failure. Helium is built on Chromium, whose setup.exe answers 19 — UNINSTALL_SUCCESSFUL
+# — after removing the application; Chrome itself behaves the same way and it is a well-known trap
+# for anyone driving it from a script. Treating it as an error reported a removal that had in fact
+# happened as a failure. 0 and 19 both mean done; anything else is reported as itself.
+case "$rc" in
+  0 | 19) ;;
+  *)
+    echo "Helium's uninstaller returned $rc." >&2
+    exit "$rc"
+    ;;
+esac
+
+# Verified rather than assumed, because the exit code alone has already misled us once here.
+if MSYS_NO_PATHCONV=1 reg.exe query "HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall" /s /f "Helium" 2>/dev/null | grep -q "DisplayName"; then
+  echo "Helium is still registered in Add/Remove Programs after the uninstall." >&2
+  exit 1
 fi

@@ -27,6 +27,8 @@ else
   # a single line would put every named entry in shard 0 and leave the other shards empty.
   ENTRIES=$(printf '%s\n' "$@")
 fi
+REQUESTED_ALL=0
+[ "${1:-}" = "all" ] && REQUESTED_ALL=1
 
 # Sharding, because a Windows run does not fit in one job. Windows entries install real MSIs
 # through winget on a cold runner, and three consecutive full runs were cancelled at their cap —
@@ -91,6 +93,126 @@ STUCK_LOCK_GRACE="${LIFECYCLE_STUCK_LOCK_GRACE:-90}"
 # How long a stopped operation gets to unwind after SIGTERM before it is killed outright.
 TERM_GRACE="${LIFECYCLE_TERM_GRACE:-20}"
 
+# Evidence mode: record the machine's state before the install, after the install and after the
+# removal, and write down exactly what changed. This exists to end a trial-and-error loop. Each
+# failed run used to yield just enough to guess at one cause, and several of those guesses turned
+# out to be about the *check* rather than the entry — a diagnostic that queried the wrong package
+# id, a path test answered from bash's hash table, an exit code (Chromium's 19) that means success.
+# A diff of real state cannot be wrong in those ways: it does not know what the entry is called or
+# where the vendor puts things, it just shows what appeared and what stayed.
+#
+# On by default when specific entries are named, because that is a targeted investigation and a few
+# seconds per snapshot is nothing next to another round. Off for a full run, where 300 entries of
+# snapshots would cost more than it tells us. LIFECYCLE_EVIDENCE=1 or =0 overrides either way.
+case "${LIFECYCLE_EVIDENCE:-auto}" in
+  1 | true | yes) EVIDENCE=1 ;;
+  0 | false | no) EVIDENCE=0 ;;
+  *) if [ "$REQUESTED_ALL" -eq 1 ]; then EVIDENCE=0; else EVIDENCE=1; fi ;;
+esac
+EVIDENCE_DIR="$LOG_DIR/evidence"
+
+# Processes that exist only because this harness is running. Without the filter every snapshot diff
+# is dominated by the shells, greps and PowerShell instances taking the snapshot itself.
+EVIDENCE_NOISE='^proc\|([^|]*/)?(bash|sh|dash|zsh|powershell|pwsh|conhost|cmd|winget|WindowsPackageManagerServer|AppInstallerCLI|sleep|timeout|ps|sort|grep|sed|awk|tr|find|comm|head|tail|cat|reg|git|mintty|cygpath|basename|dirname|date|mktemp|xargs|wc|uniq|systemctl|dpkg-query|flatpak|brew|pkgutil|launchctl|ruby|curl)(\.exe)?(\||$)'
+
+if [ "$EVIDENCE" -eq 1 ] && [ "$PLATFORM" = "windows" ]; then
+  # A .ps1 file rather than an inline -Command string: every PowerShell variable inline has to
+  # survive bash quoting first, and getting that wrong has already cost this project two entries
+  # that could never detect themselves.
+  EVIDENCE_PS1="$(mktemp -d)/snapshot.ps1"
+  cat > "$EVIDENCE_PS1" <<'PS1'
+$ErrorActionPreference = 'SilentlyContinue'
+$hives = @(
+  'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
+  'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*',
+  'HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*'
+)
+foreach ($app in (Get-ItemProperty -Path $hives)) {
+  if (-not $app.DisplayName) { continue }
+  'arp|{0}|{1}|location={2}|uninstall={3}|quiet={4}' -f $app.DisplayName, $app.DisplayVersion, $app.InstallLocation, $app.UninstallString, $app.QuietUninstallString
+}
+foreach ($proc in (Get-Process)) {
+  if ($proc.Path) { 'proc|{0}|{1}' -f $proc.ProcessName, $proc.Path }
+}
+foreach ($svc in (Get-Service)) {
+  'svc|{0}|{1}' -f $svc.Name, $svc.StartType
+}
+PS1
+fi
+
+bounded_cmd() { # bounded_cmd <cmd...> — a snapshot must never be the thing that hangs the job
+  if command -v timeout >/dev/null 2>&1; then timeout 120 "$@"; else "$@"; fi
+}
+
+snapshot() { # snapshot <key> <phase>
+  [ "$EVIDENCE" -eq 1 ] || return 0
+  mkdir -p "$EVIDENCE_DIR"
+  {
+    case "$PLATFORM" in
+      windows)
+        MSYS_NO_PATHCONV=1 bounded_cmd powershell.exe -NoProfile -ExecutionPolicy Bypass \
+          -File "$(cygpath -w "$EVIDENCE_PS1")"
+        bounded_cmd winget list --accept-source-agreements --disable-interactivity | sed 's/^/winget|/'
+        for base in "/c/Program Files" "/c/Program Files (x86)" "/c/ProgramData" \
+                    "${LOCALAPPDATA:-$HOME/AppData/Local}" "${LOCALAPPDATA:-$HOME/AppData/Local}/Programs" \
+                    "${APPDATA:-$HOME/AppData/Roaming}" \
+                    "${LOCALAPPDATA:-$HOME/AppData/Local}/Microsoft/WinGet/Links"; do
+          [ -d "$base" ] && find "$base" -mindepth 1 -maxdepth 1 | sed 's/^/path|/'
+        done
+        ;;
+      macos)
+        for base in /Applications "$HOME/Applications" /opt/homebrew/bin /usr/local/bin; do
+          [ -d "$base" ] && find "$base" -mindepth 1 -maxdepth 1 | sed 's/^/path|/'
+        done
+        bounded_cmd brew list -1 --formula | sed 's/^/brew|formula|/'
+        bounded_cmd brew list -1 --cask | sed 's/^/brew|cask|/'
+        pkgutil --pkgs | sed 's/^/pkg|/'
+        launchctl list | awk 'NR > 1 { print "launchd|" $3 }'
+        ps -axo comm= | sed 's/^/proc|/'
+        ;;
+      linux)
+        dpkg-query -W -f='${Package}\n' | sed 's/^/deb|/'
+        command -v flatpak >/dev/null && bounded_cmd flatpak list --columns=application,installation | sed 's/^/flatpak|/'
+        [ -S /run/snapd.socket ] && bounded_cmd snap list | awk 'NR > 1 { print "snap|" $1 }'
+        command -v systemctl >/dev/null &&
+          systemctl list-unit-files --no-legend --no-pager | awk '{ print "unit|" $1 "|" $2 }'
+        for base in /usr/local/bin "$HOME/.local/bin" /opt; do
+          [ -d "$base" ] && find "$base" -mindepth 1 -maxdepth 1 | sed 's/^/path|/'
+        done
+        ps -eo comm= | sed 's/^/proc|/'
+        ;;
+    esac
+  } 2>/dev/null | tr -d '\r' | sed 's/[[:space:]]*$//' | grep -v '^[a-z]*|$' | grep -v '^$' |
+    grep -vE "$EVIDENCE_NOISE" | LC_ALL=C sort -u > "$EVIDENCE_DIR/$1.$2.txt"
+}
+
+evidence_summary() { # evidence_summary <key> <log> — what changed, written into the entry's log
+  [ "$EVIDENCE" -eq 1 ] || return 0
+  local before="$EVIDENCE_DIR/$1.before.txt"
+  local installed="$EVIDENCE_DIR/$1.after-install.txt"
+  local removed="$EVIDENCE_DIR/$1.after-remove.txt"
+  # Read before the block below starts appending to the same file: grep refuses a file that is also
+  # its output ("input file is also the output") and the operations section came out empty.
+  local ops
+  ops=$(grep '^\[op\]' "$2")
+  {
+    echo "=============== EVIDENCE: $1 ($PLATFORM) ==============="
+    echo "--- every operation: script, exit code, seconds ---"
+    printf '%s\n' "$ops"
+    if [ -f "$before" ] && [ -f "$installed" ]; then
+      echo "--- ADDED by the install (absent before, present after install) ---"
+      LC_ALL=C comm -13 "$before" "$installed"
+    fi
+    if [ -f "$before" ] && [ -f "$installed" ] && [ -f "$removed" ]; then
+      echo "--- STILL PRESENT after removal (added by the install, never taken away) ---"
+      LC_ALL=C comm -13 "$before" "$installed" | LC_ALL=C comm -12 - "$removed"
+      echo "--- APPEARED only after removal (created by the uninstaller or left running) ---"
+      LC_ALL=C comm -13 "$installed" "$removed" | LC_ALL=C comm -13 "$before" -
+    fi
+    echo "--- raw snapshots: $EVIDENCE_DIR/$1.{before,after-install,after-remove}.txt ---"
+  } >> "$2" 2>&1
+}
+
 stop_op() { # stop_op <pid> — ask the process group to stop, then insist
   # SIGTERM first, and only SIGKILL if it will not go. This matters specifically because of what
   # winget does with the Windows installer lock: killed outright it never unwinds, the lock stays
@@ -127,6 +249,7 @@ run_op() { # run_op <script> <log>  — returns the script's exit code, or 124 o
   while kill -0 "$op_pid" 2>/dev/null; do
     if [ "$waited" -ge "$OP_TIMEOUT" ]; then
       stop_op "$op_pid"
+      echo "[op] $(basename "$1") exit=124 after ${waited}s (timed out)" >> "$2"
       return 124
     fi
     # Windows serialises installs behind a global lock, and a winget killed mid-operation leaves it
@@ -139,13 +262,16 @@ run_op() { # run_op <script> <log>  — returns the script's exit code, or 124 o
     if [ "$waited" -ge "$STUCK_LOCK_GRACE" ] &&
        grep -q "Waiting for another install/uninstall" "$2" 2>/dev/null; then
       stop_op "$op_pid"
+      echo "[op] $(basename "$1") exit=125 after ${waited}s (installer lock held)" >> "$2"
       return 125
     fi
     sleep 1
     waited=$((waited + 1))
   done
   wait "$op_pid"
-  return $?
+  op_rc=$?
+  echo "[op] $(basename "$1") exit=$op_rc after ${waited}s" >> "$2"
+  return "$op_rc"
 }
 
 
@@ -210,6 +336,7 @@ for key in $ENTRIES; do
   fi
 
   entry_ok=1
+  snapshot "$key" before
 
   install_rc=0
   run_op "$dir/install.sh" "$log" || install_rc=$?
@@ -217,6 +344,7 @@ for key in $ENTRIES; do
     fail_ "$key: install timed out after ${OP_TIMEOUT}s — it never exited"
     summary="${summary}| \`$key\` | ✗ | install timed out |"$'\n'
     fail=$((fail + 1))
+    snapshot "$key" after-install; evidence_summary "$key" "$log"
     continue
   fi
   # Distinguished from a plain timeout because the cause is elsewhere: this entry did nothing
@@ -228,6 +356,7 @@ for key in $ENTRIES; do
     fail_ "$key: install blocked on the Windows installer lock — something earlier left it held"
     summary="${summary}| \`$key\` | ✗ | installer lock held |"$'\n'
     fail=$((fail + 1))
+    snapshot "$key" after-install; evidence_summary "$key" "$log"
     continue
   fi
   if [ "$install_rc" -eq 3 ]; then
@@ -243,6 +372,7 @@ for key in $ENTRIES; do
   if [ "$install_rc" -ne 0 ]; then
     fail_ "$key: install failed"
     entry_ok=0
+    snapshot "$key" after-install
   else
     run_op "$dir/detect.sh" "$log"; after=$?
     # 0 = installed and current, 2 = installed but an update exists. Both mean present.
@@ -257,6 +387,7 @@ for key in $ENTRIES; do
       fail_ "$key: not safe to re-run"
       entry_ok=0
     fi
+    snapshot "$key" after-install
 
     run_op "$dir/remove.sh" "$log"; rc=$?
     # Exit 3 means the collateral guard declined: a deliberate, correct non-removal, not a failure.
@@ -345,7 +476,9 @@ for key in $ENTRIES; do
         entry_ok=0
       fi
     fi
+    snapshot "$key" after-remove
   fi
+  evidence_summary "$key" "$log"
 
   if [ "$entry_ok" -eq 1 ]; then
     pass=$((pass + 1))

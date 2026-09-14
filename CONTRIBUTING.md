@@ -127,6 +127,14 @@ recorded as a timeout — one hung installer used to take the whole run with it.
 `LIFECYCLE_SHARD_TOTAL` and `LIFECYCLE_SHARD_INDEX` to run every Nth entry, which is how the
 Windows job is split across four runners; a full Windows pass does not fit in one.
 
+When specific entries are named, the harness also runs in evidence mode: it records the machine's
+state before the install, after it and after the removal — installed-programs registry, packages,
+services, running processes, top-level directories — and writes into each entry's log what the
+install added, what is still there after removal, and every operation's exit code and duration.
+That answers "did it really uninstall?" from the machine itself, rather than from a check that can
+be wrong. Set `LIFECYCLE_EVIDENCE=1` to force it on for a full run, `=0` to turn it off. In the
+workflow, dispatch with only the failing entries to get it in a few minutes.
+
 Because `detect.sh` is read-only, all of them can be run at once against a clean container:
 
 ```bash

@@ -19,7 +19,10 @@ if [ "$rc" -ne 0 ]; then
   fi
 fi
 
-if command -v tofu >/dev/null 2>&1; then
-  echo "tofu is still on PATH after the uninstall." >&2
+# Same as detect: the shim lives in winget's Links directory, which this shell's PATH predates.
+hash -r 2>/dev/null || true
+WINGET_LINKS="${LOCALAPPDATA:-$HOME/AppData/Local}/Microsoft/WinGet/Links"
+if [ -f "$WINGET_LINKS/tofu.exe" ] || [ -f "$WINGET_LINKS/tofu" ]; then
+  echo "tofu is still installed in $WINGET_LINKS after the uninstall." >&2
   exit 1
 fi

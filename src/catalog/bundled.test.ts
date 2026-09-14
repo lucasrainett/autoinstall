@@ -875,6 +875,11 @@ Deno.test("bundled catalog - the duplicated Add/Remove Programs fallback has not
   // collateral guard is: each operation has to stay runnable standalone. What duplication costs is
   // silent drift, and that is what this buys back. Only the package id and the DisplayName pattern
   // may differ between copies.
+  // One entry — system-informer — deliberately runs the lookup *before* winget rather than after,
+  // because its `winget uninstall` hangs outright and a winget killed mid-uninstall leaves the
+  // Windows installer lock held for everything behind it. That is a different script, not a drifted
+  // copy, so the two orders are compared separately and only the standard one is expected to have
+  // several copies.
   const bodies: { path: string; body: string }[] = [];
   for (const entryDir of await entryDirs()) {
     let source: string;
@@ -886,6 +891,10 @@ Deno.test("bundled catalog - the duplicated Add/Remove Programs fallback has not
     if (!source.includes("QuietUninstallString")) continue;
     const start = source.indexOf("powershell.exe -NoProfile -Command");
     assert(start >= 0, `${entryDir}: fallback with no powershell invocation`);
+    // Anchored to the start of a line: system-informer's comment *mentions* `winget uninstall`
+    // several lines above its actual call, and matching that made the variant look standard.
+    const wingetAt = source.search(/^winget uninstall/m);
+    if (wingetAt >= 0 && wingetAt > start) continue; // lookup-first variant
     bodies.push({ path: `${entryDir}/windows/remove.sh`, body: source.slice(start) });
   }
 
